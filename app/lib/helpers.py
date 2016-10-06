@@ -1,6 +1,7 @@
 import json
 import random
 import time
+from operator import itemgetter
 
 import requests
 
@@ -49,3 +50,10 @@ def get_elapsed(begin, end):
 
 def sleep(seconds):
     time.sleep(random.random() * seconds)
+
+
+def sort(dictionary, by='value', desc=True):
+    if by not in ['key', 'value']:
+        raise ValueError('The argument by must either be key or value')
+    by = 1 if by == 'value' else 2
+    return sorted(dictionary.items(), key=itemgetter(by), reverse=desc)
