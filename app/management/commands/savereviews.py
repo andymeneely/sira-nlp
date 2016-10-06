@@ -7,35 +7,10 @@ from datetime import datetime as dt
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
+from app.lib.files import *
 from app.lib.helpers import *
 from app.lib.logger import *
 from app.lib.rietveld import *
-
-
-def _save(reviews, errors, directory, index):
-    if not os.path.exists(directory):
-        debug('Creating {}'.format(directory))
-        os.mkdir(directory, mode=0o755)
-
-    path = os.path.join(directory, 'reviews.{}.json'.format(index))
-    with open(path, 'w') as file:
-        json.dump(reviews, file)
-
-    if errors:
-        path = os.path.join(directory, 'errors.csv'.format(index))
-        with open(path, 'a') as file:
-            writer = csv.writer(file)
-            writer.writerows([(error,) for error in errors])
-
-
-def _get_ids(year, directory):
-    ids = None
-    path = os.path.join(directory, '{}.csv'.format(year))
-    debug('Getting Rietveld IDs from {}'.format(path))
-    with open(path, 'r') as file:
-        reader = csv.reader(file)
-        ids = [row[0] for row in reader]
-    return ids
 
 
 class Command(BaseCommand):
@@ -61,23 +36,20 @@ class Command(BaseCommand):
         year = options['year']
         chunksize = options['chunksize']
 
-        directory = settings.REVIEWS_PATH.format(year=year)
-
         begin = dt.now()
         rietveld = Rietveld()
+        files = Files(settings)
         try:
-            ids = _get_ids(year, settings.IDS_PATH)
-            ids_chunks = list(chunk(ids, chunksize))
-            index = 0
-            for ids_chunk in ids_chunks:
-                index += 1
-                (reviews, errors) = rietveld.get_reviews(ids_chunk, processes)
+            ids = files.get_ids(year)
+            chunks = list(chunk(ids, chunksize))
+            for (i, chnk) in enumerate(chunks):
+                (reviews, errors) = rietveld.get_reviews(chnk, processes)
                 debug('[Chunk {}/{}] {} reviews and {} errors'.format(
-                        index, len(ids_chunks), len(reviews), len(errors)
+                        (i + 1), len(chunks), len(reviews), len(errors)
                     ))
-                _save(reviews, errors, directory, index)
+                files.save_reviews(year, (i + 1), reviews, errors)
             info('Code reviews written to {} file(s) in {}'.format(
-                    len(ids_chunks), directory
+                    len(chunks), files.get_reviews_path(year)
                 ))
         except KeyboardInterrupt:
             warning('Attempting to abort.')
