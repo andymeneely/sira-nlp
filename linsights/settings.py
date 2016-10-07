@@ -23,3 +23,4 @@ if os.environ.get('ENV') == 'PROD':
 
 IDS_PATH = os.path.join(DATA_PATH, 'ids')
 REVIEWS_PATH = os.path.join(DATA_PATH, 'reviews/{year}')
+BOTS = ['commit-bot@chromium.org']
