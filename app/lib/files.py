@@ -2,14 +2,35 @@ import csv
 import glob
 import json
 import os
+import re
 
 from app.lib.helpers import *
+
+# Match the line of header that marks the beginning of quoted text.
+# E.g., On 2008/01/01 00:00:01, Raymond Reddington wrote:
+RESPONSE_HEAD_RE = re.compile(
+        '^On \d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{1,2}:\d{1,2}, .* wrote:$\n',
+        flags=re.MULTILINE
+    )
+# Match lines of quoted text.
+# E.g., > Happy New Year
+QUOTED_TEXT_RE = re.compile(
+        '^>.*$\n', flags=re.MULTILINE
+    )
+# Match code review diff location along with a line of contextual content.
+# E.g., http://codereview.chromium.org/15076/diff/1/6
+#       File chrome/browser/net/dns_master.cc (right):
+CODEREVIEW_URL_RE = re.compile(
+        '^https?:\/\/codereview.chromium.org\/\d+\/diff\/.*\n.*\n',
+        flags=re.MULTILINE
+    )
 
 
 class Files(object):
     def __init__(self, settings):
         self.ids_path = settings.IDS_PATH
         self.reviews_path = settings.REVIEWS_PATH
+        self.bots = settings.BOTS
 
     def get_ids(self, year):
         ids = None
@@ -18,6 +39,23 @@ class Files(object):
             reader = csv.reader(file)
             ids = [row[0] for row in reader]
         return ids
+
+    def get_messages(self, id, year=None, clean=False):
+        year = self.get_year(id) if year is None else year
+        review = self.get_review(id, year)
+        messages = list()
+        for message in review['messages']:
+            sender = message['sender']
+            if sender in self.bots:
+                continue
+            text = self._clean(message['text']) if clean else message['text']
+            messages.append((sender, text))
+        return messages
+
+    def get_description(self, id, year=None):
+        year = self.get_year(id) if year is None else year
+        review = self.get_review(id, year)
+        return review['description']
 
     def get_review(self, id, year=None):
         year = self.get_year(id) if year is None else year
@@ -44,16 +82,14 @@ class Files(object):
         return self.reviews_path.format(year=year)
 
     def get_year(self, id):
-        year = None
         for path in glob.glob(os.path.join(self.ids_path, '*.csv')):
             ids = None
             with open(path, 'r') as file:
                 reader = csv.reader(file)
                 ids = [int(row[0]) for row in reader]
             if ids is not None and id in ids:
-                year = os.path.basename(path).replace('.csv', '')
-                break
-        return year
+                return os.path.basename(path).replace('.csv', '')
+        raise Exception('No code review identified by {}'.format(id))
 
     def save_ids(self, year, ids):
         path = os.path.join(self.ids_path, '{}.csv'.format(year))
@@ -114,3 +150,9 @@ class Files(object):
                 for file in glob.glob(os.path.join(path, 'reviews.*.json'))
             ]
         return files
+
+    def _clean(self, text):
+        text = RESPONSE_HEAD_RE.sub('', text)
+        text = QUOTED_TEXT_RE.sub('', text)
+        text = CODEREVIEW_URL_RE.sub('', text)
+        return text
