@@ -21,9 +21,11 @@ QUOTED_TEXT_RE = re.compile(
 # E.g., http://codereview.chromium.org/15076/diff/1/6
 #       File chrome/browser/net/dns_master.cc (right):
 CODEREVIEW_URL_RE = re.compile(
-        '^https?:\/\/codereview.chromium.org\/\d+\/diff\/.*\n.*\n',
-        flags=re.MULTILINE
+        '^https?:\/\/(codereview.chromium.org|chromiumcodereview.appspot.com)'
+        '\/\d+\/diff\/.*\n.*\n', flags=re.MULTILINE
     )
+# Subsequent new lines
+NEWLINES_RE = re.compile('(^$\n)+', flags=re.MULTILINE)
 
 
 class Files(object):
@@ -155,4 +157,5 @@ class Files(object):
         text = RESPONSE_HEAD_RE.sub('', text)
         text = QUOTED_TEXT_RE.sub('', text)
         text = CODEREVIEW_URL_RE.sub('', text)
+        text = NEWLINES_RE.sub('\n', text)
         return text
