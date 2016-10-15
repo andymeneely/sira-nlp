@@ -30,9 +30,26 @@ NEWLINES_RE = re.compile('(^$\n)+', flags=re.MULTILINE)
 
 class Files(object):
     def __init__(self, settings):
+        self.bugs_path = settings.BUGS_PATH
         self.ids_path = settings.IDS_PATH
         self.reviews_path = settings.REVIEWS_PATH
         self.bots = settings.BOTS
+
+    def get_bugs(self, year):
+        bugs = None
+        directory = self.get_bugs_path(year)
+        for path in self._get_files(directory, pattern='bugs.csv'):
+            with open(path, 'r') as file:
+                file.readline()  # Skip header
+                if bugs is None:
+                    bugs = list()
+                reader = csv.reader(file)
+                for row in reader:
+                    bugs.append(self._to_dict(row))
+        return bugs
+
+    def get_bugs_path(self, year):
+        return self.bugs_path.format(year=year)
 
     def get_ids(self, year):
         ids = None
@@ -62,7 +79,7 @@ class Files(object):
     def get_review(self, id, year=None):
         year = self.get_year(id) if year is None else year
         directory = self.get_reviews_path(year)
-        for path in self._get_files(directory):
+        for path in self._get_files(directory, pattern='reviews.*.json'):
             with open(path, 'r') as file:
                 reviews = json.load(file)
                 for review in reviews:
@@ -73,7 +90,7 @@ class Files(object):
     def get_reviews(self, year):
         reviews = None
         directory = self.get_reviews_path(year)
-        for path in self._get_files(directory):
+        for path in self._get_files(directory, pattern='reviews.*.json'):
             with open(path, 'r') as file:
                 if reviews is None:
                     reviews = list()
@@ -146,12 +163,7 @@ class Files(object):
         stats['patchsets'] = sort(patchsets)
         return stats
 
-    def _get_files(self, path):
-        files = [
-                os.path.join(path, file)
-                for file in glob.glob(os.path.join(path, 'reviews.*.json'))
-            ]
-        return files
+    # Private Members
 
     def _clean(self, text):
         text = RESPONSE_HEAD_RE.sub('', text)
@@ -159,3 +171,29 @@ class Files(object):
         text = CODEREVIEW_URL_RE.sub('', text)
         text = NEWLINES_RE.sub('\n', text)
         return text
+
+    def _get_files(self, path, pattern):
+        files = [
+                os.path.join(path, file)
+                for file in glob.glob(os.path.join(path, pattern))
+            ]
+        return files
+
+    def _parse(self, commit):
+        pass
+
+    # TODO: Remove function once bug information is available in JSON format
+    def _to_dict(self, row):
+        bug = dict()
+
+        bug['id'] = row[0]
+        bug['type'] = row[1]
+        bug['cve'] = row[2]
+        bug['status'] = row[3]
+        bug['opened'] = row[4]
+        bug['closed'] = row[6]
+        bug['modified'] = row[8]
+        bug['summary'] = row[10]
+        bug['labels'] = row[11]
+
+        return bug

@@ -23,7 +23,7 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
-USE_TZ = True
+USE_TZ = False
 
 # Application Settings
 DATA_PATH = os.path.join(BASE_DIR, 'app/data')
@@ -31,5 +31,6 @@ if os.environ.get('ENV') == 'PROD':
     DATA_PATH = '/tmp/linsights/data'
 
 IDS_PATH = os.path.join(DATA_PATH, 'ids')
+BUGS_PATH = os.path.join(DATA_PATH, 'bugs/{year}')
 REVIEWS_PATH = os.path.join(DATA_PATH, 'reviews/{year}')
 BOTS = ['commit-bot@chromium.org']
