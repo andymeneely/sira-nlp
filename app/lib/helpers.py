@@ -57,3 +57,10 @@ def sort(dictionary, by='value', desc=True):
         raise ValueError('The argument by must either be key or value')
     by = 1 if by == 'value' else 2
     return sorted(dictionary.items(), key=itemgetter(by), reverse=desc)
+
+
+def get_row(model, *args, **kwargs):
+    try:
+        return model.objects.get(*args, **kwargs)
+    except model.DoesNotExist:
+        return None
