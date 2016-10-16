@@ -4,28 +4,7 @@ import json
 import os
 import re
 
-from app.lib.helpers import *
-
-# Match the line of header that marks the beginning of quoted text.
-# E.g., On 2008/01/01 00:00:01, Raymond Reddington wrote:
-RESPONSE_HEAD_RE = re.compile(
-        '^On \d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{1,2}:\d{1,2}, .* wrote:$\n',
-        flags=re.MULTILINE
-    )
-# Match lines of quoted text.
-# E.g., > Happy New Year
-QUOTED_TEXT_RE = re.compile(
-        '^>.*$\n', flags=re.MULTILINE
-    )
-# Match code review diff location along with a line of contextual content.
-# E.g., http://codereview.chromium.org/15076/diff/1/6
-#       File chrome/browser/net/dns_master.cc (right):
-CODEREVIEW_URL_RE = re.compile(
-        '^https?:\/\/(codereview.chromium.org|chromiumcodereview.appspot.com)'
-        '\/\d+\/diff\/.*\n.*\n', flags=re.MULTILINE
-    )
-# Subsequent new lines
-NEWLINES_RE = re.compile('(^$\n)+', flags=re.MULTILINE)
+from app.lib import helpers
 
 
 class Files(object):
@@ -67,7 +46,7 @@ class Files(object):
             sender = message['sender']
             if sender in self.bots:
                 continue
-            text = self._clean(message['text']) if clean else message['text']
+            text = helpers.clean(message['text']) if clean else message['text']
             messages.append((sender, text))
         return messages
 
@@ -158,19 +137,12 @@ class Files(object):
             comments[id] = 0
             for patchset in review['patchsets'].values():
                 comments[id] += patchset['num_comments']
-        stats['messages'] = sort(messages)
-        stats['comments'] = sort(comments)
-        stats['patchsets'] = sort(patchsets)
+        stats['messages'] = helpers.sort(messages)
+        stats['comments'] = helpers.sort(comments)
+        stats['patchsets'] = helpers.sort(patchsets)
         return stats
 
     # Private Members
-
-    def _clean(self, text):
-        text = RESPONSE_HEAD_RE.sub('', text)
-        text = QUOTED_TEXT_RE.sub('', text)
-        text = CODEREVIEW_URL_RE.sub('', text)
-        text = NEWLINES_RE.sub('\n', text)
-        return text
 
     def _get_files(self, path, pattern):
         files = [

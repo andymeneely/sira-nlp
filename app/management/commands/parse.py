@@ -1,17 +1,13 @@
-import csv
-import glob
-import operator
-import os
+import ast
 
 from datetime import datetime as dt
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
-from app.lib.files import *
-from app.lib.helpers import *
+from app.lib import helpers
 from app.lib.logger import *
-from app.lib.rietveld import *
+from app.models import *
 
 
 class Command(BaseCommand):
@@ -32,17 +28,18 @@ class Command(BaseCommand):
         id = options['id']
         clean = options.get('clean', False)
 
-        files = Files(settings)
         try:
-            year = files.get_year(id)
-            messages = files.get_messages(id, year, clean=clean)
-
+            review = helpers.get_row(Review, id=id)
+            if review is None:
+                raise CommandError('No review identified by {}'.format(id))
+            review = ast.literal_eval(review.document)
             print('#' * 72)
             print('# Code Review {}'.format(id))
             print('# Description\n')
-            print(format(files.get_description(id, year)))
+            print(format(review['description']))
             print('#' * 72)
             print('# Conversation\n')
+            messages = self.get_messages(review, clean=clean)
             for (i, (sender, message)) in enumerate(messages):
                 print('-' * 72)
                 print('[{}/{}] From {}'.format((i + 1), len(messages), sender))
@@ -51,3 +48,13 @@ class Command(BaseCommand):
             print('#' * 72)
         except KeyboardInterrupt:
             warning('Attempting to abort.')
+
+    def get_messages(self, review, clean=False):
+        messages = list()
+        for message in review['messages']:
+            sender = message['sender']
+            if sender in settings.BOTS:
+                continue
+            text = helpers.clean(message['text']) if clean else message['text']
+            messages.append((sender, text))
+        return messages
