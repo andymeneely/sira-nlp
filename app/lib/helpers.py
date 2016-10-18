@@ -12,7 +12,7 @@ import requests
 RESPONSE_HEAD_RE = re.compile('^On .* wrote:$\n', flags=re.MULTILINE)
 # Match lines of quoted text.
 # E.g., > Happy New Year
-QUOTED_TEXT_RE = re.compile('^> .*$', flags=re.MULTILINE)
+QUOTED_TEXT_RE = re.compile('^>+ ?.*$', flags=re.MULTILINE)
 # Match code review diff location along with a line of contextual content.
 # E.g., http://codereview.chromium.org/15076/diff/1/6
 #       File chrome/browser/net/dns_master.cc (right):
