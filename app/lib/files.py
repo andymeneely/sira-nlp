@@ -2,9 +2,9 @@ import csv
 import glob
 import json
 import os
-import re
 
 from app.lib import helpers
+
 
 
 class Files(object):
@@ -59,21 +59,19 @@ class Files(object):
         year = self.get_year(id) if year is None else year
         directory = self.get_reviews_path(year)
         for path in self._get_files(directory, pattern='reviews.*.json'):
-            with open(path, 'r') as file:
-                reviews = json.load(file)
-                for review in reviews:
-                    if id == review['issue']:
-                        return review
+            reviews = helpers.load_json(path)
+            for review in reviews:
+                if id == review['issue']:
+                    return review
         raise Exception('No code review identified by {}'.format(id))
 
     def get_reviews(self, year):
         reviews = None
         directory = self.get_reviews_path(year)
         for path in self._get_files(directory, pattern='reviews.*.json'):
-            with open(path, 'r') as file:
-                if reviews is None:
-                    reviews = list()
-                reviews += json.load(file)
+            if reviews is None:
+                reviews = list()
+            reviews += helpers.load_json(path)
         return reviews
 
     def get_reviews_path(self, year):
