@@ -22,6 +22,8 @@ CODEREVIEW_URL_RE = re.compile(
     )
 # Subsequent new lines
 NEWLINES_RE = re.compile('(^$\n)+', flags=re.MULTILINE)
+# Match unicode NULL character sequence
+NULL_RE = re.compile(r'(\\|\\\\)u0000')
 
 
 def chunk(lst, size):
@@ -56,6 +58,13 @@ def get_row(model, *args, **kwargs):
         return model.objects.get(*args, **kwargs)
     except model.DoesNotExist:
         return None
+
+
+def load_json(filepath, sanitize=True):
+    with open(filepath, 'r') as file:
+        contents = file.read()
+        contents = NULL_RE.sub('', contents)
+        return json.loads(contents)
 
 
 def normalize(paths, using):
