@@ -5,18 +5,13 @@ from django.db import models
 class Review(models.Model):
     id = models.BigIntegerField(primary_key=True)
 
+    created = models.DateTimeField(null=False)
     is_open = models.BooleanField(default=False)
     is_successful = models.BooleanField(default=False)
     has_bug = models.BooleanField(default=False)
-
-    # TODO: PostgreSQL >= 9.4
-    created = models.DateTimeField(null=False)
-
     num_messages = models.PositiveIntegerField(null=False, default=0)
 
-    # TODO: PostgreSQL >= 9.4
-    # document = fields.JSONField(null=False, default=dict)
-    document = models.TextField(null=False, default='')
+    document = fields.JSONField(null=False, default=dict)
 
     # Navigations Fields
     bugs = models.ManyToManyField('Bug', through='ReviewBug')
@@ -31,12 +26,7 @@ class Bug(models.Model):
     type = models.CharField(max_length=25, null=False, default='')
     status = models.CharField(max_length=25, null=False, default='')
 
-    # TODO: PostgreSQL >= 9.4
-    opened = models.DateTimeField(null=False)
-
-    # TODO: PostgreSQL >= 9.4
-    # document = fields.JSONField(null=False, default=dict)
-    document = models.TextField(null=False, default='')
+    document = fields.JSONField(null=False, default=dict)
 
     # Navigations Fields
     reviews = models.ManyToManyField('Review', through='ReviewBug')

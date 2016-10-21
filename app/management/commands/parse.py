@@ -32,7 +32,7 @@ class Command(BaseCommand):
             review = helpers.get_row(Review, id=id)
             if review is None:
                 raise CommandError('No review identified by {}'.format(id))
-            review = ast.literal_eval(review.document)
+            review = review.document
             print('#' * 72)
             print('# Code Review {}'.format(id))
             print('# Description\n')

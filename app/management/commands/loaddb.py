@@ -54,16 +54,14 @@ class Command(BaseCommand):
             _review = Review()
 
             _review.id = review['issue']
+            _review.created = review['created']
             _review.is_open = True if not review['closed'] else False
             # TODO: Remove hardcoding once success criteria is defined
             _review.is_successful = True
             if BUG_ID_RE.search(review['description']) is not None:
                 _review.has_bug = True
-            _review.created = review['created']
             _review.num_messages = len(review['messages'])
-            _review.document = str(review)
-            # TODO: Uncomment when PostgreSQL >= 9.4 is available
-            # _review.document = json.dumps(review)
+            _review.document = review
 
             _reviews.append(_review)
             if (index % settings.DATABASES['default']['BULK']) == 0:
@@ -97,9 +95,7 @@ class Command(BaseCommand):
                         for label in bug['labels'].split(',')
                         if 'CVE-' in label
                     ]
-            _bug.document = str(bug)
-            # TODO: PostgreSQL >= 9.4
-            # _bug.document = json.dumps(bug)
+            _bug.document = bug
             _bug.save()
 
             if _vulnerabilities is not None:
@@ -114,9 +110,7 @@ class Command(BaseCommand):
         mappings = list()
         reviews = Review.objects.filter(created__year=year, has_bug=True)
         for review in reviews:
-            # TODO: PostgreSQL >= 9.4
-            document = ast.literal_eval(review.document)
-            match = BUG_ID_RE.search(document['description'])
+            match = BUG_ID_RE.search(review.document['description'])
             if match:
                 for id in match.group(1).split(','):
                     bug = get_row(Bug, id=id)
