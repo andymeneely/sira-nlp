@@ -61,7 +61,7 @@ class Command(BaseCommand):
             if BUG_ID_RE.search(review['description']) is not None:
                 _review.has_bug = True
             _review.num_messages = len(review['messages'])
-            _review.document = review
+            _review.document = self._transform(review)
 
             _reviews.append(_review)
             if (index % settings.DATABASES['default']['BULK']) == 0:
@@ -126,3 +126,12 @@ class Command(BaseCommand):
             ReviewBug.objects.bulk_create(mappings)
 
         return count
+
+    def _transform(self, review):
+        files = set()
+        for (_, patchset) in review['patchsets'].items():
+            for file in patchset['files']:
+                files.add(file)
+        review['files'] = list(files)
+
+        return review
