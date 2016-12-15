@@ -3,7 +3,7 @@ import random
 import re
 import time
 
-from operator import itemgetter
+from collections import OrderedDict
 
 import requests
 
@@ -67,21 +67,30 @@ def load_json(filepath, sanitize=True):
         return json.loads(contents)
 
 
-def normalize(paths, using):
-    for key in paths:
-        paths[key] = paths[key].format(base=using)
-    return paths
-
-
 def sleep(seconds):
     time.sleep(random.random() * seconds)
 
 
-def sort(dictionary, by='value', desc=True):
+def sort(dictionary, by='value', cast=None, desc=False):
+    retrn = None
+
     if by not in ['key', 'value']:
-        raise ValueError('The argument by must either be key or value')
+        raise ValueError('Argument "by" can be "key" or "value"')
+    if cast not in [None, int, float]:
+        raise ValueError('Argument "cast" can be None, int or float')
     by = 1 if by == 'value' else 0
-    return sorted(dictionary.items(), key=itemgetter(by), reverse=desc)
+
+    items = sorted(
+            dictionary.items(),
+            key=lambda item: cast(item[by]) if cast is not None else item[by],
+            reverse=desc
+        )
+
+    retrn = OrderedDict()
+    for (key, value) in items:
+        retrn[key] = value
+
+    return retrn
 
 
 def to_list(queue):
