@@ -6,7 +6,6 @@ import os
 from app.lib import helpers
 
 
-
 class Files(object):
     def __init__(self, settings):
         self.bugs_path = settings.BUGS_PATH
@@ -135,9 +134,9 @@ class Files(object):
             comments[id] = 0
             for patchset in review['patchsets'].values():
                 comments[id] += patchset['num_comments']
-        stats['messages'] = helpers.sort(messages)
-        stats['comments'] = helpers.sort(comments)
-        stats['patchsets'] = helpers.sort(patchsets)
+        stats['messages'] = helpers.sort(messages, desc=True)
+        stats['comments'] = helpers.sort(comments, desc=True)
+        stats['patchsets'] = helpers.sort(patchsets, desc=True)
         return stats
 
     # Private Members

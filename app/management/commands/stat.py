@@ -27,13 +27,13 @@ def display_reviews_stats(stats):
     info('  # Open        {}'.format(stats['open']))
 
     info('  Top 10 by # Messages')
-    for (key, value) in stats['messages'][:10]:
+    for (key, value) in list(stats['messages'].items())[:10]:
         info('     {:<10} {}'.format(key, value))
     info('  Top 10 by # Comments')
-    for (key, value) in stats['comments'][:10]:
+    for (key, value) in list(stats['comments'].items())[:10]:
         info('     {:<10} {}'.format(key, value))
     info('  Top 10 by # Patchsets')
-    for (key, value) in stats['patchsets'][:10]:
+    for (key, value) in list(stats['patchsets'].items())[:10]:
         info('     {:<10} {}'.format(key, value))
 
 
