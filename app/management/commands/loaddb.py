@@ -61,7 +61,7 @@ class Command(BaseCommand):
             if BUG_ID_RE.search(review['description']) is not None:
                 _review.has_bug = True
             _review.num_messages = len(review['messages'])
-            _review.document = self._transform(review)
+            _review.document = files.transform_review(review)
 
             _reviews.append(_review)
             if (index % settings.DATABASES['default']['BULK']) == 0:
@@ -71,19 +71,20 @@ class Command(BaseCommand):
         if len(_reviews) > 0:
             Review.objects.bulk_create(_reviews)
 
-        return (index + 1)
+        return len(reviews)
 
     def load_bugs(self, year):
         files = Files(settings)
         bugs = files.get_bugs(year)
-        for (index, bug) in enumerate(bugs):
-            _vulnerabilities = None
+        for bug in bugs:
             _bug = Bug()
 
             _bug.id = bug['id']
             _bug.type = bug['type']
             _bug.status = bug['status']
             _bug.opened = dt.strptime(bug['opened'], '%b %d, %Y %H:%M:%S')
+
+            _vulnerabilities = None
             if bug['cve'] != '':
                 _vulnerabilities = [
                         Vulnerability(id='CVE-{}'.format(cve.strip()))
@@ -103,7 +104,7 @@ class Command(BaseCommand):
                     _vulnerability.bug = _bug
                     _vulnerability.save()
 
-        return (index + 1)
+        return len(bugs)
 
     def map_reviews_to_bugs(self, year):
         count = 0
@@ -126,12 +127,3 @@ class Command(BaseCommand):
             ReviewBug.objects.bulk_create(mappings)
 
         return count
-
-    def _transform(self, review):
-        files = set()
-        for (_, patchset) in review['patchsets'].items():
-            for file in patchset['files']:
-                files.add(file)
-        review['files'] = list(files)
-
-        return review
