@@ -93,16 +93,6 @@ class Files(object):
             writer.writerows([(id,) for id in ids])
         return path
 
-    def stat_review(self, id):
-        stats = dict()
-        review = self.get_review(id)
-        stats['status'] = 'Closed' if review['closed'] else 'Open'
-        stats['created'] = review['created']
-        stats['reviewers'] = len(review['reviewers'])
-        stats['messages'] = len(review['messages'])
-        stats['patchsets'] = len(review['patchsets'])
-        return stats
-
     def save_reviews(self, year, chunk, reviews, errors=None):
         directory = self.get_reviews_path(year)
         if not os.path.exists(directory):
@@ -118,6 +108,16 @@ class Files(object):
                 writer = csv.writer(file)
                 writer.writerows([(error,) for error in errors])
         return path
+
+    def stat_review(self, id):
+        stats = dict()
+        review = self.get_review(id)
+        stats['status'] = 'Closed' if review['closed'] else 'Open'
+        stats['created'] = review['created']
+        stats['reviewers'] = len(review['reviewers'])
+        stats['messages'] = len(review['messages'])
+        stats['patchsets'] = len(review['patchsets'])
+        return stats
 
     def stat_reviews(self, year):
         stats = dict()
@@ -138,6 +138,25 @@ class Files(object):
         stats['comments'] = helpers.sort(comments, desc=True)
         stats['patchsets'] = helpers.sort(patchsets, desc=True)
         return stats
+
+    def transform_review(self, review):
+        patchsets = review['patchsets']
+
+        reviewed_files = set()
+        for (_, patchset) in patchsets.items():
+            for file in patchset['files']:
+                reviewed_files.add(file)
+
+        patchsets = helpers.sort(patchsets, by='key', cast=int, desc=True)
+        committed_files = None
+        for (_, patchset) in patchsets.items():
+            committed_files = set(list(patchset['files'].keys()))
+            break
+
+        review['reviewed_files'] = list(reviewed_files)
+        review['committed_files'] = list(committed_files)
+
+        return review
 
     # Private Members
 
