@@ -1,0 +1,3 @@
+#!/bin/bash
+
+coverage run manage.py test app.tests && coverage report

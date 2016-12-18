@@ -1,0 +1,9 @@
+[run]
+    branch = True
+    cover_pylib = False
+    source = app
+
+[report]
+    skip_covered = True
+    show_missing = True
+    sort = Cover
