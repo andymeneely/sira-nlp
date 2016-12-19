@@ -84,25 +84,15 @@ class Command(BaseCommand):
             _bug.status = bug['status']
             _bug.opened = dt.strptime(bug['opened'], '%b %d, %Y %H:%M:%S')
 
-            _vulnerabilities = None
             if bug['cve'] != '':
-                _vulnerabilities = [
-                        Vulnerability(id='CVE-{}'.format(cve.strip()))
-                        for cve in bug['cve'].split(',')
-                    ]
-            else:
-                _vulnerabilites = [
-                        Vulnerability(id=label)
-                        for label in bug['labels'].split(',')
-                        if 'CVE-' in label
-                    ]
+                for cve in bug['cve'].split(','):
+                    _vulnerability = Vulnerability(
+                            id='CVE-{}'.format(cve.strip())
+                        )
+                    _vulnerability.save()
+                    _bug.vulnerability_set.add(_vulnerability)
             _bug.document = bug
             _bug.save()
-
-            if _vulnerabilities is not None:
-                for _vulnerability in _vulnerabilities:
-                    _vulnerability.bug = _bug
-                    _vulnerability.save()
 
         return len(bugs)
 
