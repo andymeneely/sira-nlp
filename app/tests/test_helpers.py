@@ -1,6 +1,5 @@
+from unittest import TestCase
 from collections import OrderedDict
-
-from django.test import TestCase
 
 from app.lib import helpers
 
