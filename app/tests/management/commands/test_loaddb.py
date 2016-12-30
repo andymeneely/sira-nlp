@@ -39,12 +39,12 @@ class TestLoaddbCommand(TestCase):
                 )
             self.assertTrue(
                     Vulnerability.objects.filter(
-                        id='CVE-2016-1681', bug__id=613160
+                        cve='CVE-2016-1681', bug__id=613160
                     )
                 )
             self.assertTrue(
                     Vulnerability.objects.filter(
-                        id='CVE-2016-1702', bug__id=609260
+                        cve='CVE-2016-1702', bug__id=609260
                     )
                 )
 
