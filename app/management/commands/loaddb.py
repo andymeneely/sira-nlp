@@ -1,4 +1,3 @@
-import ast
 import os
 
 from datetime import datetime as dt
@@ -10,7 +9,6 @@ from django.db import transaction
 from app.lib.files import *
 from app.lib.helpers import *
 from app.lib.logger import *
-from app.lib.rietveld import *
 from app.models import *
 
 # Match the bug ID(s) in the code review description
@@ -21,28 +19,24 @@ BUG_ID_RE = re.compile(BUG_ID_PATTERN)
 class Command(BaseCommand):
     help = 'Load the database with code review and bug information.'
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-                'year', type=int, help='Load only those code reviews that '
-                'were created in the specified year.'
-            )
-
     def handle(self, *args, **options):
-        year = options['year']
-
         begin = dt.now()
         try:
             with transaction.atomic():
-                info('Loading bugs for the year {}'.format(year))
-                count = self.load_bugs(year)
-                info('Loaded {} bugs'.format(count))
-                info('Loading reviews for the year {}'.format(year))
-                count = self.load_reviews(year)
-                info('Loaded {} reviews'.format(count))
-                info('Mapping reviews to bugs')
-                (count, missing) = self.map_reviews_to_bugs(year)
-                info('Created {} mappings'.format(count))
-                warning('{} bugs were not found'.format(missing))
+                info('Bugs')
+                for year in settings.YEARS:
+                    count = self.load_bugs(year)
+                    info('  {}: {}'.format(year, count))
+                info('Reviews')
+                for year in settings.YEARS:
+                    count = self.load_reviews(year)
+                    info('  {}: {}'.format(year, count))
+                info('Bug to Review Mapping')
+                for year in settings.YEARS:
+                    (count, missing) = self.map_reviews_to_bugs(year)
+                    info('  {}: {}'.format(year, count))
+                    if missing > 0:
+                        warning('  {}: {} missing'.format(year, missing))
         except KeyboardInterrupt:
             warning('Attempting to abort.')
         finally:

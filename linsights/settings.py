@@ -26,6 +26,11 @@ USE_L10N = True
 USE_TZ = False
 
 # Application Settings
+
+# Years for which data is available
+YEARS = list(range(2008, 2017))
+
+# Paths to various directories in which the data files are stored
 DATA_PATH = os.path.join(BASE_DIR, 'app/data')
 if os.environ.get('ENV') == 'PROD':
     DATA_PATH = '/tmp/linsights/data'
