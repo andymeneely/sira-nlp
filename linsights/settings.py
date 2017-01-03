@@ -38,4 +38,5 @@ if os.environ.get('ENV') == 'PROD':
 IDS_PATH = os.path.join(DATA_PATH, 'ids')
 BUGS_PATH = os.path.join(DATA_PATH, 'bugs/{year}')
 REVIEWS_PATH = os.path.join(DATA_PATH, 'reviews/{year}')
+VULNERABILITIES_PATH = os.path.join(DATA_PATH, 'vulnerabilities')
 BOTS = ['commit-bot@chromium.org']
