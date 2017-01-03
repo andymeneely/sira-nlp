@@ -11,16 +11,15 @@ class Files(object):
         self.bugs_path = settings.BUGS_PATH
         self.ids_path = settings.IDS_PATH
         self.reviews_path = settings.REVIEWS_PATH
+        self.vulnerabilities_path = settings.VULNERABILITIES_PATH
         self.bots = settings.BOTS
 
     def get_bugs(self, year):
-        bugs = None
+        bugs = list()
         directory = self.get_bugs_path(year)
         for path in self._get_files(directory, pattern='bugs.csv'):
             with open(path, 'r') as file:
                 file.readline()  # Skip header
-                if bugs is None:
-                    bugs = list()
                 reader = csv.reader(file)
                 for row in reader:
                     bugs.append(self._to_dict(row))
@@ -30,7 +29,7 @@ class Files(object):
         return self.bugs_path.format(year=year)
 
     def get_ids(self, year):
-        ids = None
+        ids = list()
         path = os.path.join(self.ids_path, '{}.csv'.format(year))
         with open(path, 'r') as file:
             reader = csv.reader(file)
@@ -65,19 +64,27 @@ class Files(object):
         raise Exception('No code review identified by {}'.format(id))
 
     def get_reviews(self, year):
-        reviews = None
+        reviews = list()
         directory = self.get_reviews_path(year)
         for path in self._get_files(directory, pattern='reviews.*.json'):
-            if reviews is None:
-                reviews = list()
             reviews += helpers.load_json(path)
         return reviews
 
     def get_reviews_path(self, year):
         return self.reviews_path.format(year=year)
 
+    def get_vulnerabilities(self):
+        vulnerabilities = list()
+        for path in self._get_files(self.vulnerabilities_path, '*.csv'):
+            (source, _) = os.path.splitext(os.path.basename(path))
+            with open(path, 'r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    vulnerabilities.append((source, row[0], row[1]))
+        return vulnerabilities
+
     def get_year(self, id):
-        for path in glob.glob(os.path.join(self.ids_path, '*.csv')):
+        for path in self._get_files(self.ids_path, '*.csv'):
             ids = None
             with open(path, 'r') as file:
                 reader = csv.reader(file)

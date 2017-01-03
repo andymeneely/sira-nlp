@@ -27,6 +27,9 @@ class Command(BaseCommand):
                 for year in settings.YEARS:
                     count = self.load_bugs(year)
                     info('  {}: {}'.format(year, count))
+                info('Vulnerabilities')
+                count = self.load_vulnerabilities()
+                info('  {}'.format(count))
                 info('Reviews')
                 for year in settings.YEARS:
                     count = self.load_reviews(year)
@@ -41,6 +44,27 @@ class Command(BaseCommand):
             warning('Attempting to abort.')
         finally:
             info('Time: {:.2f} mins'.format(get_elapsed(begin, dt.now())))
+
+    def load_bugs(self, year):
+        files = Files(settings)
+        bugs = files.get_bugs(year)
+        for bug in bugs:
+            b = Bug()
+
+            b.id = bug['id']
+            b.type = bug['type']
+            b.status = bug['status']
+            b.opened = dt.strptime(bug['opened'], '%b %d, %Y %H:%M:%S')
+            b.document = bug
+            if bug['cve'] != '':
+                b.vulnerability_set.add(
+                        *self._get_vulnerabilities(bug['cve'].split(',')),
+                        bulk=False
+                    )
+
+            b.save()
+
+        return len(bugs)
 
     def load_reviews(self, year):
         files = Files(settings)
@@ -66,26 +90,18 @@ class Command(BaseCommand):
 
         return len(reviews)
 
-    def load_bugs(self, year):
+    def load_vulnerabilities(self):
         files = Files(settings)
-        bugs = files.get_bugs(year)
-        for bug in bugs:
-            b = Bug()
+        vulnerabilities = files.get_vulnerabilities()
+        for (source, cve, bug_id) in vulnerabilities:
+            b = helpers.get_row(Bug, id=bug_id)
+            if b is None:
+                b = Bug(id=bug_id, type='Bug-Security', status='Redacted')
+                b.save()
+            v = Vulnerability(cve=cve, source=source, bug=b)
+            v.save()
 
-            b.id = bug['id']
-            b.type = bug['type']
-            b.status = bug['status']
-            b.opened = dt.strptime(bug['opened'], '%b %d, %Y %H:%M:%S')
-            b.document = bug
-            if bug['cve'] != '':
-                b.vulnerability_set.add(
-                        *self._get_vulnerabilities(bug['cve'].split(',')),
-                        bulk=False
-                    )
-
-            b.save()
-
-        return len(bugs)
+        return len(vulnerabilities)
 
     def map_reviews_to_bugs(self, year):
         count = 0
