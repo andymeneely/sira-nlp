@@ -12,7 +12,7 @@ from app.lib.logger import *
 from app.models import *
 
 # Match the bug ID(s) in the code review description
-BUG_ID_PATTERN = 'BUG=((?:\d+)(?:,\d+)*)'
+BUG_ID_PATTERN = 'BUG=((?:\d+)(?:, ?\d+)*)'
 BUG_ID_RE = re.compile(BUG_ID_PATTERN)
 
 
@@ -115,7 +115,7 @@ class Command(BaseCommand):
         for review in reviews:
             match = BUG_ID_RE.search(review.document['description'])
             for id in match.group(1).split(','):
-                bug = get_row(Bug, id=id)
+                bug = get_row(Bug, id=id.strip())
                 if bug is not None:
                     objects.append(ReviewBug(review=review, bug=bug))
                     count += 1

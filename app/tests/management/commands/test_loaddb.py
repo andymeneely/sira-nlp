@@ -88,7 +88,7 @@ class LoaddbTestCase(TestCase):
         expected = [
                 1999153002, 2027643002, 2140383005, 2148643002, 2148653002,
                 2148793002, 2149523002, 2150783003, 2151613002, 2151763003,
-                2050053002, 2048483002, 2177983004
+                2050053002, 2048483002, 2177983004, 2134723002
             ]
         actual = list(Review.objects.values_list('id', flat=True))
         self.assertCountEqual(expected, actual)
@@ -100,7 +100,8 @@ class LoaddbTestCase(TestCase):
         # Bugs
         expected = [
                 606056, 610176, 627655, 602509, 584783, 628496, 624894, 617492,
-                609260, 613160, 625357, 628110, 618037, 542060, 174059
+                609260, 613160, 625357, 628110, 618037, 542060, 174059, 576270,
+                620126
             ]
         actual = list(Bug.objects.values_list('id', flat=True))
         self.assertCountEqual(expected, actual)
@@ -123,7 +124,8 @@ class LoaddbTestCase(TestCase):
                 (2148653002, 602509), (2148793002, 584783),
                 (2149523002, 628496), (2150783003, 617492),
                 (2151613002, 625357), (2151763003, 628110),
-                (2177983004, 618037)
+                (2177983004, 618037), (2134723002, 576270),
+                (2134723002, 620126)
             ]
         actual = list(ReviewBug.objects.values_list('review_id', 'bug_id'))
         self.assertCountEqual(expected, actual)
@@ -149,11 +151,6 @@ class LoaddbTestCase(TestCase):
         information.
         '''
         call_command('loaddb')
-
-        self.assertEqual(25, Review.objects.all().count())
-        self.assertEqual(25, Bug.objects.all().count())
-        self.assertEqual(23, ReviewBug.objects.all().count())
-        self.assertEqual(7, Vulnerability.objects.all().count())
 
         self.assertTrue(
                 ReviewBug.objects.filter(
