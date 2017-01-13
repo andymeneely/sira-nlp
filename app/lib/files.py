@@ -64,11 +64,10 @@ class Files(object):
         raise Exception('No code review identified by {}'.format(id))
 
     def get_reviews(self, year):
-        reviews = list()
         directory = self.get_reviews_path(year)
         for path in self._get_files(directory, pattern='reviews.*.json'):
-            reviews += helpers.load_json(path)
-        return reviews
+            for review in helpers.load_json(path):
+                yield review
 
     def get_reviews_path(self, year):
         return self.reviews_path.format(year=year)
@@ -128,7 +127,7 @@ class Files(object):
 
     def stat_reviews(self, year):
         stats = dict()
-        reviews = self.get_reviews(year)
+        reviews = list(self.get_reviews(year))
         stats['reviews'] = len(reviews)
         stats['open'] = len(
                 [review['issue'] for review in reviews if not review['closed']]

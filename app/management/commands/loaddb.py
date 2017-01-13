@@ -71,9 +71,9 @@ class Command(BaseCommand):
 
     def load_reviews(self, year):
         files = Files(settings)
-        reviews = files.get_reviews(year)
         objects = list()
-        for review in reviews:
+        count = 0
+        for review in files.get_reviews(year):
             r = Review()
 
             r.id = review['issue']
@@ -86,12 +86,14 @@ class Command(BaseCommand):
 
             if (len(objects) % settings.DATABASES['default']['BULK']) == 0:
                 Review.objects.bulk_create(objects)
+                count += len(objects)
                 objects.clear()
 
         if len(objects) > 0:
             Review.objects.bulk_create(objects)
+            count += len(objects)
 
-        return len(reviews)
+        return count
 
     def load_vulnerabilities(self):
         files = Files(settings)
