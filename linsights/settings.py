@@ -40,3 +40,7 @@ BUGS_PATH = os.path.join(DATA_PATH, 'bugs/{year}')
 REVIEWS_PATH = os.path.join(DATA_PATH, 'reviews/{year}')
 VULNERABILITIES_PATH = os.path.join(DATA_PATH, 'vulnerabilities')
 BOTS = ['commit-bot@chromium.org']
+FILETYPES_WHITELIST = [
+    '.c', '.cc', '.cpp', '.gyp', '.h', '.js', '.make', 'Makefile', '.py', '.S',
+    '.sb', '.scons', '.sh'
+]

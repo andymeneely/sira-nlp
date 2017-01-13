@@ -1,0 +1,2 @@
+"ID","Type","CVE","Status","Opened","OpenedTimestamp","Closed","ClosedTimestamp","Modified","ModifiedTimestamp","Summary","AllLabels"
+"138542","Bug","","Fixed","Jul 23, 2012 14:12:10","1343052730","Dec 29, 2015 03:01:37","1451358097","Dec 29, 2015 03:01:37","1451358097","Migrate from base/basictypes.h standard types to use stdint.h instead.","Hotlist-Recharge, Pri-3, Type-Bug"

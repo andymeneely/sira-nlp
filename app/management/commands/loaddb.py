@@ -40,6 +40,9 @@ class Command(BaseCommand):
                     info('  {}: {}'.format(year, count))
                     if missing > 0:
                         warning('  {}: {} missing'.format(year, missing))
+                info('Missed Vulnerability Reviews Tagging')
+                count = self.tag_missed_vulnerabilities()
+                info('  {}'.format(count))
         except KeyboardInterrupt:
             warning('Attempting to abort.')
         finally:
@@ -131,9 +134,55 @@ class Command(BaseCommand):
 
         return (count, missing)
 
+    def tag_missed_vulnerabilities(self):
+        files = self._filter(self._get_filesfixed())
+        ids = self._get_missed_vulnerabilities_reviewids(files)
+        Review.objects.filter(id__in=ids).update(missed_vulnerability=True)
+        return len(ids)
+
+    def _filter(self, files):
+        retrn = dict()
+        for file in files:
+            if self._is_whitelisted(file):
+                retrn[file] = files[file]
+        return retrn
+
+    def _get_filesfixed(self):
+        reviews = set()
+        for v in Vulnerability.objects.all():
+            for r in v.bug.review_set.all():
+                reviews.add(r)
+
+        files = dict()
+        for r in reviews:
+            for f in r.document['committed_files']:
+                if f not in files:
+                    files[f] = dt.min
+                files[f] = r.created if r.created > files[f] else files[f]
+        return files
+
+    def _get_missed_vulnerabilities_reviewids(self, files):
+        ids = set()
+        for (file, date) in files.items():
+            ids |= set(
+                    list(
+                        Review.objects.filter(
+                            created__lt=date,
+                            document__reviewed_files__contains=file
+                        ).values_list('id', flat=True)
+                    )
+                )
+        return ids
+
     def _get_vulnerabilities(self, cves):
         vulnerabilities = list()
         for cve in cves:
             vulnerability = Vulnerability(cve='CVE-{}'.format(cve.strip()))
             vulnerabilities.append(vulnerability)
         return vulnerabilities
+
+    def _is_whitelisted(self, file):
+        for type in settings.FILETYPES_WHITELIST:
+            if file.endswith(type):
+                return True
+        return False
