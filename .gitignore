@@ -107,3 +107,8 @@ tags
 
 # Files that could contain sensitive information
 linsights/dbsettings.py
+
+# Files that are used to contain temporary content
+**/scratch.*
+**/workspace.*
+**/temp.*
