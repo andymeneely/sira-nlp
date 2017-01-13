@@ -1,7 +1,15 @@
 import os
 import sys
 
+ENVIRONMENT = os.environ.get('ENV', 'DEV')
+if ENVIRONMENT not in ['DEV', 'TEST', 'PROD']:
+    raise Exception('{} is an unknown environment'.format(ENVIRONMENT))
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+DATA_DIR = os.path.join(BASE_DIR, 'app/data')
+if ENVIRONMENT == 'TEST':
+    DATA_DIR = os.path.join(BASE_DIR, 'app/tests/data')
 
 DATABASES = {
     'default': {
@@ -11,8 +19,8 @@ DATABASES = {
 }
 
 try:
-    from linsights import dbsettings
-    DATABASES = dbsettings.get()
+    from linsights import databases
+    DATABASES = databases.get(ENVIRONMENT)
 except ImportError:
     pass
 
@@ -25,22 +33,22 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = False
 
-# Application Settings
+# Paths
+BUGS_PATH = os.path.join(DATA_DIR, 'bugs/{year}')
+IDS_PATH = os.path.join(DATA_DIR, 'ids')
+REVIEWS_PATH = os.path.join(DATA_DIR, 'reviews/{year}')
+VULNERABILITIES_PATH = os.path.join(DATA_DIR, 'vulnerabilities')
+
+# Preferences
 
 # Years for which data is available
 YEARS = list(range(2008, 2017))
 
-# Paths to various directories in which the data files are stored
-DATA_PATH = os.path.join(BASE_DIR, 'app/data')
-if os.environ.get('ENV') == 'PROD':
-    DATA_PATH = '/tmp/linsights/data'
-
-IDS_PATH = os.path.join(DATA_PATH, 'ids')
-BUGS_PATH = os.path.join(DATA_PATH, 'bugs/{year}')
-REVIEWS_PATH = os.path.join(DATA_PATH, 'reviews/{year}')
-VULNERABILITIES_PATH = os.path.join(DATA_PATH, 'vulnerabilities')
+# Addresses of bots that post messages during a code review
 BOTS = ['commit-bot@chromium.org']
+
+# Types of files that are considered from vulnerability-fixing code reviews
 FILETYPES_WHITELIST = [
-    '.c', '.cc', '.cpp', '.gyp', '.h', '.js', '.make', 'Makefile', '.py', '.S',
-    '.sb', '.scons', '.sh'
-]
+        '.c', '.cc', '.cpp', '.gyp', '.h', '.js', '.make', 'Makefile', '.py',
+        '.S', '.sb', '.scons', '.sh'
+    ]

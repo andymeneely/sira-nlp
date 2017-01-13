@@ -1,3 +1,8 @@
 #!/bin/bash
 
-coverage run manage.py test app.tests && coverage report
+target="app.tests"
+if [[ ! -z $1 ]]; then
+    target=$1
+fi
+
+ENV="TEST" coverage run manage.py test $target && coverage report

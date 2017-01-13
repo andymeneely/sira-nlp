@@ -12,14 +12,7 @@ from app.lib import files
 
 class FilesTestCase(TestCase):
     def setUp(self):
-        data_path = os.path.join(settings.BASE_DIR, 'app/tests/data')
-        with self.settings(
-                IDS_PATH=os.path.join(data_path, 'ids'),
-                BUGS_PATH=os.path.join(data_path, 'bugs/{year}'),
-                REVIEWS_PATH=os.path.join(data_path, 'reviews/{year}'),
-                VULNERABILITIES_PATH=os.path.join(data_path, 'vulnerabilities')
-             ):
-            self.files = files.Files(settings)
+        self.files = files.Files(settings)
 
     def test_get_bugs(self):
         expected = [

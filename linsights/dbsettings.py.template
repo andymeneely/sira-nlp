@@ -1,17 +1,23 @@
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': '',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'BULK': 999,
-    }
-}
-
 __all__ = ['get']
 
+SETTINGS = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': '',
+            'USER': '',
+            'PASSWORD': '',
+            'HOST': 'localhost',
+            'PORT': '5432',
+            'BULK': 999,
+        }
+    }
 
-def get():
-    return DATABASES
+
+def get(environment):
+    if environment == 'PROD':
+        SETTINGS['default']['NAME'] = 'linsights'
+    elif environment == 'DEV':
+        SETTINGS['default']['NAME'] = 'linsights_dev'
+    elif environment == 'TEST':
+        SETTINGS['default']['NAME'] = 'linsights_test'
+    return SETTINGS

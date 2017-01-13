@@ -8,15 +8,7 @@ from django.utils.six import StringIO
 
 from app.models import *
 
-DATA_PATH = os.path.join(settings.BASE_DIR, 'app/tests/data')
 
-
-@override_settings(
-    IDS_PATH=os.path.join(DATA_PATH, 'ids'),
-    BUGS_PATH=os.path.join(DATA_PATH, 'bugs/{year}'),
-    REVIEWS_PATH=os.path.join(DATA_PATH, 'reviews/{year}'),
-    VULNERABILITIES_PATH=os.path.join(DATA_PATH, 'vulnerabilities')
-)
 class LoaddbTestCase(TestCase):
     def setUp(self):
         pass
