@@ -8,6 +8,84 @@ class HelpersTestCase(TestCase):
     def setUp(self):
         pass
 
+    def test_parse_bugids(self):
+        data = [
+                # Patterns that SHOULD BE recognized
+                'BUG=589630\r\n',
+                'BUG= 586985, 613948',
+                'BUG= 41156',
+                'BUG=61406',
+                'BUG=612140,581716,602701',
+                'BUG=604427, 609013, 612397',
+                'BUG=470662, 614968, 614952\r\n',
+                (
+                    'BUG=364417, 366042, 364391, 403987, 403363, 405125, '
+                    '417752, 459576, 482050, 564571, 571534, 588598, 596002'
+                ),
+                'BUG=chromium:61356',
+                'BUG=chromium:639321,459361',
+                (
+                    'BUG=chromium:648031,chromium:648135,648063,607283,645532,'
+                    'chromium:648074'
+                ),
+                'BUG=chromium:575167, chromium:650655',
+                'BUG=chromium:609831,chromium:613947,v8:5049"',
+                'BUG=chromium:644033,chromium:637050,648462,chromium:647807',
+                (
+                    'BUG=chromium:648031,chromium:648135,648063,607283,645532,'
+                    'chromium:648074'
+                ),
+                'BUG=chromium:613321, webrtc:5608',
+            ] + [
+                # Patterns that SHOULD NOT BE recognized
+                'BUG=',
+                'BUG=\r\n',
+                'BUG=NONE',
+                'BUG=NONE\r\n',
+                'BUG=None',
+                'BUG=none',
+                'BUG=n/a',
+                'BUG=none\r\n',
+                'BUG=skia:5307',
+                'BUG=webrtc:5805',
+                'BUG=catapult:#2309',
+                'BUG=v8:4907',
+                'BUG=internal b/28110563',
+                'BUG=flutter/flutter#3804',
+                'BUG=b/31767249',
+                'BUG=#27238',
+                'BUG=b:26700652\r\n',
+            ]
+        expected = [
+                # Bug IDs recognized
+                [589630],
+                [586985, 613948],
+                [41156],
+                [61406],
+                [612140, 581716, 602701],
+                [604427, 609013, 612397],
+                [470662, 614968, 614952],
+                [
+                    364417, 366042, 364391, 403987, 403363, 405125, 417752,
+                    459576, 482050, 564571, 571534, 588598, 596002
+                ],
+                [61356],
+                [639321, 459361],
+                [648031, 648135, 648063, 607283, 645532, 648074],
+                [575167, 650655],
+                [609831, 613947],
+                [644033, 637050, 648462, 647807],
+                [648031, 648135, 648063, 607283, 645532, 648074],
+                [613321],
+            ] + [
+                # Empty lists indicating that no bug IDs were recognized
+                list() for i in range(0, 17)
+            ]
+
+        actual = [helpers.parse_bugids(item) for item in data]
+
+        self.assertEqual(expected, actual)
+
     def test_sort_exceptions(self):
         self.assertRaises(ValueError, helpers.sort, {}, by='foo')
         self.assertRaises(ValueError, helpers.sort, {}, cast='foo')

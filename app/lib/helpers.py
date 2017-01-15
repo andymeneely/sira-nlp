@@ -24,6 +24,10 @@ CODEREVIEW_URL_RE = re.compile(
 NEWLINES_RE = re.compile('(^$\n)+', flags=re.MULTILINE)
 # Match unicode NULL character sequence
 NULL_RE = re.compile(r'(\\|\\\\)u0000')
+# Match the bug ID(s) in the code review description
+BUG_ID_RE = re.compile(
+    'BUG=((?: ?(?:chromium:)?\d+)(?:, ?(?:chromium:)?\d+)*)'
+)
 
 
 def chunk(lst, size):
@@ -65,6 +69,17 @@ def load_json(filepath, sanitize=True):
         contents = file.read()
         contents = NULL_RE.sub('', contents)
         return json.loads(contents)
+
+
+def parse_bugids(text):
+    ids = list()
+    match = BUG_ID_RE.search(text)
+    if match:
+        ids = [
+                int(id.strip().replace('chromium:', ''))
+                for id in match.group(1).split(',')
+            ]
+    return ids
 
 
 def sleep(seconds):
