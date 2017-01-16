@@ -8,12 +8,14 @@ class StemmerTestCase(TestCase):
         pass
 
     def test_execute(self):
-        data = (
-                'Gulf Applied Technologies Inc said it sold its subsidiaries '
-                'engaged in pipeline and terminal operations for 12.2 mln '
-                'dlrs. The company said the sale is subject to certain post '
-                'closing adjustments, which it did not explain. Reuter'
-            )
+        data = [
+                'Gulf', 'Applied', 'Technologies', 'Inc', 'said', 'it', 'sold',
+                'its', 'subsidiaries', 'engaged', 'in', 'pipeline', 'and',
+                'terminal', 'operations', 'for', '12.2', 'mln', 'dlrs', '.',
+                'The', 'company', 'said', 'the', 'sale', 'is', 'subject', 'to',
+                'certain', 'post', 'closing', 'adjustments', ',', 'which',
+                'it', 'did', 'not', 'explain', '.', 'Reuter'
+            ]
         expected = [
                 'Gulf', 'Appli', 'Technolog', 'Inc', 'said', 'it', 'sold',
                 'it', 'subsidiari', 'engag', 'in', 'pipelin', 'and', 'termin',

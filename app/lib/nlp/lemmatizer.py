@@ -1,15 +1,10 @@
 import nltk
 
-from app.lib.nlp import tokenizer
-
 
 class Lemmatizer(object):
-    def __init__(self, text):
+    def __init__(self, tokens):
         self.lemmatizer = nltk.WordNetLemmatizer()
-        self.text = text
+        self.tokens = tokens
 
     def execute(self):
-        return [
-                self.lemmatizer.lemmatize(token)
-                for token in tokenizer.Tokenizer(self.text).execute()
-            ]
+        return [self.lemmatizer.lemmatize(token) for token in self.tokens]

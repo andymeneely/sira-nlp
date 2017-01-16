@@ -1,17 +1,11 @@
 from nltk.corpus import stopwords
 
-from app.lib.nlp import tokenizer
-
 STOPWORDS = stopwords.words('english')
 
 
 class StopWordsRemover(object):
-    def __init__(self, text):
-        self.text = text
+    def __init__(self, tokens):
+        self.tokens = tokens
 
     def execute(self):
-        return [
-                token
-                for token in tokenizer.Tokenizer(self.text).execute()
-                if token not in STOPWORDS
-            ]
+        return [token for token in self.tokens if token not in STOPWORDS]

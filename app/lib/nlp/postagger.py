@@ -1,11 +1,9 @@
 import nltk
 
-from app.lib.nlp import tokenizer
-
 
 class PosTagger(object):
-    def __init__(self, text):
-        self.text = text
+    def __init__(self, tokens):
+        self.tokens = tokens
 
     def execute(self):
-        return nltk.pos_tag(tokenizer.Tokenizer(self.text).execute())
+        return nltk.pos_tag(self.tokens)

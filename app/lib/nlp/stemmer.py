@@ -1,15 +1,10 @@
 import nltk
 
-from app.lib.nlp import tokenizer
-
 
 class Stemmer(object):
-    def __init__(self, text):
+    def __init__(self, tokens):
         self.stemmer = nltk.PorterStemmer()
-        self.text = text
+        self.tokens = tokens
 
     def execute(self):
-        return [
-                self.stemmer.stem(token)
-                for token in tokenizer.Tokenizer(self.text).execute()
-            ]
+        return [self.stemmer.stem(token) for token in self.tokens]
