@@ -19,8 +19,8 @@ DATABASES = {
 }
 
 try:
-    from linsights import databases
-    DATABASES = databases.get(ENVIRONMENT)
+    from linsights import dbsettings
+    DATABASES = dbsettings.get(ENVIRONMENT)
 except ImportError:
     pass
 
