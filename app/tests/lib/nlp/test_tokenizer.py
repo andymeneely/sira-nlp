@@ -26,3 +26,13 @@ class TokenizerTestCase(TestCase):
         actual = tokenizer.Tokenizer(data).execute()
 
         self.assertEqual(expected, actual)
+
+        data = 'I don\'t like that reviewers do not get the message.'
+        expected = [
+                'I', 'do', 'n\'t', 'like', 'that', 'reviewers', 'do', 'not',
+                'get', 'the', 'message', '.'
+            ]
+
+        actual = tokenizer.Tokenizer(data).execute()
+
+        self.assertEqual(expected, actual)
