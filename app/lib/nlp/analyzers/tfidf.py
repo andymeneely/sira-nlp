@@ -4,15 +4,43 @@ import pickle
 
 import nltk
 
+from app.lib.utils import parallel
 from app.lib.nlp import preprocessor, tokenizer
 
 CACHE_FILE = 'docfreq.pickle'
 
 
+def produce(inputq, commq):
+    document = inputq.get(block=True)
+    commq.put(set(preprocessor.Preprocessor(document).execute()), block=True)
+
+
+def consume(outputq, commq):
+    idf = dict()
+    count = 0
+
+    while True:
+        document = commq.get(block=True)
+        if document == parallel.END:
+            break
+
+        count += 1
+        for token in document:
+            idf[token] = idf[token] + 1 if token in idf else 1
+
+    for (token, freq) in idf.items():
+        idf[token] = math.log(count / freq)
+
+    outputq.put(idf, block=True)
+
+
 class TfIdf(object):
-    def __init__(self, settings, documents):
+    def __init__(self, settings, num_documents):
         self.cache_path = os.path.join(settings.NLP_CACHE_PATH, CACHE_FILE)
-        self.documents = documents
+        self.cpu_count = settings.CPU_COUNT
+        self.num_documents = num_documents
+        self._documents = parallel.manager.Queue(100)
+
         self._idf = None
 
     def initialize(self):
@@ -48,22 +76,18 @@ class TfIdf(object):
                }
 
     @property
+    def documents(self):
+        return self._documents
+
+    @property
     def is_cached(self):
         return os.path.exists(self.cache_path)
 
     def _build_idf(self):
-        self._idf = dict()
-
-        count = 0.0
-        for document in self.documents:
-            count += 1
-            for token in set(preprocessor.Preprocessor(document).execute()):
-                self._idf[token] = self._idf[token] + 1 \
-                                   if token in self._idf else 1
-
-        for (token, freq) in self._idf.items():
-            self._idf[token] = math.log(count / freq)
-
+        self._idf = parallel.run(
+                produce, consume,
+                self._documents, self.num_documents, self.cpu_count
+            )
         self._pickle()
 
     def _pickle(self):

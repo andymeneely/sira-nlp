@@ -1,4 +1,5 @@
 import os
+import multiprocessing
 import sys
 
 ENVIRONMENT = os.environ.get('ENV', 'DEV')
@@ -53,3 +54,6 @@ FILETYPES_WHITELIST = [
         '.c', '.cc', '.cpp', '.gyp', '.h', '.js', '.make', 'Makefile', '.py',
         '.S', '.sb', '.scons', '.sh'
     ]
+
+# Number of processes to use when parallel processing
+CPU_COUNT = multiprocessing.cpu_count()

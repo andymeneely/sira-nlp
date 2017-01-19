@@ -1,15 +1,30 @@
 import os
+import multiprocessing
+import shutil
 import tempfile
 
 from django import test
 from django.conf import settings
 
 from app.lib.nlp import analyzers
+from app.lib.utils import parallel
+
+
+def generator(documents, inputq):
+    for document in documents:
+        inputq.put(document, block=True)
 
 
 class TfIdfTestCase(test.TestCase):
+    def start_generator(self):
+        process = multiprocessing.Process(
+                target=generator, args=(self.documents, self.tfidf.documents)
+            )
+        process.start()
+        return process
+
     def setUp(self):
-        documents = [
+        self.documents = [
                 (
                     'Google Chrome is a freeware web browser developed by Goog'
                     'le. It was first released in 2008, for Microsoft Windows,'
@@ -53,14 +68,19 @@ class TfIdfTestCase(test.TestCase):
                     'ssions, private browsing, and tabbed browsing.'
                 )
             ]
-        tempdir = tempfile.mkdtemp()
-        with self.settings(NLP_CACHE_PATH=tempdir):
-            self.tfidf = analyzers.TfIdf(settings, documents)
-        self.document = documents[2]
+        self.tempdir = tempfile.mkdtemp()
+        with self.settings(NLP_CACHE_PATH=self.tempdir, CPU_COUNT=3):
+            self.tfidf = analyzers.TfIdf(settings, len(self.documents))
+        self.document = self.documents[2]
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
 
     def test_initialize(self):
         self.assertFalse(self.tfidf.is_cached)
+        process = self.start_generator()
         self.tfidf.initialize()
+        process.join()
         self.assertTrue(self.tfidf.is_cached)
         self.tfidf.initialize()
 
@@ -93,7 +113,9 @@ class TfIdfTestCase(test.TestCase):
                 'worldwide': 0.0096369
             }
 
+        process = self.start_generator()
         self.tfidf.initialize()
+        process.join()
 
         actual = self.tfidf.get(self.document)
         self.assertAlmostEqual(expected, actual)
@@ -161,7 +183,9 @@ class TfIdfTestCase(test.TestCase):
         with self.assertRaises(Exception):
             _ = self.tfidf.get_idf('')
 
+        process = self.start_generator()
         self.tfidf.initialize()
+        process.join()
 
         actual = self.tfidf.get_idf()
         self.assertAlmostEqual(expected, actual)
@@ -204,7 +228,9 @@ class TfIdfTestCase(test.TestCase):
                 'Windows': 0.0087719, 'worldwide': 0.0087719
             }
 
+        process = self.start_generator()
         self.tfidf.initialize()
+        process.join()
 
         actual = self.tfidf.get_tf(self.document)
         self.maxDiff = None
