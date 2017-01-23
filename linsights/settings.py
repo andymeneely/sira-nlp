@@ -8,8 +8,11 @@ if ENVIRONMENT not in ['DEV', 'TEST', 'PROD']:
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-DATA_DIR = os.path.join(BASE_DIR, 'app/data')
-if ENVIRONMENT == 'TEST':
+if ENVIRONMENT == 'PROD':
+    DATA_DIR = '/home/artifacts/linsights/'
+elif ENVIRONMENT == 'DEV':
+    DATA_DIR = os.path.join(BASE_DIR, 'app/data')
+elif ENVIRONMENT == 'TEST':
     DATA_DIR = os.path.join(BASE_DIR, 'app/tests/data')
 
 DATABASES = {
