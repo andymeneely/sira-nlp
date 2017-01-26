@@ -69,3 +69,28 @@ class ReviewBug(models.Model):
 
     class Meta:
         db_table = 'review_bug'
+
+
+class Message(models.Model):
+    posted = models.DateTimeField()
+    sender = models.EmailField()
+    text = models.TextField(default='')
+
+    # Navigation Fields
+    review = models.ForeignKey('Review')
+
+    class Meta:
+        db_table = 'message'
+
+
+class Token(models.Model):
+    text = models.TextField(default='', db_index=True)
+    base = models.TextField(default='', db_index=True)
+    frequency = models.PositiveIntegerField(default=0)
+    pos = models.CharField(max_length=10, default='')
+
+    # Navigation Fields
+    message = models.ForeignKey('Message')
+
+    class Meta:
+        db_table = 'token'
