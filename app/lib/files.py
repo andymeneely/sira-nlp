@@ -1,3 +1,7 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 import csv
 import glob
 import json
@@ -7,7 +11,13 @@ from app.lib import helpers
 
 
 class Files(object):
+    """
+
+    """
     def __init__(self, settings):
+        """
+        Constructor.
+        """
         self.bugs_path = settings.BUGS_PATH
         self.ids_path = settings.IDS_PATH
         self.reviews_path = settings.REVIEWS_PATH
@@ -15,6 +25,9 @@ class Files(object):
         self.bots = settings.BOTS
 
     def get_bugs(self, year):
+        """
+        Return a list of bugs that were associated with the specified year.
+        """
         bugs = list()
         directory = self.get_bugs_path(year)
         for path in self._get_files(directory, pattern='bugs.csv'):
@@ -26,9 +39,15 @@ class Files(object):
         return bugs
 
     def get_bugs_path(self, year):
+        """
+        Return the system path for the bugs associated with the specified year.
+        """
         return self.bugs_path.format(year=year)
 
     def get_ids(self, year):
+        """
+        Return the IDs associated with the specified year.
+        """
         ids = list()
         path = os.path.join(self.ids_path, '{}.csv'.format(year))
         with open(path, 'r') as file:
@@ -37,6 +56,10 @@ class Files(object):
         return ids
 
     def get_messages(self, id, year=None, clean=False):
+        """
+        Given a review ID, return a list of messages associated with that
+        review.
+        """
         year = self.get_year(id) if year is None else year
         review = self.get_review(id, year)
         messages = list()
@@ -49,11 +72,20 @@ class Files(object):
         return messages
 
     def get_description(self, id, year=None):
+        """
+        Given a review ID, return the description associated with that review.
+        """
         year = self.get_year(id) if year is None else year
         review = self.get_review(id, year)
         return review['description']
 
+    # TODO: (Ben) I don't understand what's going on in here. I think it's
+    # returning the first review that addresses the issue specified by the
+    # given ID, but I'm unsure.
     def get_review(self, id, year=None):
+        """
+
+        """
         year = self.get_year(id) if year is None else year
         directory = self.get_reviews_path(year)
         for path in self._get_files(directory, pattern='reviews.*.json'):
@@ -64,15 +96,25 @@ class Files(object):
         raise Exception('No code review identified by {}'.format(id))
 
     def get_reviews(self, year):
+        """
+        Yield the reviews associated with the specified year.
+        """
         directory = self.get_reviews_path(year)
         for path in self._get_files(directory, pattern='reviews.*.json'):
             for review in helpers.load_json(path):
                 yield review
 
     def get_reviews_path(self, year):
+        """
+        Return the system path for the reviews associated with the specified
+        year.
+        """
         return self.reviews_path.format(year=year)
 
     def get_vulnerabilities(self):
+        """
+        Return a list of all vulnerabilities.
+        """
         vulnerabilities = list()
         for path in self._get_files(self.vulnerabilities_path, '*.csv'):
             (source, _) = os.path.splitext(os.path.basename(path))
@@ -82,7 +124,11 @@ class Files(object):
                     vulnerabilities.append((source, row[0], row[1]))
         return vulnerabilities
 
+    # TODO: (Ben) I have no idea what's going on here.
     def get_year(self, id):
+        """
+
+        """
         for path in self._get_files(self.ids_path, '*.csv'):
             ids = None
             with open(path, 'r') as file:
@@ -93,6 +139,10 @@ class Files(object):
         raise Exception('No code review identified by {}'.format(id))
 
     def save_ids(self, year, ids):
+        """
+        Save the specified IDs to a file in the path associated with the
+        specified year.
+        """
         path = os.path.join(self.ids_path, '{}.csv'.format(year))
         with open(path, 'a') as file:
             writer = csv.writer(file)
@@ -100,6 +150,11 @@ class Files(object):
         return path
 
     def save_reviews(self, year, chunk, reviews, errors=None):
+        """
+        Save the specified reviews to a json file in the reviews path associated
+        with the specified year. Format according to the specified chunk. Log
+        errors in a CSV file in the same directory.
+        """
         directory = self.get_reviews_path(year)
         if not os.path.exists(directory):
             os.mkdir(directory, mode=0o755)
@@ -116,6 +171,10 @@ class Files(object):
         return path
 
     def stat_review(self, id):
+        """
+        Return a dictionary of the fields associated with the the specified
+        review ID.
+        """
         stats = dict()
         review = self.get_review(id)
         stats['status'] = 'Closed' if review['closed'] else 'Open'
@@ -126,6 +185,10 @@ class Files(object):
         return stats
 
     def stat_reviews(self, year):
+        """
+        Return a dictionary of fields for all of the reviews associated with
+        the specified year.
+        """
         stats = dict()
         reviews = list(self.get_reviews(year))
         stats['reviews'] = len(reviews)
@@ -145,7 +208,12 @@ class Files(object):
         stats['patchsets'] = helpers.sort(patchsets, desc=True)
         return stats
 
+    # TODO: (Ben) Nuthan, can you walk me through an example of what's going on
+    # here?
     def transform_review(self, review):
+        """
+
+        """
         patchsets = review['patchsets']
 
         reviewed_files = set()
@@ -167,6 +235,10 @@ class Files(object):
     # Private Members
 
     def _get_files(self, path, pattern):
+        """
+        Return a list of files within the specified path that match the
+        specified pattern.
+        """
         files = [
                 os.path.join(path, file)
                 for file in glob.glob(os.path.join(path, pattern))
@@ -174,10 +246,16 @@ class Files(object):
         return files
 
     def _parse(self, commit):
+        """
+
+        """
         pass
 
     # TODO: Remove function once bug information is available in JSON format
     def _to_dict(self, row):
+        """
+
+        """
         bug = dict()
 
         bug['id'] = row[0]

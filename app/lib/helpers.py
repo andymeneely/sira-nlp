@@ -1,3 +1,7 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 import json
 import random
 import re
@@ -31,11 +35,17 @@ BUG_ID_RE = re.compile(
 
 
 def chunk(lst, size):
+    """
+
+    """
     for index in range(0, len(lst), size):
         yield lst[index:index + size]
 
 
 def clean(text):
+    """
+    Return the specified text with certain metadata removed.
+    """
     text = RESPONSE_HEAD_RE.sub('', text)
     text = QUOTED_TEXT_RE.sub('', text)
     text = CODEREVIEW_URL_RE.sub('', text)
@@ -44,10 +54,17 @@ def clean(text):
 
 
 def get_elapsed(begin, end):
+    """
+    Return the number of minutes that passed between the specified beginning
+    and end.
+    """
     return (end - begin).total_seconds() / 60
 
 
 def get_json(url, parameters):
+    """
+    Return the json associated with the given URL.
+    """
     (status, json) = (None, None)
     response = requests.get(url, parameters, allow_redirects=False)
     status = response.status_code
