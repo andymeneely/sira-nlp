@@ -1,4 +1,6 @@
 import os
+import signal
+import subprocess
 
 from django.conf import settings
 from django.core.management import call_command
@@ -7,11 +9,20 @@ from django.test import TestCase, override_settings
 from django.utils.six import StringIO
 
 from app.models import *
-
+from app.lib import helpers
 
 class LoaddbTestCase(TestCase):
     def setUp(self):
         pass
+
+    # If there is a way to test whether or not a KeyboardInterrupt is handled
+    # correctly, no one on the internet knows how to do it.
+#    def test_keyboard_interrupt(self):
+#        p = subprocess.Popen(['/home/bsm9339/sira-nlp/manage.py', 'loaddb'], stderr=subprocess.DEVNULL)
+#        helpers.sleep(5)
+#        p.send_signal(signal.SIGINT)
+
+#        self.assertEqual(True, True)
 
     def test_handle(self):
         call_command('loaddb')
