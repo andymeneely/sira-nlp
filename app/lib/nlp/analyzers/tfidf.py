@@ -14,23 +14,17 @@ from app.lib.nlp import preprocessor, tokenizer
 CACHE_FILE = 'docfreq.pickle'
 
 
-def produce(inputq, commq):
-    """
-
-    """
-    document = inputq.get(block=True)
-    commq.put(set(preprocessor.Preprocessor(document).execute()), block=True)
+def do(iqueue, cqueue):
+    document = iqueue.get(block=True)
+    cqueue.put(set(preprocessor.Preprocessor(document).execute()), block=True)
 
 
-def consume(outputq, commq):
-    """
-
-    """
+def aggregate(oqueue, cqueue):
     idf = dict()
     count = 0
 
     while True:
-        document = commq.get(block=True)
+        document = cqueue.get(block=True)
         if document == parallel.END:
             break
 
@@ -41,7 +35,7 @@ def consume(outputq, commq):
     for (token, freq) in idf.items():
         idf[token] = math.log(count / freq)
 
-    outputq.put(idf, block=True)
+    oqueue.put(idf, block=True)
 
 
 class TfIdf(object):
@@ -55,7 +49,7 @@ class TfIdf(object):
         self.cache_path = os.path.join(settings.NLP_CACHE_PATH, CACHE_FILE)
         self.cpu_count = settings.CPU_COUNT
         self.num_documents = num_documents
-        self._documents = parallel.manager.Queue(100)
+        self._documents = parallel.manager.Queue(settings.QUEUE_SIZE)
 
         self._idf = None
 
@@ -113,7 +107,7 @@ class TfIdf(object):
 
     def _build_idf(self):
         self._idf = parallel.run(
-                produce, consume,
+                do, aggregate,
                 self._documents, self.num_documents, self.cpu_count
             )
         self._pickle()
