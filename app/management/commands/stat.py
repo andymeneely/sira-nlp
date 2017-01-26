@@ -1,3 +1,7 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 import csv
 import glob
 import operator
@@ -15,6 +19,9 @@ from app.lib.rietveld import *
 
 
 def display_review_stats(stats):
+    """
+    Formats and prints the specified review statistics.
+    """
     info('  Status      {}'.format(stats['status']))
     info('  Created On  {}'.format(stats['created']))
     info('  # Reviewers {}'.format(stats['reviewers']))
@@ -23,6 +30,9 @@ def display_review_stats(stats):
 
 
 def display_reviews_stats(stats):
+    """
+    Formats and prints the specified review statitics for multiple reviews.
+    """
     info('  # Reviews     {}'.format(stats['reviews']))
     info('  # Open        {}'.format(stats['open']))
 
@@ -38,10 +48,16 @@ def display_reviews_stats(stats):
 
 
 class Command(BaseCommand):
+    """
+    Sets up the command line arguments.
+    """
     help = 'Display statistics about single code review or all code reviews ' \
            'created in a specified year.'
 
     def add_arguments(self, parser):
+        """
+
+        """
         parser.add_argument(
                 '-id', type=int, default=None, help='Code review identifier '
                 'of a code review the statistics of which will be displayed.'
@@ -53,6 +69,9 @@ class Command(BaseCommand):
             )
 
     def handle(self, *args, **options):
+        """
+
+        """
         id = options.get('id', None)
         year = options.get('year', None)
 

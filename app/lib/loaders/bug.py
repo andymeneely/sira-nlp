@@ -1,3 +1,7 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 from datetime import datetime
 
 from app.lib import files
@@ -6,10 +10,21 @@ from app.lib.loaders import loader
 
 
 class BugLoader(loader.Loader):
+    """
+    Implements loader object.
+    """
     def __init__(self, settings):
+        """
+        Constructor.
+        """
         super(BugLoader, self).__init__(settings)
 
     def _load(self):
+        """
+        Grabs all of the bugs from within the specified range of years,
+        parses through them, cleans them up, then saves them. Returns the
+        total number of bugs loaded.
+        """
         count = 0
 
         f = files.Files(self.settings)

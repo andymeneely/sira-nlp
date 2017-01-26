@@ -1,3 +1,7 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 import ast
 
 from datetime import datetime as dt
@@ -11,10 +15,16 @@ from app.models import *
 
 
 class Command(BaseCommand):
+    """
+    Sets up command line arguments.
+    """
     help = 'Parse a code review in its JSON form and present the '\
            'conversation in plain text.'
 
     def add_arguments(self, parser):
+        """
+
+        """
         parser.add_argument(
                 '--clean', action='store_true', help='Clean-up the code '
                 'review messages when parsing.'
@@ -25,6 +35,9 @@ class Command(BaseCommand):
             )
 
     def handle(self, *args, **options):
+        """
+
+        """
         id = options['id']
         clean = options.get('clean', False)
 
@@ -50,6 +63,9 @@ class Command(BaseCommand):
             warning('Attempting to abort.')
 
     def get_messages(self, review, clean=False):
+        """
+        Returns a list of messages associated with the specified review.
+        """
         messages = list()
         for message in review['messages']:
             sender = message['sender']

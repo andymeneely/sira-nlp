@@ -1,10 +1,22 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 from app.lib import files, helpers
 from app.lib.loaders import loader
 from app.models import *
 
 
 class ReviewLoader(loader.Loader):
+    """
+    Implements loader object.
+    """
     def _load(self):
+        """
+        Grabs all of the reviews created within the specified range of years,
+        parses them, cleans them up, and saves them. Returns the total number
+        of loaded reviews.
+        """
         count = 0
 
         f = files.Files(self.settings)

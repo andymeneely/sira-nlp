@@ -1,3 +1,7 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 import math
 import os
 import pickle
@@ -11,11 +15,17 @@ CACHE_FILE = 'docfreq.pickle'
 
 
 def produce(inputq, commq):
+    """
+
+    """
     document = inputq.get(block=True)
     commq.put(set(preprocessor.Preprocessor(document).execute()), block=True)
 
 
 def consume(outputq, commq):
+    """
+
+    """
     idf = dict()
     count = 0
 
@@ -35,7 +45,13 @@ def consume(outputq, commq):
 
 
 class TfIdf(object):
+    """
+
+    """
     def __init__(self, settings, num_documents):
+        """
+        Constructor.
+        """
         self.cache_path = os.path.join(settings.NLP_CACHE_PATH, CACHE_FILE)
         self.cpu_count = settings.CPU_COUNT
         self.num_documents = num_documents
@@ -44,12 +60,18 @@ class TfIdf(object):
         self._idf = None
 
     def initialize(self):
+        """
+
+        """
         if self.is_cached:
             self._unpickle()
         else:
             self._build_idf()
 
     def get(self, document, token=None):
+        """
+        Returns the tf-idf value for the specified document and token.
+        """
         if token:
             return self.get_tf(document, token) * self.get_idf(token)
         return {
@@ -58,6 +80,9 @@ class TfIdf(object):
                }
 
     def get_idf(self, token=None):
+        """
+        Returns the idf value for the specified token.
+        """
         if self._idf is None:
             raise Exception('initialize() must be invoked before get_idf().')
 
@@ -67,6 +92,9 @@ class TfIdf(object):
         return self._idf
 
     def get_tf(self, document, token=None):
+        """
+        Returns the tf value for the specified document and token.
+        """
         tokens = tokenizer.Tokenizer(document).execute()
         if token:
             return tokens.count(token) / float(len(tokens))

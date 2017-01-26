@@ -1,3 +1,7 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 import csv
 import multiprocessing
 import os
@@ -7,6 +11,7 @@ from requests import get, exceptions
 from app.lib.helpers import *
 from app.lib.logger import *
 
+# Rietveld is where reviews get pulled from.
 __all__ = ['Rietveld']
 
 CREATED_AFTER = '{}-01-01 00:00:00'
@@ -21,7 +26,15 @@ STATUS_OK = 200
 
 
 class Rietveld(object):
+    """
+    A collection of helper functions for retrieving code reviews from chromium
+    and parsing them.
+    """
     def get_ids(self, year):
+        """
+        Return a list of all of the IDs associated with reviews created in the
+        specified year.
+        """
         ids = list()
 
         parameters = {
@@ -47,6 +60,10 @@ class Rietveld(object):
         return ids
 
     def get_reviews(self, ids, processes):
+        """
+        Get all of the reviews associated with the specified IDs. Return a
+        tuple of the form: ([rev1, rev2,...revN], [err1, err2,...errN])
+        """
         manager = multiprocessing.Manager()
         reviews = manager.Queue(len(ids))
         errors = manager.Queue()
@@ -59,6 +76,12 @@ class Rietveld(object):
         return (to_list(reviews), to_list(errors))
 
     def _get_ids(self, parameters):
+        """
+        Given a specified list of parameters, form a query and return the
+        results as a tuple of the form (a, b, c), where a is the status of the
+        query, b is a json object containing the results of the query, and c
+        is a json object containing the cursor of the query.
+        """
         (status, ids, cursor) = (-1, None, None)
 
         url = SEARCH_URL
@@ -79,6 +102,11 @@ class Rietveld(object):
         return (status, ids, cursor)
 
     def _put_review(self, rid, reviews, errors):
+        """
+        Grab the review associated with the specified ID, create a dictionary
+        of patchsets associated with that review, and append the review with
+        its patchsets to the specified list of reviews.
+        """
         url = REVIEW_URL.format(rid=rid)
         debug(url)
         try:
@@ -107,6 +135,10 @@ class Rietveld(object):
             errors.put(rid, block=True)
 
     def _get_patchset(self, rid, psid):
+        """
+        Get the patchset associated with the specified patchset ID within the
+        specified review ID.
+        """
         (status, patchset) = (-1, None)
         url = PATCHSET_URL.format(rid=rid, psid=psid)
         debug(url)

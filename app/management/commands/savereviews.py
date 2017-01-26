@@ -1,3 +1,7 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 import csv
 import json
 import os
@@ -14,9 +18,15 @@ from app.lib.rietveld import *
 
 
 class Command(BaseCommand):
+    """
+    Sets up command line arguments.
+    """
     help = 'Retrieve and save code reviews in their JSON format.'
 
     def add_arguments(self, parser):
+        """
+
+        """
         parser.add_argument(
                 '-p', type=int, dest='processes', default=6, help='Number of '
                 'processes to spawn when running in parallel. Default is 6.'
@@ -32,6 +42,9 @@ class Command(BaseCommand):
             )
 
     def handle(self, *args, **options):
+        """
+
+        """
         processes = options['processes']
         year = options['year']
         chunksize = options['chunksize']

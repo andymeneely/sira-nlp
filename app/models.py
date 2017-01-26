@@ -1,8 +1,15 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 from django.contrib.postgres import fields
 from django.db import models
 
 
 class Review(models.Model):
+    """
+    Defines the schema for the review table.
+    """
     id = models.BigIntegerField(primary_key=True)
 
     created = models.DateTimeField()
@@ -21,6 +28,9 @@ class Review(models.Model):
 
 
 class Bug(models.Model):
+    """
+    Defines the schema for the bug table.
+    """
     id = models.BigIntegerField(primary_key=True)
 
     type = models.CharField(max_length=25, default='')
@@ -36,6 +46,9 @@ class Bug(models.Model):
 
 
 class Vulnerability(models.Model):
+    """
+    defines the schema for the vulnerability table.
+    """
     cve = models.CharField(max_length=15, primary_key=True)
     source = models.CharField(max_length=8, default='monorail')
 
@@ -47,6 +60,10 @@ class Vulnerability(models.Model):
 
 
 class ReviewBug(models.Model):
+    """
+    Defines the schema for the review_bug table, which maps associated reviews
+    and bugs to each other.
+    """
     review = models.ForeignKey('Review')
     bug = models.ForeignKey('Bug')
 

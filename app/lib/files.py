@@ -124,7 +124,6 @@ class Files(object):
                     vulnerabilities.append((source, row[0], row[1]))
         return vulnerabilities
 
-    # TODO: (Ben) I have no idea what's going on here.
     def get_year(self, id):
         """
 
@@ -208,8 +207,6 @@ class Files(object):
         stats['patchsets'] = helpers.sort(patchsets, desc=True)
         return stats
 
-    # TODO: (Ben) Nuthan, can you walk me through an example of what's going on
-    # here?
     def transform_review(self, review):
         """
 
@@ -254,7 +251,9 @@ class Files(object):
     # TODO: Remove function once bug information is available in JSON format
     def _to_dict(self, row):
         """
-
+        The monorail API is awful, and our credentials don't work. So this
+        function grabs the CSV file, adds a few keys, and converts everything
+        into json.
         """
         bug = dict()
 

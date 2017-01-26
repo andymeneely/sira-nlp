@@ -36,7 +36,7 @@ BUG_ID_RE = re.compile(
 
 def chunk(lst, size):
     """
-
+    Break the specified list up into smaller lists of the specified size.
     """
     for index in range(0, len(lst), size):
         yield lst[index:index + size]
@@ -75,6 +75,13 @@ def get_json(url, parameters):
 
 
 def get_row(model, *args, **kwargs):
+    """
+    This is a wrapper for a database lookup. Returns None if the specified
+    model does not exist. For example, if you run `Review.objects.get(id=1234)`
+    and the review with that ID doesn't exist, an exception will be raised.
+    Instead, you can call `get_row(Review, id=1234)` and avoid exception
+    handling elsewhere in the code base.
+    """
     try:
         return model.objects.get(*args, **kwargs)
     except model.DoesNotExist:
@@ -82,6 +89,9 @@ def get_row(model, *args, **kwargs):
 
 
 def load_json(filepath, sanitize=True):
+    """
+    Load the specified json file after sanitizing it.
+    """
     with open(filepath, 'r') as file:
         contents = file.read()
         contents = NULL_RE.sub('', contents)
@@ -89,6 +99,9 @@ def load_json(filepath, sanitize=True):
 
 
 def parse_bugids(text):
+    """
+    Search for bug IDs within the specified text. Return a list of any results.
+    """
     ids = list()
     match = BUG_ID_RE.search(text)
     if match:
@@ -100,10 +113,16 @@ def parse_bugids(text):
 
 
 def sleep(seconds):
+    """
+    Just a timer.
+    """
     time.sleep(random.random() * seconds)
 
 
 def sort(dictionary, by='value', cast=None, desc=False):
+    """
+    Sort the specified dictionary by the specified value.
+    """
     retrn = None
 
     if by not in ['key', 'value']:
@@ -126,6 +145,9 @@ def sort(dictionary, by='value', cast=None, desc=False):
 
 
 def to_list(queue):
+    """
+    Convert the specified queue to a list and return it.
+    """
     list_ = list()
     if not queue.empty():
         while not queue.empty():
@@ -134,9 +156,17 @@ def to_list(queue):
 
 
 def to_querystring(dictionary):
+    """
+    Convert the specified dictionary to a query string and return it.
+    """
     components = ['{}={}'.format(k, v) for (k, v) in dictionary.items()]
     return '&'.join(components)
 
 
 def truncate(string, length=50):
+    """
+    If the specified string is less than (or equal to) the specified number of
+    characters, return it. Otherwise, truncate the string, append an elipses
+    (...) and return that.
+    """
     return string[:length] + '...' if len(string) > length else string

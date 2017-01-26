@@ -1,3 +1,7 @@
+"""
+@AUTHOR: nuthanmunaiah
+"""
+
 from datetime import datetime as dt
 
 from django.conf import settings
@@ -9,9 +13,15 @@ from app.lib.logger import *
 
 
 class Command(BaseCommand):
+    """
+    Sets up command line arguments.
+    """
     help = 'Load the database with code review and bug information.'
 
     def handle(self, *args, **options):
+        """
+
+        """
         begin = dt.now()
         try:
             info('loaddb Command')
