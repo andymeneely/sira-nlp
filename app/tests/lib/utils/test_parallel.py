@@ -1,43 +1,66 @@
 import multiprocessing
+import time
+
 from unittest import TestCase
 
 from app.lib.utils import parallel
 
-CPU_COUNT = multiprocessing.cpu_count()
 
-
-def produce(inputq, commq):
-    item = inputq.get(block=True)
-    commq.put(item, block=True)
-
-
-def consume(outputq, commq):
+def aggregate_with_return(oqueue, cqueue):
     while True:
-        item = commq.get(block=True)
+        item = cqueue.get()
         if item == parallel.END:
             break
-        outputq.put(item + 10, block=True)
+        oqueue.put(item + 10)
 
 
-def generator(items, inputq):
+def aggregate_without_return(oqueue, cqueue):
+    while True:
+        item = cqueue.get()
+        if item == parallel.END:
+            break
+
+
+def do(iqueue, cqueue):
+    item = iqueue.get()
+    cqueue.put(item)
+
+
+def stream(items, iqueue):
     for item in items:
-        inputq.put(item, block=True)
+        iqueue.put(item)
 
 
 class ParallelTestCase(TestCase):
     def setUp(self):
         self.count = 100
 
-    def test_run(self):
-        inputq = parallel.manager.Queue()
+    def test_run_with_return(self):
+        iqueue = parallel.manager.Queue()
 
         process = multiprocessing.Process(
-                target=generator, args=(list(range(0, self.count)), inputq)
+                target=stream, args=(list(range(0, self.count)), iqueue)
             )
         process.start()
 
         expected = [(i + 10) for i in range(0, self.count)]
-        actual = parallel.run(produce, consume, inputq, self.count, CPU_COUNT)
+        aggregate = aggregate_with_return
+        actual = parallel.run(do, aggregate, iqueue, self.count, 2)
         self.assertCountEqual(expected, actual)
+
+        process.join()
+
+    def test_run_without_return(self):
+        iqueue = parallel.manager.Queue()
+
+        process = multiprocessing.Process(
+                target=stream, args=(list(range(0, self.count)), iqueue)
+            )
+        process.start()
+
+        expected = [(i + 10) for i in range(0, self.count)]
+        aggregate = aggregate_without_return
+        actual = parallel.run(do, aggregate, iqueue, self.count, 2)
+        self.assertIsNone(actual)
 
         process.join()

@@ -5,4 +5,6 @@ if [[ ! -z $1 ]]; then
     target=$1
 fi
 
-ENV="TEST" coverage run manage.py test $target && coverage report
+ENV="TEST" coverage run manage.py test $target \
+    && coverage combine \
+    && coverage report

@@ -33,5 +33,4 @@ class PosTaggerTestCase(TestCase):
 
         actual = postagger.PosTagger(data).execute()
 
-        self.maxDiff = None
         self.assertEqual(expected, actual)

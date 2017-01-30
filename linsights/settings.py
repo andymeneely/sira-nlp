@@ -60,3 +60,6 @@ FILETYPES_WHITELIST = [
 
 # Number of processes to use when parallel processing
 CPU_COUNT = multiprocessing.cpu_count()
+
+# Maximum number of items in a queue
+QUEUE_SIZE = 5000

@@ -10,15 +10,15 @@ from app.lib.nlp import analyzers
 from app.lib.utils import parallel
 
 
-def generator(documents, inputq):
+def stream(documents, inputq):
     for document in documents:
         inputq.put(document, block=True)
 
 
 class TfIdfTestCase(test.TestCase):
-    def start_generator(self):
+    def start_streaming(self):
         process = multiprocessing.Process(
-                target=generator, args=(self.documents, self.tfidf.documents)
+                target=stream, args=(self.documents, self.tfidf.documents)
             )
         process.start()
         return process
@@ -78,7 +78,7 @@ class TfIdfTestCase(test.TestCase):
 
     def test_initialize(self):
         self.assertFalse(self.tfidf.is_cached)
-        process = self.start_generator()
+        process = self.start_streaming()
         self.tfidf.initialize()
         process.join()
         self.assertTrue(self.tfidf.is_cached)
@@ -113,7 +113,7 @@ class TfIdfTestCase(test.TestCase):
                 'worldwide': 0.0096369
             }
 
-        process = self.start_generator()
+        process = self.start_streaming()
         self.tfidf.initialize()
         process.join()
 
@@ -183,7 +183,7 @@ class TfIdfTestCase(test.TestCase):
         with self.assertRaises(Exception):
             _ = self.tfidf.get_idf('')
 
-        process = self.start_generator()
+        process = self.start_streaming()
         self.tfidf.initialize()
         process.join()
 
@@ -228,7 +228,7 @@ class TfIdfTestCase(test.TestCase):
                 'Windows': 0.0087719, 'worldwide': 0.0087719
             }
 
-        process = self.start_generator()
+        process = self.start_streaming()
         self.tfidf.initialize()
         process.join()
 
