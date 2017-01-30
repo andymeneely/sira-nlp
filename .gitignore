@@ -111,3 +111,6 @@ linsights/dbsettings.py
 **/scratch.*
 **/workspace.*
 **/temp.*
+
+# Unversioned files
+app/management/commands/frequency.py
