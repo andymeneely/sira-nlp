@@ -1,5 +1,6 @@
 """
 @AUTHOR: nuthanmunaiah
+@AUTHOR: meyersbs
 """
 
 import csv
@@ -79,9 +80,6 @@ class Files(object):
         review = self.get_review(id, year)
         return review['description']
 
-    # TODO: (Ben) I don't understand what's going on in here. I think it's
-    # returning the first review that addresses the issue specified by the
-    # given ID, but I'm unsure.
     def get_review(self, id, year=None):
         """
 
