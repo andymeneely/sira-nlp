@@ -7,6 +7,7 @@ import glob
 import operator
 import os
 
+from math import log10
 from datetime import datetime as dt
 
 from django.conf import settings
@@ -16,40 +17,7 @@ from app.lib.files import *
 from app.lib.helpers import *
 from app.lib.logger import *
 from app.lib.rietveld import *
-
-def display_tfidf_score(review, score):
-    pass
-
-def display_tfidf_score(review, score):
-    pass
-
-def display_review_stats(stats):
-    """
-    Formats and prints the specified review statistics.
-    """
-    info('  Status      {}'.format(stats['status']))
-    info('  Created On  {}'.format(stats['created']))
-    info('  # Reviewers {}'.format(stats['reviewers']))
-    info('  # Messages  {}'.format(stats['messages']))
-    info('  # Patchsets {}'.format(stats['patchsets']))
-
-
-def display_reviews_stats(stats):
-    """
-    Formats and prints the specified review statitics for multiple reviews.
-    """
-    info('  # Reviews     {}'.format(stats['reviews']))
-    info('  # Open        {}'.format(stats['open']))
-
-    info('  Top 10 by # Messages')
-    for (key, value) in list(stats['messages'].items())[:10]:
-        info('     {:<10} {}'.format(key, value))
-    info('  Top 10 by # Comments')
-    for (key, value) in list(stats['comments'].items())[:10]:
-        info('     {:<10} {}'.format(key, value))
-    info('  Top 10 by # Patchsets')
-    for (key, value) in list(stats['patchsets'].items())[:10]:
-        info('     {:<10} {}'.format(key, value))
+from app.queryStrings import *
 
 
 class Command(BaseCommand):
@@ -92,14 +60,41 @@ class Command(BaseCommand):
             raise CommandError('id or year must be provided')
 
         begin = dt.now()
-        files = Files(settings)
+        #files = Files(settings)
         reviews = {}
         try:
             if id is not None:
-                reviews[id] = {}
-            else:
-                reviews[id] = {}
+                tf = queryTermFrequency(term, id)
+                df = queryDocumentFrequency(term)
+                total = queryTotalDocuments()
 
+                # +1 to pad result against df==0
+                idf = log10(float(total)/float(df + 1))
+                tf_idf = float(tf) * float(idf)
+
+                info("TF-IDF for term \'%s\' in review %i is %3.3f." % \
+                    (term,id,tf_idf))
+            else:
+                revIDs = queryReviewsByYear(year)
+                df = queryDocumentFrequency(term, year)
+                total = queryTotalDocuments(year)
+
+                # +1 to pad result against df==0
+                idf = log10(float(total)/float(df + 1))
+
+                info('TF-IDF for reviews from %i:' % year)
+                skipped = 0
+                for r in revIDs:
+                    tf = queryTermFrequency(term, r)
+                    tf_idf = float(tf) * float(idf)
+
+                    if tf_idf == 0:
+                        skipped += 1
+                    else:
+                        info("TF-IDF for term \'%s\' in review %i is %3.3f." % \
+                            (term,r,tf_idf))
+
+                info("Skipped %i reviews where TF-IDF was 0" % skipped)
         except KeyboardInterrupt:
             warning('Attempting to abort.')
         finally:
