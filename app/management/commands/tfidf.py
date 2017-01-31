@@ -16,6 +16,7 @@ from django.core.management.base import BaseCommand, CommandError
 from app.lib.files import *
 from app.lib.helpers import *
 from app.lib.logger import *
+from app.lib.nlp.lemmatizer import Lemmatizer
 from app.lib.rietveld import *
 from app.queryStrings import *
 
@@ -41,6 +42,10 @@ class Command(BaseCommand):
                 'Argument is ignored when id is specified.'
             )
         parser.add_argument(
+                '--lemma', default=False, action='store_true', help='If '
+                'included, the lemma of the specified term will be used.'
+            )
+        parser.add_argument(
                 'term', type=str, default=None, help='The term to calculate '
                 'tf-idf for.'
             )
@@ -52,6 +57,8 @@ class Command(BaseCommand):
         id = options.get('id', None)
         year = options.get('year', None)
         term = options.get('term', None)
+        lemma = options.get('lemma', False)
+        word = ""
 
         if term is None:
             raise CommandError('term must be specified')
@@ -59,42 +66,71 @@ class Command(BaseCommand):
         if id is None and year is None:
             raise CommandError('id or year must be provided')
 
+        if lemma:
+            word = Lemmatizer([term]).execute()
+            word = word[0]
+            info("Using lemma \'%s\' of term \'%s\'." % (word,term))
+        else:
+            word = term
+
         begin = dt.now()
-        #files = Files(settings)
-        reviews = {}
         try:
             if id is not None:
-                tf = queryTermFrequency(term, id)
-                df = queryDocumentFrequency(term)
+                if lemma:
+                    tf = queryTermFrequency(word, id, lemma="base")
+                    df = queryDocumentFrequency(word, lemma="base")
+                else:
+                    tf = queryTermFrequency(word, id)
+                    df = queryDocumentFrequency(word)
+
                 total = queryTotalDocuments()
 
                 # +1 to pad result against df==0
-                idf = log10(float(total)/float(df + 1))
+                try:
+                    idf = log10(float(total)/float(df + 1))
+                except ValueError as e:
+                    warning("Value Error: " + str(e))
+
                 tf_idf = float(tf) * float(idf)
 
                 info("TF-IDF for term \'%s\' in review %i is %3.3f." % \
-                    (term,id,tf_idf))
+                    (word,id,tf_idf))
             else:
                 revIDs = queryReviewsByYear(year)
-                df = queryDocumentFrequency(term, year)
+                if lemma:
+                    df = queryDocumentFrequency(word, year, lemma="base")
+                else:
+                    df = queryDocumentFrequency(word, year)
+
                 total = queryTotalDocuments(year)
 
                 # +1 to pad result against df==0
-                idf = log10(float(total)/float(df + 1))
+                try:
+                    idf = log10(float(total)/float(df + 1))
+                except ValueError as e:
+                    warning("Value Error: " + str(e))
 
                 info('TF-IDF for reviews from %i:' % year)
                 skipped = 0
                 for r in revIDs:
-                    tf = queryTermFrequency(term, r)
+                    if lemma:
+                        tf = queryTermFrequency(word, r, lemma="base")
+                    else:
+                        tf = queryTermFrequency(word, r)
+
                     tf_idf = float(tf) * float(idf)
 
                     if tf_idf == 0:
                         skipped += 1
                     else:
                         info("TF-IDF for term \'%s\' in review %i is %3.3f." % \
-                            (term,r,tf_idf))
+                            (word,r,tf_idf))
 
-                info("Skipped %i reviews where TF-IDF was 0" % skipped)
+                if skipped > 0:
+                    info("Skipped %i reviews where TF-IDF was 0" % skipped)
+                else:
+                    info("There are no reviews from %i that contain \'%s\'." % \
+                        (year,word))
         except KeyboardInterrupt:
             warning('Attempting to abort.')
         finally:

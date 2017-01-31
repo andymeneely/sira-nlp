@@ -6,7 +6,7 @@ from django.contrib.postgres import fields
 #from django.db import models
 from app.models import *
 
-def queryTermFrequency(token, reviewID):
+def queryTermFrequency(token, reviewID, lemma="text"):
     """
     Returns the number of occurences of the specified token in the specified
     reviewID.
@@ -18,7 +18,7 @@ def queryTermFrequency(token, reviewID):
         "ON public.message.id=public.token.message_id " \
 	"JOIN public.review " \
 	"ON public.review.id=public.message.review_id " \
-        "WHERE public.token.text=\'" + token + "\' " \
+        "WHERE public.token." + lemma + "=\'" + token + "\' " \
         "AND public.review.id=" + str(reviewID) + " " \
         "GROUP BY public.token.id, public.review.id")
 
@@ -32,7 +32,7 @@ def queryTermFrequency(token, reviewID):
 
     return termFrequency
 
-def queryDocumentFrequency(token, year=None):
+def queryDocumentFrequency(token, year=None, lemma="text"):
     """
     Returns the total number of documents containing the specified token if
     year==None. Otherwise, returns the total number of documents within that
@@ -47,7 +47,7 @@ def queryDocumentFrequency(token, year=None):
             "ON public.message.id=public.token.message_id " \
             "JOIN public.review " \
             "ON public.review.id=public.message.review_id " \
-            "WHERE public.token.text=\'" + token + "\' " \
+            "WHERE public.token." + lemma + "=\'" + token + "\' " \
             "AND to_char(public.review.created, \'YYYY\')::text=\'" \
             + str(year) + "\'")
     else:
@@ -56,7 +56,7 @@ def queryDocumentFrequency(token, year=None):
             "public.message.id FROM public.message " \
             "JOIN public.token " \
             "ON public.message.id=public.token.message_id " \
-            "WHERE public.token.text=\'" + token + "\'")
+            "WHERE public.token." + lemma + "=\'" + token + "\'")
 
     reviews = []
     for entry in queryResults:
