@@ -1,5 +1,6 @@
 """
 @AUTHOR: nuthanmunaiah
+@AUTHOR: meyersbs
 """
 
 from django.contrib.postgres import fields
@@ -84,6 +85,7 @@ class Message(models.Model):
 
 
 class Token(models.Model):
+    id = models.AutoField(primary_key=True)
     text = models.TextField(default='', db_index=True)
     base = models.TextField(default='', db_index=True)
     frequency = models.PositiveIntegerField(default=0)
