@@ -73,6 +73,9 @@ class ReviewBug(models.Model):
 
 
 class Message(models.Model):
+    """
+    Defines the schema for the message table.
+    """
     posted = models.DateTimeField()
     sender = models.EmailField()
     text = models.TextField(default='')
@@ -85,9 +88,12 @@ class Message(models.Model):
 
 
 class Token(models.Model):
+    """
+    Defines the schema for the token table.
+    """
     id = models.AutoField(primary_key=True)
-    text = models.TextField(default='', db_index=True)
-    base = models.TextField(default='', db_index=True)
+    token = models.TextField(default='', db_index=True)
+    lemma = models.TextField(default='', db_index=True)
     frequency = models.PositiveIntegerField(default=0)
     pos = models.CharField(max_length=10, default='')
 

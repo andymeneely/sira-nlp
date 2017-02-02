@@ -29,10 +29,10 @@ def do(iqueue, cqueue):
         try:
             for (message_id, message_text) in messages:
                 summary = summarizer.Summarizer(message_text).execute()
-                for (token, base, frequency, pos) in set(summary):
+                for (token, lemma, frequency, pos) in set(summary):
                     objects.append(Token(
-                            message_id=message_id,
-                            text=token, base=base, frequency=frequency, pos=pos
+                            message_id=message_id, token=token, lemma=lemma,
+                            frequency=frequency, pos=pos
                         ))
 
             if len(objects) > 0:

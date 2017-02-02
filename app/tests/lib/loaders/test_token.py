@@ -43,6 +43,6 @@ class TokenLoaderTestCase(test.TestCase):
                 Token.objects.filter(
                     message__review_id=1259853004,
                     message__posted='2015-07-30 10:32:31.936180'
-                ).values_list('text', 'base', 'frequency', 'pos')
+                ).values_list('token', 'lemma', 'frequency', 'pos')
             )
         self.assertCountEqual(expected, actual, msg='Data:Token')
