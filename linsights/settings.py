@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ENVIRONMENT == 'PROD':
     DATA_DIR = '/home/artifacts/linsights/'
 elif ENVIRONMENT == 'DEV':
-    DATA_DIR = os.path.join(BASE_DIR, 'app/data')
+    DATA_DIR = os.path.join(BASE_DIR, 'app/tests/data')
 elif ENVIRONMENT == 'TEST':
     DATA_DIR = os.path.join(BASE_DIR, 'app/tests/data')
 
