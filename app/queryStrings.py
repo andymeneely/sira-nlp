@@ -3,15 +3,15 @@
 """
 
 from django.contrib.postgres import fields
-#from django.db import models
+
 from app.models import *
 
-def _queryMessagesByReview(reviewID):
+def __queryMessagesByReview(reviewID):
     """
     Returns a list of Message objects where Message.review_id=reviewID.
     """
     queryResults = Message.objects.raw(
-        "SELECT public.message.id FROM public.message " \
+        "SELECT public.message.id FROM public.message "
         "WHERE public.message.review_id=" + str(reviewID))
 
     messages = []
@@ -20,26 +20,34 @@ def _queryMessagesByReview(reviewID):
 
     return messages
 
-def _queryTokenCountByReview(reviewID):
+def __queryTokenCountByReview(reviewID):
     """
     Returns the number of tokens in all of the messages where Message.review_id
     =reviewID.
     """
-
-    messages = _queryMessagesByReview(reviewID)
+    messages = __queryMessagesByReview(reviewID)
 
     numTokens = 0
     for message in messages:
-        query = Token.objects.raw(
-                    "SELECT public.token.id, public.token.frequency FROM public.token " \
-                    "JOIN public.message " \
-                    "ON public.message.id=public.token.message_id " \
-                    "WHERE public.message.id=" + str(message.id))
-        for entry in query:
-            numTokens += entry.frequency
+        numTokens += __queryTokenCountByMessage(message.id)
 
     return numTokens
 
+def __queryTokenCountByMessage(messageID):
+    """
+    Returns the number of tokens in a single message where Message.id=messageID.
+    """
+    queryResults = Message.objects.raw(
+        "SELECT public.token.id, public.token.frequency "
+        "FROM public.token JOIN public.message "
+        "ON public.token.message_id=public.message.id "
+        "WHERE public.message.id=" + str(messageID))
+
+    numTokens = 0
+    for entry in queryResults:
+        numTokens += entry.frequency
+
+    return numTokens
 
 def queryTermFrequency(token, reviewID, lemma="text"):
     """
@@ -47,17 +55,17 @@ def queryTermFrequency(token, reviewID, lemma="text"):
     reviewID.
     """
     queryResults = Token.objects.raw(
-        "SELECT public.token.id, COUNT(public.token.frequency) " \
-        "FROM public.token " \
-        "JOIN public.message " \
-        "ON public.message.id=public.token.message_id " \
-	"JOIN public.review " \
-	"ON public.review.id=public.message.review_id " \
-        "WHERE public.token." + lemma + "=\'" + token + "\' " \
-        "AND public.review.id=" + str(reviewID) + " " \
+        "SELECT public.token.id, COUNT(public.token.frequency) "
+        "FROM public.token "
+        "JOIN public.message "
+        "ON public.message.id=public.token.message_id "
+	"JOIN public.review "
+	"ON public.review.id=public.message.review_id "
+        "WHERE public.token." + lemma + "=\'" + token + "\' "
+        "AND public.review.id=" + str(reviewID) + " "
         "GROUP BY public.token.id, public.review.id")
 
-    numTokens = _queryTokenCountByReview(reviewID)
+    numTokens = __queryTokenCountByReview(reviewID)
 
     # This doesn't work because len() is not defined for RawQuerySet
     # termFrequency = len(queryResults)
@@ -78,21 +86,21 @@ def queryDocumentFrequency(token, year=None, lemma="text"):
     queryResults = None
     if year is not None:
         queryResults = Message.objects.raw(
-            "SELECT DISTINCT(public.message.review_id), " \
-            "public.message.id FROM public.message " \
-            "JOIN public.token " \
-            "ON public.message.id=public.token.message_id " \
-            "JOIN public.review " \
-            "ON public.review.id=public.message.review_id " \
-            "WHERE public.token." + lemma + "=\'" + token + "\' " \
-            "AND to_char(public.review.created, \'YYYY\')::text=\'" \
+            "SELECT DISTINCT(public.message.review_id), "
+            "public.message.id FROM public.message "
+            "JOIN public.token "
+            "ON public.message.id=public.token.message_id "
+            "JOIN public.review "
+            "ON public.review.id=public.message.review_id "
+            "WHERE public.token." + lemma + "=\'" + token + "\' "
+            "AND to_char(public.review.created, \'YYYY\')::text=\'"
             + str(year) + "\'")
     else:
         queryResults = Message.objects.raw(
-            "SELECT DISTINCT(public.message.review_id), " \
-            "public.message.id FROM public.message " \
-            "JOIN public.token " \
-            "ON public.message.id=public.token.message_id " \
+            "SELECT DISTINCT(public.message.review_id), "
+            "public.message.id FROM public.message "
+            "JOIN public.token "
+            "ON public.message.id=public.token.message_id "
             "WHERE public.token." + lemma + "=\'" + token + "\'")
 
     reviews = []
@@ -101,34 +109,35 @@ def queryDocumentFrequency(token, year=None, lemma="text"):
 
     return len(set(reviews))
 
-def queryTotalDocuments(year=None):
-    """
-    Returns the total number of documents in the database if year==None.
-    Otherwise, returns the total number of documents within that year.
-    """
-    if year is not None:
-        return len(queryReviewsByYear(year))
-    else:
-        queryResults = Review.objects.all()
-        cnt = 0
-        for entry in queryResults:
-            cnt += 1
-
-        return cnt
-
 def queryReviewsByYear(year):
     """
     Returns a list of Review.id where Review.created is within the
     specified year.
     """
     queryResults = Review.objects.raw(
-        "SELECT public.review.id " \
-        "FROM public.review " \
-        "WHERE to_char(public.review.created, \'YYYY\')::text=\'" \
+        "SELECT public.review.id FROM public.review "
+        "WHERE to_char(public.review.created, \'YYYY\')::text=\'"
         + str(year) + "\'")
 
     reviewIDs = []
     for entry in queryResults:
         reviewIDs.append(entry.id)
 
-    return reviewIDs
+    return reviewIDs, len(reviewIDs)
+
+def queryAllReviews():
+    """
+    Returns a list of all Review IDS within the database.
+    """
+    queryResults = Review.objects.raw(
+        "SELECT public.review.id FROM public.review "
+        "ORDER BY public.review.id ASC")
+
+    #print(queryResults)
+
+    reviewIDs = []
+    for entry in queryResults:
+        reviewIDs.append(entry.id)
+
+    #print(reviewIDs)
+    return reviewIDs, len(reviewIDs)
