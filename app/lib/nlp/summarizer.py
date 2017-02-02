@@ -8,7 +8,7 @@ class Summarizer(object):
     def execute(self):
         tokens = tokenizer.Tokenizer(self.text).execute()
 
-        base = lemmatizer.Lemmatizer(tokens).execute()
+        base = lemmatizer.Lemmatizer(self.text).execute()
         frequency = counter.Counter(tokens).execute()
         pos = postagger.PosTagger(tokens).execute()
 

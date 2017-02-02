@@ -1,3 +1,7 @@
+"""
+@AUTHOR: meyersbs
+"""
+
 from unittest import TestCase
 
 from app.lib.nlp import tokenizer
@@ -27,7 +31,7 @@ class TokenizerTestCase(TestCase):
 
         self.assertEqual(expected, actual)
 
-        data = 'I don\'t like that reviewers do not get the message.'
+        data = "I don't like that reviewers do not get the message."
         expected = [
                 'I', 'do', 'n\'t', 'like', 'that', 'reviewers', 'do', 'not',
                 'get', 'the', 'message', '.'

@@ -1,24 +1,25 @@
 """
-@AUTHOR: nuthanmunaiah
+@AUTHOR: meyersbs
 """
 
-import nltk
+from app.lib.nlp import preprocessor
 
 
 class Lemmatizer(object):
     """
-    Given a list of tokens, return a list of the same length containing
-    the lemma of each token.
+    Given a string of text, return a list of all of the lemmas for each token
+    in the text.
     """
-    def __init__(self, tokens):
+    def __init__(self, text):
         """
         Constructor.
         """
-        self.lemmatizer = nltk.WordNetLemmatizer()
-        self.tokens = tokens
+        self.text = text
 
     def execute(self):
         """
-        Returns a list of lemmas corresponding to each token in the tokens list.
+        Given a string of text, return a list of all of the lemmas for each
+        token.
         """
-        return [self.lemmatizer.lemmatize(token) for token in self.tokens]
+        lemmas = preprocessor.Preprocessor(self.text).execute()
+        return lemmas[1]

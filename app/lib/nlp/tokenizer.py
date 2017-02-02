@@ -1,8 +1,8 @@
 """
-@AUTHOR: nuthanmunaiah
+@AUTHOR: meyersbs
 """
 
-from nltk.tokenize import word_tokenize
+from app.lib.nlp import preprocessor
 
 
 class Tokenizer(object):
@@ -20,4 +20,5 @@ class Tokenizer(object):
         Given a string of text, return a list of all of the tokens within the
         text.
         """
-        return word_tokenize(self.text)
+        tokens = preprocessor.Preprocessor(self.text).execute()
+        return tokens[0]
