@@ -15,15 +15,12 @@ class PreprocessorTestCase(TestCase):
                 'closing adjustments, which it did not explain. Reuter'
             )
         expected = [
-                'Gulf', 'Applied', 'Technologies', 'Inc', 'said', 'it', 'sold',
-                'its', 'subsidiaries', 'engaged', 'in', 'pipeline', 'and',
-                'terminal', 'operations', 'for', '12.2', 'mln', 'dlrs', '.',
-                'The', 'company', 'said', 'the', 'sale', 'is', 'subject', 'to',
-                'certain', 'post', 'closing', 'adjustments', ',', 'which',
-                'it', 'did', 'not', 'explain', '.', 'Reuter'
+                'gulf', 'applied', 'technologies', 'inc', 'say',
+                'sell', 'subsidiary', 'engage', 'pipeline', 'terminal',
+                'operation', '12.2', 'mln', 'dlrs', 'company', 'say', 'sale',
+                'subject', 'certain', 'post', 'close', 'adjustment',
+                'explain', 'reuter'
             ]
-
-        results = preprocessor.Preprocessor(data).execute()
-        actual = results[0]
+        actual = preprocessor.Preprocessor(data).execute()
 
         self.assertEqual(expected, actual)

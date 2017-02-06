@@ -1,8 +1,10 @@
 """
+@AUTHOR: nuthanmunaiah
 @AUTHOR: meyersbs
 """
 
-from spacy.en import English
+from app.lib.nlp import lemmatizer, tokenizer, tokenremover
+
 
 class Preprocessor(object):
     """
@@ -12,7 +14,6 @@ class Preprocessor(object):
         """
         Constructor.
         """
-        self.parser = English()
         self.text = text
 
     def execute(self):
@@ -20,11 +21,7 @@ class Preprocessor(object):
         Tokenize, lemmatize, and remove stop-words from the text. Return a list
         of the remaining tokens lowercased.
         """
-        parsedText = self.parser(self.text)
-        tokens = []
-        lemmas = []
-        for i, token in enumerate(parsedText):
-            tokens.append(token.orth_)
-            lemmas.append(token.lemma_)
-
-        return tokens, lemmas
+        tokens = tokenizer.NLTKTokenizer(self.text).execute()
+        tokens = lemmatizer.NLTKLemmatizer(tokens).execute()
+        tokens = tokenremover.TokenRemover(tokens).execute()
+        return [token.lower() for token in tokens]

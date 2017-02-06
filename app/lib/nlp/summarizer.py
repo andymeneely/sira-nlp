@@ -1,14 +1,13 @@
 from app.lib.nlp import counter, lemmatizer, postagger, tokenizer
 
-
 class Summarizer(object):
     def __init__(self, text):
         self.text = text
 
     def execute(self):
-        tokens = tokenizer.Tokenizer(self.text).execute()
+        tokens = tokenizer.NLTKTokenizer(self.text).execute()
 
-        base = lemmatizer.Lemmatizer(self.text).execute()
+        base = lemmatizer.NLTKLemmatizer(tokens).execute()
         frequency = counter.Counter(tokens).execute()
         pos = postagger.PosTagger(tokens).execute()
 

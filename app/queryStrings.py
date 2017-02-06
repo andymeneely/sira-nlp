@@ -6,6 +6,20 @@ from django.contrib.postgres import fields
 
 from app.models import *
 
+def queryMessagesByYear(year):
+    """
+    Returns a list of Message objects where Message.posted contains year.
+    """
+    queryResults = Message.objects.raw(
+        "SELECT * FROM public.message "
+        "WHERE to_char(public.message.posted, \'YYYY\')::text=\'" + str(year) + "\'")
+
+    messages = []
+    for entry in queryResults:
+        messages.append(entry)
+
+    return messages
+
 def __queryMessagesByReview(reviewID):
     """
     Returns a list of Message objects where Message.review_id=reviewID.

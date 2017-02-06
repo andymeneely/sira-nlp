@@ -1,8 +1,10 @@
 """
 @AUTHOR: nuthanmunaiah
+@AUTHOR: meyersbs
 """
 
 import json
+import os
 import random
 import re
 import time
@@ -170,3 +172,22 @@ def truncate(string, length=50):
     (...) and return that.
     """
     return string[:length] + '...' if len(string) > length else string
+
+def loadVerbs():
+    """
+    Loads the contents of 'verbs.txt' into a list of lists, where the first
+    entry in each inner list is an uninflected verb, and all following
+    entries are known conjugations.
+
+    Adapted from code provided in NodeBox:
+    https://www.nodebox.net/code/index.php/Linguistics#verb_conjugation
+    """
+    verbs = []
+    with open(os.path.join(os.path.dirname(__file__), "verbs.txt"), 'r') as f:
+        rawVerbs = f.readlines()
+        tempVerbs = []
+        for i in range(len(rawVerbs)):
+            parsedVerbs = rawVerbs[i].strip().split(",")
+            verbs.append(parsedVerbs)
+
+    return verbs

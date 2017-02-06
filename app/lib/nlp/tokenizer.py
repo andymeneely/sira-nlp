@@ -2,23 +2,30 @@
 @AUTHOR: meyersbs
 """
 
-from app.lib.nlp import preprocessor
+#from app.lib.nlp import preprocessor
+from nltk.tokenize import word_tokenize
 
 
 class Tokenizer(object):
-    """
-    Given a string of text, return a list of all of the tokens within the text.
-    """
+    """ Interface. """
     def __init__(self, text):
-        """
-        Constructor.
-        """
+        """ Constructor. """
         self.text = text
 
     def execute(self):
-        """
-        Given a string of text, return a list of all of the tokens within the
-        text.
-        """
-        tokens = preprocessor.Preprocessor(self.text).execute()
-        return tokens[0]
+        """ Raises NotImplementedError. """
+        raise NotImplementedError("Tokenizer is an abstract class. In must be "
+                                  "implemented by another class. Try using "
+                                  "the NLTKTokenizer.")
+
+
+class NLTKTokenizer(Tokenizer):
+    """ Implements Tokenizer. """
+    def __init__(self, text):
+        """ Constructor. """
+        super(NLTKTokenizer, self).__init__(text)
+
+    def execute(self):
+        """ Return a list of all tokens within the specified string. """
+        return word_tokenize(self.text)
+
