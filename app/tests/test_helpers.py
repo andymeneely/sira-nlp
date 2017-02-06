@@ -40,6 +40,26 @@ class HelpersTestCase(TestCase):
                     'chromium:648074'
                 ),
                 'BUG=chromium:613321, webrtc:5608',
+                'BUG=478714.',
+                (
+                    'BUG=https://code.google.com/p/chromium/issues/detail?id'
+                    '=397177'
+                ),
+                'BUG= http://crbug.com/14508',
+                'BUG=http://crbug.com/18725',
+                'BUG=11007\nBUG=16535',
+                'BUG=b/27827591, 549781',
+                (
+                    'BUG=649539,649291,574611,649579,v8:5378,https://github.'
+                    'com/dart-lang/sdk/issues/27412,chromium:638366'
+                ),
+                (
+                    'BUG=webrtc:5949,622062,544330,638343,629679,620494,607344'
+                    ',637561,https://github.com/dart-lang/sdk/issues/27005,'
+                    '637037,611020,604452,chromium:628770,635421,605572,None,'
+                    'chromium:448050,626364,598405,none,629863,635877,623207,'
+                    '638295'
+                ),
             ] + [
                 # Patterns that SHOULD NOT BE recognized
                 'BUG=',
@@ -59,6 +79,7 @@ class HelpersTestCase(TestCase):
                 'BUG=b/31767249',
                 'BUG=#27238',
                 'BUG=b:26700652\r\n',
+                'FOO BAR BAZ',
             ]
         expected = [
                 # Bug IDs recognized
@@ -81,9 +102,21 @@ class HelpersTestCase(TestCase):
                 [644033, 637050, 648462, 647807],
                 [648031, 648135, 648063, 607283, 645532, 648074],
                 [613321],
+                [478714],
+                [397177],
+                [14508],
+                [18725],
+                [11007, 16535],
+                [549781],
+                [649539, 649291, 574611, 649579, 638366],
+                [
+                    622062, 544330, 638343, 629679, 620494, 607344, 637561,
+                    637037, 611020, 604452, 628770, 635421, 605572, 448050,
+                    626364, 598405, 629863, 635877, 623207, 638295
+                ],
             ] + [
                 # Empty lists indicating that no bug IDs were recognized
-                list() for i in range(0, 17)
+                list() for i in range(0, 18)
             ]
 
         actual = [helpers.parse_bugids(item) for item in data]
@@ -141,6 +174,10 @@ class HelpersTestCase(TestCase):
         actual = helpers.sort(data, by='value', cast=float, desc=False)
 
         self.assertDictEqual(expected, actual)
+
+    def test_to_int(self):
+        self.assertEqual(10, helpers.to_int('10'))
+        self.assertIsNone(helpers.to_int('chromium:1234'))
 
     def test_truncate_defaults(self):
         data = 'a' * 55

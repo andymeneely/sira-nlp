@@ -31,9 +31,17 @@ NEWLINES_RE = re.compile('(^$\n)+', flags=re.MULTILINE)
 # Match unicode NULL character sequence
 NULL_RE = re.compile(r'(\\|\\\\)u0000')
 # Match the bug ID(s) in the code review description
-BUG_ID_RE = re.compile(
-    'BUG=((?: ?(?:chromium:)?\d+)(?:, ?(?:chromium:)?\d+)*)'
-)
+BUG_ID_RE = re.compile('BUG=(.*)')
+# Bug identifiers can have one of the following patterns prefixed or suffixed
+# to them. These patterns are replaced with '' when parsing identifiers.
+# E.g., chromium:123,http://crbug.com/123,123.
+# NOTE: DO NOT change the sequence.
+BUG_ID_PATTERNS = [
+    'http://crbug.com/',
+    'https://code.google.com/p/chromium/issues/detail?id=',
+    'chromium:',
+    '.'
+]
 
 
 def chunk(lst, size):
@@ -105,12 +113,13 @@ def parse_bugids(text):
     Search for bug IDs within the specified text. Return a list of any results.
     """
     ids = list()
-    match = BUG_ID_RE.search(text)
-    if match:
-        ids = [
-                int(id.strip().replace('chromium:', ''))
-                for id in match.group(1).split(',')
-            ]
+    for match in BUG_ID_RE.finditer(text):
+        for id in match.group(1).strip().split(','):
+            for pattern in BUG_ID_PATTERNS:
+                id = id.replace(pattern, '')
+            id = to_int(id)
+            if id is not None:
+                ids.append(id)
     return ids
 
 
@@ -144,6 +153,16 @@ def sort(dictionary, by='value', cast=None, desc=False):
         retrn[key] = value
 
     return retrn
+
+
+def to_int(text):
+    """
+    Convert text to integer if conversion is posssible else return None.
+    """
+    try:
+        return int(text)
+    except ValueError:
+        return None
 
 
 def to_list(queue):
