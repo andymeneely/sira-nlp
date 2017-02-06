@@ -256,7 +256,7 @@ class LoaddbTestCase(TransactionTestCase):
                 Message.objects.filter(review_id=1259853004)
                 .values_list('posted', 'sender', 'text')
             )
-        self.assertCountEqual(expected, actual, msg='Data:Message')
+        self.assertCountEqual(expected, actual, msg='Data: Message')
 
         # Tokens
         expected = [
@@ -281,7 +281,36 @@ class LoaddbTestCase(TransactionTestCase):
                     message__posted='2015-07-30 10:32:31.936180'
                 ).values_list('token', 'lemma', 'frequency', 'pos')
             )
-        self.assertCountEqual(expected, actual, msg='Data:Token')
+        self.assertCountEqual(expected, actual, msg='Data: Token')
+
+        # Materialized View - vw_review_token
+        expected = [
+                1128633002, 1144393004, 1188433011, 1247623005, 1259853004,
+                1286193008, 1292403004, 1293023003, 1295403003, 1299243002,
+                1304613003, 1321103002, 1999153002, 2048483002, 2050053002,
+                2134723002, 2140383005, 2148643002, 2149523002, 2150783003,
+                2151763003, 2177983004, 2189523002, 2211423003, 2230993004
+            ]
+        actual = list(
+                ReviewTokenView.objects.filter(token='lgtm')
+                .values_list('review_id', flat=True)
+            )
+        self.assertCountEqual(expected, actual, msg='Data: vw_review_token')
+
+        # Materialized View - vw_review_lemma
+        expected = [
+                1259853004, 1292403004, 2150783003, 1286193008, 2177983004,
+                2230993004, 1454003003, 2140383005, 1304613003, 2134723002,
+                1128633002, 2085023003, 2148643002, 1188433011, 2149523002,
+                2050053002, 1144393004, 1999153002, 1293023003, 1295403003,
+                2211423003, 1321103002, 2151763003, 1308723003, 1318783003,
+                2189523002, 1299243002, 1247623005, 2048483002
+            ]
+        actual = list(
+                ReviewLemmaView.objects.filter(lemma='lgtm')
+                .values_list('review_id', flat=True)
+            )
+        self.assertCountEqual(expected, actual, msg='Data: vw_review_lemma')
 
     def test_handle_issue_4(self):
         '''Test fix for issue #4

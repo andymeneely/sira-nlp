@@ -102,3 +102,21 @@ class Token(models.Model):
 
     class Meta:
         db_table = 'token'
+
+
+class ReviewTokenView(models.Model):
+    token = models.TextField(default='')
+    review_id = models.BigIntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'vw_review_token'
+
+
+class ReviewLemmaView(models.Model):
+    lemma = models.TextField(default='')
+    review_id = models.BigIntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'vw_review_lemma'

@@ -6,7 +6,7 @@ from datetime import datetime as dt
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.db import connections
+from django.db import connection, connections
 
 from app.lib import loaders, taggers
 from app.lib.helpers import *
@@ -51,6 +51,12 @@ class Command(BaseCommand):
             loader = loaders.TokenLoader(settings, 8, ids)
             count = loader.load()
             info('  {} tokens loaded'.format(count))
+
+            with connection.cursor() as cursor:
+                cursor.execute('REFRESH MATERIALIZED VIEW vw_review_token;')
+                info('  vw_review_token refreshed')
+                cursor.execute('REFRESH MATERIALIZED VIEW vw_review_lemma;')
+                info('  vw_review_lemma refreshed')
         except KeyboardInterrupt:
             warning('Attempting to abort.')
         finally:
