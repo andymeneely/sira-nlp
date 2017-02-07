@@ -42,6 +42,8 @@ def fix(token, lemma, next=None, prev=None):
     if token.lower() == "ca":
         if next and next[0] and next[0].lower() == "n't":
             return "can"
+    elif token.lower() == "as":
+        return "as"
     elif token.lower() == "left":
         if prev and prev[1] == wordnet.VERB:
             return "leave"
