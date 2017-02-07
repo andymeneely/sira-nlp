@@ -1,16 +1,43 @@
 """
 @AUTHOR: nuthanmunaiah
 """
+import csv
 
 from unittest import TestCase
 from collections import OrderedDict
 
 from app.lib import helpers
+from app.lib.nlp import VERBS_PATH
 
 
 class HelpersTestCase(TestCase):
     def setUp(self):
         pass
+
+    def test_get_verbs(self):
+        keys, values = set(), set()
+        with open(VERBS_PATH) as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if len(row) > 1:
+                    for item in row[1:]:
+                        keys.add(item)
+                    values.add(row[0])
+        expected = (keys, values)
+
+        actual = helpers.get_verbs(VERBS_PATH)
+
+        self.assertCountEqual(expected[0], list(actual.keys()))
+        self.assertCountEqual(
+                expected[1] - set(['shot', 'overshot']),
+                list(set(list(actual.values())))
+            )
+        expected = 'shoot'
+        for key in ['shot', 'shoots', 'shooting', 'shot', 'shot']:
+            self.assertEqual(expected, actual[key], msg='Key: {}'.format(key))
+        expected = 'overshoot'
+        for key in ['overshot', 'overshoots', 'overshooting']:
+            self.assertEqual(expected, actual[key], msg='Key: {}'.format(key))
 
     def test_parse_bugids(self):
         data = [

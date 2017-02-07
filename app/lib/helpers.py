@@ -3,6 +3,7 @@
 @AUTHOR: meyersbs
 """
 
+import csv
 import json
 import os
 import random
@@ -98,6 +99,27 @@ def get_row(model, *args, **kwargs):
         return None
 
 
+def get_verbs(filepath):
+    """
+    Return the contents of verbs file pointed to by the filepath argument as a
+    dictionary in which the key is the conjugate of a verb and the value is
+    uninflected verb form of the conjugate verb.
+
+    For example, {'scolded': 'scold', 'scolding': 'scold'}
+
+    Adapted from code provided in NodeBox:
+    https://www.nodebox.net/code/index.php/Linguistics#verb_conjugation
+    """
+    verbs = dict()
+    with open(filepath) as file:
+        reader = csv.reader(file)
+        for row in reader:
+            for verb in row[1:]:
+                verbs[verb] = row[0]
+
+    return verbs
+
+
 def load_json(filepath, sanitize=True):
     """
     Load the specified json file after sanitizing it.
@@ -191,22 +213,3 @@ def truncate(string, length=50):
     (...) and return that.
     """
     return string[:length] + '...' if len(string) > length else string
-
-def loadVerbs():
-    """
-    Loads the contents of 'verbs.txt' into a list of lists, where the first
-    entry in each inner list is an uninflected verb, and all following
-    entries are known conjugations.
-
-    Adapted from code provided in NodeBox:
-    https://www.nodebox.net/code/index.php/Linguistics#verb_conjugation
-    """
-    verbs = []
-    with open(os.path.join(os.path.dirname(__file__), "verbs.txt"), 'r') as f:
-        rawVerbs = f.readlines()
-        tempVerbs = []
-        for i in range(len(rawVerbs)):
-            parsedVerbs = rawVerbs[i].strip().split(",")
-            verbs.append(parsedVerbs)
-
-    return verbs

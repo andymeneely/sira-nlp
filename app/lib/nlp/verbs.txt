@@ -1924,7 +1924,6 @@ sclaff,sclaffs,sclaffing,sclaffed,sclaffed
 tiptoe,tiptoes,tiptoeing,tiptoed,tiptoed
 wire,wires,wiring,wired,wired
 cense,censes,censing,censed,censed
-posse,possing,possed,possed
 macadamize,macadamizes,macadamizing,macadamized,macadamized
 slack,slacks,slacking,slacked,slacked
 destine,destines,destining,destined,destined
