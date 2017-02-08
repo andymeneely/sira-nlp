@@ -3,8 +3,142 @@
 """
 
 from django.contrib.postgres import fields
-
+from django.db import connection
+from django.db.models import Count
 from app.models import *
+
+
+def _custom_raw_review_token(population):
+    cursor = connection.cursor()
+    cursor.execute(
+        "SELECT t.token AS id, COUNT(t.review_id) AS df "
+        "FROM public.vw_review_token t "
+        "WHERE t.review_id IN " + str(population) + " "
+        "GROUP BY t.token")
+
+#    print(cursor.fetchone())
+    df_dict = {}
+    for entry in cursor.fetchall():
+#        print(entry)
+        df_dict[entry.id] = entry.df
+
+    return df_dict
+
+
+def query_TF_dict(reviewID, lemma="token"):
+    """
+    Returns a dictionary with each key being a token in the review and the
+    value being the TF calculation:
+    TF = (# of occurrences of Token in Review)/(# of total tokens in Review)
+    """
+    innerQuery = (
+        "(SELECT SUM(t.frequency) FROM public.token t "
+        "JOIN public.message m ON m.id = t.message_id "
+        "WHERE m.review_id=" + str(reviewID) + ") "
+        )
+    queryResults = Token.objects.raw(
+        "SELECT t.id, t." + str(lemma) + ", ((SUM(t.frequency)*1.0) / "
+        + innerQuery + ") AS tf "
+        "FROM public.token t JOIN public.message m "
+        "ON m.id=t.message_id WHERE m.review_id=" + str(reviewID) + " "
+        "GROUP BY t.token, t.id"
+        )
+    termFrequencyDict = {}
+    for entry in queryResults:
+        # For whatever reason, this query returns tf as a decimal.Decimal
+        # objects, so we need to cast it to a float in order for it to be
+        # useful.
+        termFrequencyDict[entry.token] = float(entry.tf)
+
+    return termFrequencyDict
+
+def query_DF_dict(lemma="token", population=[]):
+    """
+    Returns a dictionary where each key is a token (or lemma) and each value is
+    the Document Frequency (DF) associated with that token.
+    """
+    if population == []:
+        raise ValueError("Received invalid population for IDF query.")
+
+    # We have to cast the list of IDs to a tuple so that when we concatenate
+    # the list with the query, the string representation of the list is
+    # (rID1, rID2,...) instead of [rID1, rID2...]
+    population = tuple(population)
+
+#    print(population)
+#    print(type(population))
+
+    documentFrequencies = {}
+    if lemma == "token":
+        queryResults = (ReviewTokenView.objects
+            .values('token', 'review_id')
+            .annotate(df=Count('review_id')))
+#            .filter(review_id__in=population))
+#        documentFrequencies = _custom_raw_review_token(population)
+    elif lemma == "lemma":
+        queryResults = ReviewLemmaView.objects.raw(
+            "SELECT t.lemma AS id, COUNT(t.review_id) AS df "
+            "FROM public.vw_review_lemma t "
+            "WHERE t.review_id IN " + str(population) + " "
+            "GROUP BY t.lemma")
+    else:
+        return documentFrequencies
+
+    print("LEN: " + str(len(queryResults)))
+#    print(queryResults)
+
+    for entry in queryResults:
+#        print(entry)
+        if entry['review_id'] in population:
+            documentFrequencies[entry['token']] = entry['df']
+
+    print("LEN2: " + str(len(documentFrequencies)))
+#    print(documentFrequencies)
+    return documentFrequencies
+
+def query_rIDs_by_year(year):
+    """
+    Returns a list of Review.id where Review.created is within the
+    specified year.
+    """
+    queryResults = Review.objects.raw(
+        "SELECT public.review.id FROM public.review "
+        "WHERE to_char(public.review.created, \'YYYY\')::text=\'"
+        + str(year) + "\'")
+
+    reviewIDs = [ entry.id for entry in queryResults ]
+    return reviewIDs
+
+def query_rIDs_all():
+    """ Returns a list of all Review IDS within the database. """
+    queryResults = Review.objects.raw(
+        "SELECT public.review.id FROM public.review "
+        "ORDER BY public.review.id ASC")
+
+    reviewIDs = [ entry.id for entry in queryResults ]
+    return reviewIDs
+
+def query_rIDs_fixed():
+    """ Returns a list of reviewIDs that fixed a vulnerability. """
+    queryResults = ReviewBug.objects.raw(
+        "SELECT DISTINCT t.review_id, t.id FROM public.review_bug t "
+        "JOIN public.vulnerability v ON t.bug_id=v.bug_id "
+        "ORDER BY t.review_id ASC")
+
+    reviewIDs = [ entry.id for entry in queryResults ]
+    return reviewIDs
+
+def query_rIDs_missed():
+    """ Returns a list of reviewIDs that missed a vulnerability. """
+    queryResults = Review.objects.raw(
+        "SELECT public.review.id FROM public.review "
+        "WHERE public.review.missed_vulnerability=True "
+        "ORDER BY public.review.id ASC")
+
+    reviewIDs = [ entry.id for entry in queryResults ]
+    return reviewIDs
+
+#### OLD STUFF ####
 
 def queryMessagesByYear(year):
     """
@@ -63,95 +197,3 @@ def __queryTokenCountByMessage(messageID):
 
     return numTokens
 
-def queryTermFrequency(token, reviewID, lemma="text"):
-    """
-    Returns the number of occurences of the specified token in the specified
-    reviewID.
-    """
-    queryResults = Token.objects.raw(
-        "SELECT public.token.id, COUNT(public.token.frequency) "
-        "FROM public.token "
-        "JOIN public.message "
-        "ON public.message.id=public.token.message_id "
-	"JOIN public.review "
-	"ON public.review.id=public.message.review_id "
-        "WHERE public.token." + lemma + "=\'" + token + "\' "
-        "AND public.review.id=" + str(reviewID) + " "
-        "GROUP BY public.token.id, public.review.id")
-
-    numTokens = __queryTokenCountByReview(reviewID)
-
-    # This doesn't work because len() is not defined for RawQuerySet
-    # termFrequency = len(queryResults)
-    # print(termFrequency)
-
-    termFrequency = 0;
-    for entry in queryResults:
-        termFrequency += 1
-
-    return float(termFrequency)/float(numTokens) if numTokens != 0 else 0
-
-def queryDocumentFrequency(token, year=None, lemma="text"):
-    """
-    Returns the total number of documents containing the specified token if
-    year==None. Otherwise, returns the total number of documents within that
-    year containing the specified token.
-    """
-    queryResults = None
-    if year is not None:
-        queryResults = Message.objects.raw(
-            "SELECT DISTINCT(public.message.review_id), "
-            "public.message.id FROM public.message "
-            "JOIN public.token "
-            "ON public.message.id=public.token.message_id "
-            "JOIN public.review "
-            "ON public.review.id=public.message.review_id "
-            "WHERE public.token." + lemma + "=\'" + token + "\' "
-            "AND to_char(public.review.created, \'YYYY\')::text=\'"
-            + str(year) + "\'")
-    else:
-        queryResults = Message.objects.raw(
-            "SELECT DISTINCT(public.message.review_id), "
-            "public.message.id FROM public.message "
-            "JOIN public.token "
-            "ON public.message.id=public.token.message_id "
-            "WHERE public.token." + lemma + "=\'" + token + "\'")
-
-    reviews = []
-    for entry in queryResults:
-        reviews.append(entry.review_id)
-
-    return len(set(reviews))
-
-def queryReviewsByYear(year):
-    """
-    Returns a list of Review.id where Review.created is within the
-    specified year.
-    """
-    queryResults = Review.objects.raw(
-        "SELECT public.review.id FROM public.review "
-        "WHERE to_char(public.review.created, \'YYYY\')::text=\'"
-        + str(year) + "\'")
-
-    reviewIDs = []
-    for entry in queryResults:
-        reviewIDs.append(entry.id)
-
-    return reviewIDs, len(reviewIDs)
-
-def queryAllReviews():
-    """
-    Returns a list of all Review IDS within the database.
-    """
-    queryResults = Review.objects.raw(
-        "SELECT public.review.id FROM public.review "
-        "ORDER BY public.review.id ASC")
-
-    #print(queryResults)
-
-    reviewIDs = []
-    for entry in queryResults:
-        reviewIDs.append(entry.id)
-
-    #print(reviewIDs)
-    return reviewIDs, len(reviewIDs)

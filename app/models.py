@@ -6,11 +6,8 @@
 from django.contrib.postgres import fields
 from django.db import models
 
-
 class Review(models.Model):
-    """
-    Defines the schema for the review table.
-    """
+    """ Defines the schema for the review table. """
     id = models.BigIntegerField(primary_key=True)
 
     created = models.DateTimeField()
@@ -29,9 +26,7 @@ class Review(models.Model):
 
 
 class Bug(models.Model):
-    """
-    Defines the schema for the bug table.
-    """
+    """ Defines the schema for the bug table. """
     id = models.BigIntegerField(primary_key=True)
 
     type = models.CharField(max_length=25, default='')
@@ -47,9 +42,7 @@ class Bug(models.Model):
 
 
 class Vulnerability(models.Model):
-    """
-    defines the schema for the vulnerability table.
-    """
+    """ Defines the schema for the vulnerability table. """
     cve = models.CharField(max_length=15, primary_key=True)
     source = models.CharField(max_length=8, default='monorail')
 
@@ -73,9 +66,7 @@ class ReviewBug(models.Model):
 
 
 class Message(models.Model):
-    """
-    Defines the schema for the message table.
-    """
+    """ Defines the schema for the message table. """
     posted = models.DateTimeField()
     sender = models.EmailField()
     text = models.TextField(default='')
@@ -88,10 +79,9 @@ class Message(models.Model):
 
 
 class Token(models.Model):
-    """
-    Defines the schema for the token table.
-    """
+    """ Defines the schema for the token table. """
     id = models.AutoField(primary_key=True)
+
     token = models.TextField(default='', db_index=True)
     lemma = models.TextField(default='', db_index=True)
     frequency = models.PositiveIntegerField(default=0)
@@ -105,6 +95,12 @@ class Token(models.Model):
 
 
 class ReviewTokenView(models.Model):
+    """
+    Defines the scheme for the vw_review_token materialized view, which links
+    every token with its associated reviewID.
+    """
+    id = models.BigIntegerField(primary_key=True)
+
     token = models.TextField(default='')
     review_id = models.BigIntegerField()
 
@@ -114,6 +110,12 @@ class ReviewTokenView(models.Model):
 
 
 class ReviewLemmaView(models.Model):
+    """
+    Defines the scheme for the vw_review_lemma materialized view, which links
+    every lemma with its associated reviewID.
+    """
+    id = models.BigIntegerField(primary_key=True)
+
     lemma = models.TextField(default='')
     review_id = models.BigIntegerField()
 
