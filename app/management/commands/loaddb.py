@@ -2,6 +2,8 @@
 @AUTHOR: nuthanmunaiah
 """
 
+import multiprocessing
+
 from datetime import datetime as dt
 
 from django.conf import settings
@@ -12,6 +14,12 @@ from app.lib import loaders, taggers
 from app.lib.helpers import *
 from app.lib.logger import *
 from app.models import *
+
+
+def refresh_view(name):
+    with connection.cursor() as cursor:
+        cursor.execute('REFRESH MATERIALIZED VIEW {};'.format(name))
+        info('  {} refreshed'.format(name))
 
 
 class Command(BaseCommand):
@@ -52,11 +60,8 @@ class Command(BaseCommand):
             count = loader.load()
             info('  {} tokens loaded'.format(count))
 
-            with connection.cursor() as cursor:
-                cursor.execute('REFRESH MATERIALIZED VIEW vw_review_token;')
-                info('  vw_review_token refreshed')
-                cursor.execute('REFRESH MATERIALIZED VIEW vw_review_lemma;')
-                info('  vw_review_lemma refreshed')
+            with multiprocessing.Pool(2) as pool:
+                pool.map(refresh_view, ['vw_review_token', 'vw_review_lemma'])
         except KeyboardInterrupt:
             warning('Attempting to abort.')
         finally:
