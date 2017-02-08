@@ -11,9 +11,7 @@ class PosTagger(object):
     (token, part-of-speech-tag)
     """
     def __init__(self, tokens):
-        """
-        Constructor.
-        """
+        """ Constructor. """
         self.tokens = tokens
 
     def execute(self):

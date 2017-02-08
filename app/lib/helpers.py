@@ -46,17 +46,13 @@ BUG_ID_PATTERNS = [
 
 
 def chunk(lst, size):
-    """
-    Break the specified list up into smaller lists of the specified size.
-    """
+    """ Break the specified list up into smaller lists of the given size. """
     for index in range(0, len(lst), size):
         yield lst[index:index + size]
 
 
 def clean(text):
-    """
-    Return the specified text with certain metadata removed.
-    """
+    """ Return the specified text with certain metadata removed. """
     text = RESPONSE_HEAD_RE.sub('', text)
     text = QUOTED_TEXT_RE.sub('', text)
     text = CODEREVIEW_URL_RE.sub('', text)
@@ -73,9 +69,7 @@ def get_elapsed(begin, end):
 
 
 def get_json(url, parameters):
-    """
-    Return the json associated with the given URL.
-    """
+    """ Return the json associated with the given URL. """
     (status, json) = (None, None)
     response = requests.get(url, parameters, allow_redirects=False)
     status = response.status_code
@@ -121,9 +115,7 @@ def get_verbs(filepath):
 
 
 def load_json(filepath, sanitize=True):
-    """
-    Load the specified json file after sanitizing it.
-    """
+    """ Load the specified json file after sanitizing it. """
     with open(filepath, 'r') as file:
         contents = file.read()
         contents = NULL_RE.sub('', contents)
@@ -146,16 +138,12 @@ def parse_bugids(text):
 
 
 def sleep(seconds):
-    """
-    Just a timer.
-    """
+    """ Just a timer. """
     time.sleep(random.random() * seconds)
 
 
 def sort(dictionary, by='value', cast=None, desc=False):
-    """
-    Sort the specified dictionary by the specified value.
-    """
+    """ Sort the specified dictionary by the specified value. """
     retrn = None
 
     if by not in ['key', 'value']:
@@ -188,9 +176,7 @@ def to_int(text):
 
 
 def to_list(queue):
-    """
-    Convert the specified queue to a list and return it.
-    """
+    """ Convert the specified queue to a list and return it. """
     list_ = list()
     if not queue.empty():
         while not queue.empty():
@@ -199,9 +185,7 @@ def to_list(queue):
 
 
 def to_querystring(dictionary):
-    """
-    Convert the specified dictionary to a query string and return it.
-    """
+    """ Convert the specified dictionary to a query string and return it. """
     components = ['{}={}'.format(k, v) for (k, v) in dictionary.items()]
     return '&'.join(components)
 

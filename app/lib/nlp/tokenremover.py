@@ -18,9 +18,7 @@ class TokenRemover(object):
     excluding the filtered words.
     """
     def __init__(self, tokens, filters=['SW', 'PU']):
-        """
-        Constructor.
-        """
+        """ Constructor. """
         self.tokens = tokens
         self.filters = set()
         for filter in filters:

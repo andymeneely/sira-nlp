@@ -9,19 +9,13 @@ from termcolor import cprint
 
 
 def debug(message):
-    """
-    Prepend '\r[DBG] ' to the specified message, make it blue, and print to
-    stderr.
-    """
+    """ Prepend '\r[DBG]' to the given message and print to stderr in blue. """
     if 'DEBUG' in os.environ:
         cprint('\r[DBG] {0}'.format(message), 'blue', file=sys.stderr)
 
 
 def info(message):
-    """
-    Prepend '\r[INF] ' to the specified message, make it white, and print to
-    stdout.
-    """
+    """ Prepend '\r[INF]' to the given message and print to stdout in white. """
     cprint('\r[INF] {0}'.format(message), 'white', file=sys.stdout)
 
 

@@ -7,13 +7,9 @@ from app.lib.nlp import lemmatizer, tokenizer, tokenremover
 
 
 class Preprocessor(object):
-    """
-    Preforms a variety of preprocessing tasks.
-    """
+    """ Preforms a variety of preprocessing tasks. """
     def __init__(self, text):
-        """
-        Constructor.
-        """
+        """ Constructor. """
         self.text = text
 
     def execute(self):

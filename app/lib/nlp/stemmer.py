@@ -10,9 +10,7 @@ class Stemmer(object):
     Given a list of tokens, return a list of stems associated with those tokens.
     """
     def __init__(self, tokens):
-        """
-        Constructor.
-        """
+        """ Constructor. """
         self.stemmer = nltk.PorterStemmer()
         self.tokens = tokens
 
