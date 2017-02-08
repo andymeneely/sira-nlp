@@ -4,7 +4,7 @@
 
 from datetime import datetime
 
-from app.lib import files
+from app.lib import files, helpers
 from app.models import *
 from app.lib.loaders import loader
 
@@ -41,9 +41,12 @@ class BugLoader(loader.Loader):
                 b.document = bug
                 if bug['cve'] != '':
                     for cve in bug['cve'].split(','):
-                        v = Vulnerability(cve='CVE-{}'.format(cve.strip()))
-                        b.vulnerability_set.add(v, bulk=False)
-
+                        v = helpers.get_row(Vulnerability, id=cve)
+                        if v is None:
+                            v = Vulnerability(id='CVE-{}'.format(cve.strip()))
+                            v.save()
+                        vb = VulnerabilityBug(vulnerability=v, bug=b)
+                        vb.save()
                 b.save()
                 count += 1
 
