@@ -7,7 +7,7 @@ from app.models import *
 
 class BugLoaderTestCase(test.TestCase):
     def setUp(self):
-        self.loader = loaders.BugLoader(settings)
+        self.loader = loaders.BugLoader(settings, num_processes=2)
 
     def test_load(self):
         # Bugs

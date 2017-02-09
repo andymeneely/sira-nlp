@@ -1,25 +1,91 @@
 """
 @AUTHOR: nuthanmunaiah
 """
+import multiprocessing
+import sys
+import traceback
 
 from datetime import datetime
 
-from app.lib import files, helpers
+from django.db import Error, transaction
+
+from app.lib import files, helpers, loaders
+from app.lib.utils import parallel
 from app.models import *
-from app.lib.loaders import loader
 
 
-class BugLoader(loader.Loader):
+def aggregate(oqueue, cqueue, num_doers):
+    count, done = 0, 0
+    while True:
+        item = cqueue.get()
+        if item == parallel.DD:
+            done += 1
+            if done == num_doers:
+                break  # All doers are done
+            continue
+
+        (bug, cves) = item
+        try:
+            with transaction.atomic():
+                bug.save()
+                objects = list()
+                for cve in cves:
+                    vulnerability = helpers.get_row(Vulnerability, id=cve)
+                    if vulnerability is None:
+                        vulnerability = Vulnerability(id=cve)
+                        vulnerability.save()
+
+                    objects.append(VulnerabilityBug(
+                            vulnerability=vulnerability, bug=bug
+                        ))
+                if objects:
+                    VulnerabilityBug.objects.bulk_create(objects)
+                count += 1
+        except Error as err:
+            sys.stderr.write('Exception\n')
+            sys.stderr.write('  Bug  {}\n'.format(bug.id))
+            extype, exvalue, extrace = sys.exc_info()
+            traceback.print_exception(extype, exvalue, extrace)
+
+    oqueue.put(count)
+
+
+def do(iqueue, cqueue):
+    while True:
+        item = iqueue.get()
+        if item == parallel.EOI:
+            cqueue.put(parallel.DD)
+            break
+
+        bug = Bug(
+                id=item['id'], type=item['type'], status=item['status'],
+                document=item
+            )
+        cves = list()
+        if item['cve'] != '':
+            cves = [
+                    'CVE-{}'.format(cve.strip())
+                    for cve in item['cve'].split(',')
+                ]
+
+        cqueue.put((bug, cves))
+
+
+def stream(iqueue, settings, num_doers):
+    f = files.Files(settings)
+    for year in settings.YEARS:
+        for bug in f.get_bugs(year):
+            iqueue.put(bug)
+
+    for i in range(num_doers):
+        iqueue.put(parallel.EOI)
+
+
+class BugLoader(loaders.Loader):
     """
     Implements loader object.
     """
-    def __init__(self, settings):
-        """
-        Constructor.
-        """
-        super(BugLoader, self).__init__(settings)
-
-    def _load(self):
+    def load(self):
         """
         Grabs all of the bugs from within the specified range of years,
         parses through them, cleans them up, then saves them. Returns the
@@ -27,27 +93,16 @@ class BugLoader(loader.Loader):
         """
         count = 0
 
-        f = files.Files(self.settings)
-        for year in self.settings.YEARS:
-            for bug in f.get_bugs(year):
-                b = Bug()
-
-                b.id = bug['id']
-                b.type = bug['type']
-                b.status = bug['status']
-                b.opened = datetime.strptime(
-                        bug['opened'], '%b %d, %Y %H:%M:%S'
-                    )
-                b.document = bug
-                if bug['cve'] != '':
-                    for cve in bug['cve'].split(','):
-                        v = helpers.get_row(Vulnerability, id=cve)
-                        if v is None:
-                            v = Vulnerability(id='CVE-{}'.format(cve.strip()))
-                            v.save()
-                        vb = VulnerabilityBug(vulnerability=v, bug=b)
-                        vb.save()
-                b.save()
-                count += 1
+        iqueue = parallel.manager.Queue(self.settings.QUEUE_SIZE)
+        process = self._start_streaming(iqueue)
+        count = parallel.run(do, aggregate, iqueue, self.num_processes)
+        process.join()
 
         return count
+
+    def _start_streaming(self, iqueue):
+        process = multiprocessing.Process(
+                target=stream, args=(iqueue, self.settings, self.num_processes)
+            )
+        process.start()
+        return process

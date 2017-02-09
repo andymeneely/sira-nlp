@@ -28,37 +28,50 @@ class Command(BaseCommand):
     """
     help = 'Load the database with code review and bug information.'
 
+    def add_arguments(self, parser):
+        """
+
+        """
+        parser.add_argument(
+                '--processes', dest='processes', type=int,
+                default=settings.CPU_COUNT,
+                help='Number of processes to spawn. Default is {}'.format(
+                        settings.CPU_COUNT
+                    )
+            )
+
     def handle(self, *args, **options):
         """
 
         """
+        processes = options['processes']
         begin = dt.now()
         try:
             info('loaddb Command')
             info('  Years: {}'.format(settings.YEARS))
 
-            loader = loaders.BugLoader(settings)
+            loader = loaders.BugLoader(settings, processes)
             count = loader.load()
-            info('  {} bugs loaded'.format(count))
-            loader = loaders.VulnerabilityLoader(settings)
+            info('  {:,} bugs loaded'.format(count))
+            loader = loaders.VulnerabilityLoader(settings, processes)
             count = loader.load()
-            info('  {} vulnerabilities loaded'.format(count))
-            loader = loaders.ReviewLoader(settings)
+            info('  {:,} vulnerabilities loaded'.format(count))
+            loader = loaders.ReviewLoader(settings, processes)
             count = loader.load()
-            info('  {} reviews loaded'.format(count))
+            info('  {:,} reviews loaded'.format(count))
 
             tagger = taggers.MissedVulnerabilityTagger(settings)
             count = tagger.tag()
-            info('  {} reviews tagged as missed a vulnerability'.format(count))
+            info('  {:,} reviews missed a vulnerability'.format(count))
 
             ids = list(Review.objects.all().values_list('id', flat=True))
             connections.close_all()  # Hack
-            loader = loaders.MessageLoader(settings, 8, ids)
+            loader = loaders.MessageLoader(settings, processes, ids)
             count = loader.load()
-            info('  {} messages loaded'.format(count))
-            loader = loaders.TokenLoader(settings, 8, ids)
+            info('  {:,} messages loaded'.format(count))
+            loader = loaders.TokenLoader(settings, processes, ids)
             count = loader.load()
-            info('  {} tokens loaded'.format(count))
+            info('  {:,} tokens loaded'.format(count))
 
             with multiprocessing.Pool(2) as pool:
                 pool.map(refresh_view, ['vw_review_token', 'vw_review_lemma'])

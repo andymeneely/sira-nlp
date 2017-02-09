@@ -14,7 +14,7 @@ def to_datetime(text):
 class MessageLoaderTestCase(test.TestCase):
     @classmethod
     def setUpTestData(cls):
-        loader = loaders.ReviewLoader(settings)
+        loader = loaders.ReviewLoader(settings, num_processes=2)
         _ = loader.load()
 
     def setUp(self):

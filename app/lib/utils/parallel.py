@@ -10,10 +10,11 @@ from multiprocessing import Manager, Pool, Process
 from app.lib import helpers
 
 manager = Manager()
-END = 'ENDCOMMUNICATION'
+EOI = 'ENDOFINPUT'
+DD = 'DOERDONE'
 
 
-def run(doer, aggregator, iqueue, num_inputs, num_doers):
+def run(doer, aggregator, iqueue, num_doers):
     '''
     Run a pool of doers and an aggregator.
 
@@ -52,13 +53,12 @@ def run(doer, aggregator, iqueue, num_inputs, num_doers):
     oqueue = manager.Queue()
 
     # Aggregator Process
-    process = Process(target=aggregator, args=(oqueue, cqueue))
+    process = Process(target=aggregator, args=(oqueue, cqueue, num_doers))
     process.start()
 
     # Doer Processe(s)
     with Pool(num_doers) as pool:
-        pool.starmap(doer, [(iqueue, cqueue) for i in range(0, num_inputs)])
-        cqueue.put(END, block=True)
+        pool.starmap(doer, [(iqueue, cqueue) for i in range(num_doers)], 1)
 
     process.join()
 
