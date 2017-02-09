@@ -9,23 +9,15 @@ class Loader(object):
     """
     An abstract class containing stubs to be implemented.
     """
-    def __init__(self, settings):
+    def __init__(self, settings, num_processes):
         """
         Constructor.
         """
         self.settings = settings
+        self.num_processes = num_processes
 
     def load(self):
         """
         Stub.
         """
-        with transaction.atomic():
-            return self._load()
-
-    def _load(self):
-        """
-        Stub.
-        """
         raise NotImplementedError()
-
-

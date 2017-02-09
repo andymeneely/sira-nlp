@@ -8,7 +8,7 @@ from app.models import *
 class TokenLoaderTestCase(test.TestCase):
     @classmethod
     def setUpTestData(cls):
-        loader = loaders.ReviewLoader(settings)
+        loader = loaders.ReviewLoader(settings, num_processes=2)
         _ = loader.load()
         loader = loaders.MessageLoader(
                 settings, num_processes=2, review_ids=[1259853004]

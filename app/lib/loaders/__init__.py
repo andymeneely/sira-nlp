@@ -1,3 +1,5 @@
+from app.lib.loaders.loader import Loader
+
 from app.lib.loaders.bug import BugLoader
 from app.lib.loaders.message import MessageLoader
 from app.lib.loaders.review import ReviewLoader

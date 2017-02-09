@@ -8,11 +8,11 @@ from app.models import *
 class BugLoaderTestCase(test.TestCase):
     @classmethod
     def setUpTestData(cls):
-        loader = loaders.BugLoader(settings)
+        loader = loaders.BugLoader(settings, num_processes=2)
         _ = loader.load()
 
     def setUp(self):
-        self.loader = loaders.ReviewLoader(settings)
+        self.loader = loaders.ReviewLoader(settings, num_processes=2)
 
     def test_load(self):
         # Vulnerabilities

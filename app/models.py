@@ -36,21 +36,12 @@ class Bug(models.Model):
 
     # Navigations Fields
     reviews = models.ManyToManyField('Review', through='ReviewBug')
+    vulnerabilities = models.ManyToManyField(
+            'Vulnerability', through='VulnerabilityBug'
+        )
 
     class Meta:
         db_table = 'bug'
-
-
-class Vulnerability(models.Model):
-    """ Defines the schema for the vulnerability table. """
-    cve = models.CharField(max_length=15, primary_key=True)
-    source = models.CharField(max_length=8, default='monorail')
-
-    # Navigation Fields
-    bug = models.ForeignKey('Bug')
-
-    class Meta:
-        db_table = 'vulnerability'
 
 
 class ReviewBug(models.Model):
@@ -63,6 +54,32 @@ class ReviewBug(models.Model):
 
     class Meta:
         db_table = 'review_bug'
+        unique_together = ('review', 'bug')
+
+
+class Vulnerability(models.Model):
+    """ Defines the schema for the vulnerability table. """
+    id = models.CharField(max_length=15, primary_key=True)
+    source = models.CharField(max_length=8, default='monorail')
+
+    # Navigation Fields
+    bugs = models.ManyToManyField('Bug', through='VulnerabilityBug')
+
+    class Meta:
+        db_table = 'vulnerability'
+
+
+class VulnerabilityBug(models.Model):
+    """
+    Defines the schema for the vulnerability_bug table, which maps
+    vulnerabilities to bugs.
+    """
+    vulnerability = models.ForeignKey('Vulnerability')
+    bug = models.ForeignKey('Bug')
+
+    class Meta:
+        db_table = 'vulnerability_bug'
+        unique_together = ('vulnerability', 'bug')
 
 
 class Message(models.Model):

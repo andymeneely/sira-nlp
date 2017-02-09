@@ -71,7 +71,7 @@ class LoaddbTestCase(TransactionTestCase):
                 [   # 2016
                     576270, 583485, 584783, 602509, 606056, 607690, 609260,
                     610176, 613160, 617492, 620126, 624894, 625357, 627655,
-                    628110, 628496, 636539
+                    628110, 628496, 636539, 613918, 619379, 626102, 642598
                 ] +
                 [   # Manually Added (aka Redacted)
                     618037, 174059
@@ -129,23 +129,47 @@ class LoaddbTestCase(TransactionTestCase):
         # Vulnerabilities
         expected = (
                 [   # 2015
-                    ('CVE-2015-1294', 492263, 'monorail'),
-                    ('CVE-2015-1292', 522791, 'monorail'),
+                    ('CVE-2015-1294', 'monorail'),
+                    ('CVE-2015-1292', 'monorail'),
                 ] +
                 [   # 2016
-                    ('CVE-2016-1681', 613160, 'monorail'),
-                    ('CVE-2016-1702', 609260, 'monorail')
+                    ('CVE-2016-1681', 'monorail'),
+                    ('CVE-2016-1702', 'monorail'),
+                    ('CVE-2016-5167', 'monorail')
                 ] +
                 [   # Manually Added
-                    ('CVE-2016-5165', 618037, 'blog'),
-                    ('CVE-2016-2845', 542060, 'manual'),
-                    ('CVE-2013-0908', 174059, 'manual')
+                    ('CVE-2016-5165', 'blog'),
+                    ('CVE-2016-2845', 'manual'),
+                    ('CVE-2013-0908', 'manual')
                 ]
             )
-        actual = list(
-                Vulnerability.objects.values_list('cve', 'bug_id', 'source')
-            )
+        actual = list(Vulnerability.objects.values_list('id', 'source'))
         self.assertCountEqual(expected, actual)
+
+        # Vulnerability to Bug Mappings
+        expected = (
+                [   # 2015
+                    ('CVE-2015-1294', 492263),
+                    ('CVE-2015-1292', 522791),
+                ] +
+                [   # 2016
+                    ('CVE-2016-1681', 613160),
+                    ('CVE-2016-1702', 609260),
+                    ('CVE-2016-5167', 613918),
+                    ('CVE-2016-5167', 619379),
+                    ('CVE-2016-5167', 626102),
+                    ('CVE-2016-5167', 642598)
+                ] +
+                [   # Manually Added
+                    ('CVE-2016-5165', 618037),
+                    ('CVE-2016-2845', 542060),
+                    ('CVE-2013-0908', 174059)
+                ]
+            )
+        actual = list(VulnerabilityBug.objects.values_list(
+                'vulnerability_id', 'bug_id'
+            ))
+        self.assertCountEqual(expected, actual, msg='Data: VulnerabilityBug')
 
         # Missed Vulnerability Reviews
         expected = [
