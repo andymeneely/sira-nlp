@@ -2,13 +2,13 @@
 @AUTHOR: meyersbs
 """
 
-from django.contrib.postgres import fields
-from django.db.models import Count
-from app.models import *
+import random
 
-POP_DICT = {'all': _query_rIDs_all,
-            'fixed': _query_rIDs_fixed,
-            'missed': _query_rIDs_missed}
+from django.contrib.postgres import fields
+from django.db.models import Count, Sum
+from itertools import chain
+
+from app.models import *
 
 def query_TF_dict(review_id, use_lemma=False):
     """
@@ -45,21 +45,30 @@ def query_DF(review_ids, use_lemma=False):
 
 def query_rIDs(population):
     """ Passthrough function for determining which queries to run. """
-    global POP_DICT
-    if population in POP_DICT.keys():
-        return POP_DICT[population]()
-    elif population == 'fixmiss':
-        return _query_rIDs_fixed() + query_rIDs_missed()
-    else:
-        return _query_rIDs_year(population)
 
-def _query_rIDs_all():
+    pop_dict = {'all': query_rIDs_all, 'fixed': query_rIDs_fixed,
+                'missed': query_rIDs_missed, 'fixmiss': query_rIDs_fixmiss,
+                'random': query_rIDs_random}
+
+    if population in pop_dict.keys():
+        return pop_dict[population]()
+    else:
+        return query_rIDs_year(population)
+
+def query_rIDs_all():
     """ Returns a list of all review IDs in the corpus. """
     queryResults = Review.objects.all().values_list('id', flat=True)
 
     return queryResults
 
-def _query_rIDs_year(year):
+def query_rIDs_random():
+    """ Returns a list of all review IDs in the corpus. """
+    queryResults = Review.objects.all().values_list('id', flat=True)
+    r = random.randint(0, 50) * random.randint(1, 5)
+
+    return queryResults[r:r+500]
+
+def query_rIDs_year(year):
     """ Returns a list of review IDs from the specified year. """
     years = [str(i) for i in range(2008, 2017)]
     if year not in years:
@@ -70,16 +79,42 @@ def _query_rIDs_year(year):
 
     return queryResults
 
-def _query_rIDs_fixed():
+def query_rIDs_fixed():
     """ Returns a list of review IDs that fixed a vulnerability. """
     queryResults = VulnerabilityBug.objects.distinct('bug__review__id') \
         .values_list('bug__review__id', flat=True)
 
     return queryResults
 
-def _query_rIDs_missed():
+def query_rIDs_missed():
     """ Returns a list of review IDs that missed a vulnerability. """
     queryResults = Review.objects.filter(missed_vulnerability=True) \
         .values_list('id', flat=True)
+
+    return queryResults
+
+def query_rIDs_fixmiss():
+    """
+    Returns a list of review IDs that have fixed or missed a vulnerability.
+    """
+    fixed = list(query_rIDs_fixed())
+    missed = list(query_rIDs_missed())
+
+    queryResults = fixed + missed
+    print(len(queryResults))
+    print(type(queryResults))
+
+    return queryResults
+
+def query_tokens(review_ids):
+    queryResults = ReviewTokenView.objects.distinct('token') \
+        .filter(review_id__in=review_ids) \
+        .values_list('token', flat=True)
+
+    return queryResults
+
+def query_tokens_all():
+    queryResults = ReviewTokenView.objects.distinct('token') \
+        .values_list('token', flat=True)
 
     return queryResults

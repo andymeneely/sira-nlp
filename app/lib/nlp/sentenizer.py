@@ -26,7 +26,9 @@ class NLTKSentenizer(Sentenizer):
     def execute(self):
         """ Return a list of all sentences within the specified string. """
         tempSents = self.text.strip().split('\n')
-        sents = [ sent_tokenize(i.strip()) for i in tempSents ]
+        sents = []
+        for s in tempSents:
+            sents += sent_tokenize(s.strip())
 
         return sents
 

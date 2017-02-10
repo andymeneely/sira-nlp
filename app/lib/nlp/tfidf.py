@@ -44,7 +44,7 @@ def do(iqueue, cqueue):
         try:
             # Dictionary of { 'token': frequency }.
             # The numerator of TF for every token in the review.
-            tfs = query_tf_dict(review_id, USE_LEMMA)
+            tfs = query_TF_dict(review_id, USE_LEMMA)
 
             # The total number of tokens in the review.
             num_tokens = tfs.aggregate(nt=Sum('frequency'))['nt']
