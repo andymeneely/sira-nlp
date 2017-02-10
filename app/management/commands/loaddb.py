@@ -60,7 +60,7 @@ class Command(BaseCommand):
             count = loader.load()
             info('  {:,} reviews loaded'.format(count))
 
-            tagger = taggers.MissedVulnerabilityTagger(settings)
+            tagger = taggers.MissedVulnerabilityTagger(settings, processes)
             count = tagger.tag()
             info('  {:,} reviews missed a vulnerability'.format(count))
 
