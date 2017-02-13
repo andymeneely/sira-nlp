@@ -159,28 +159,48 @@ def query_rIDs_nm():
 
     return queryResults
 
-def query_tokens(review_ids):
-    queryResults = ReviewTokenView.objects.distinct('token') \
-        .filter(review_id__in=review_ids) \
-        .values_list('token', flat=True)
+def query_tokens(review_ids, use_lemma=False):
+    if use_lemma:
+        queryResults = ReviewLemmaView.objects.distinct('lemma') \
+            .filter(review_id__in=review_ids) \
+            .values_list('lemma', flat=True)
+    else:
+        queryResults = ReviewTokenView.objects.distinct('token') \
+            .filter(review_id__in=review_ids) \
+            .values_list('token', flat=True)
 
     return queryResults
 
-def query_tokens_all():
-    queryResults = ReviewTokenView.objects.distinct('token') \
-        .values_list('token', flat=True)
+def query_tokens_all(use_lemma=False):
+    if use_lemma:
+        queryResults = ReviewLemmaView.objects.distinct('lemma') \
+            .values_list('lemma', flat=True)
+    else:
+        queryResults = ReviewTokenView.objects.distinct('token') \
+            .values_list('token', flat=True)
 
     return queryResults
 
-def query_top_x_tokens(review_ids, x):
+def query_top_x_tokens(review_ids, x, use_lemma=False):
     message_ids = Message.objects.distinct('id') \
         .filter(review_id__in=review_ids) \
         .values_list('id', flat=True)
-    queryResults = Token.objects \
-        .filter(message__review__id__in=review_ids) \
-        .values('token') \
-        .annotate(freq=Sum('frequency')) \
-        .order_by('-freq') \
-        .values_list('token', flat=True)
+
+    if use_lemma:
+        queryResults = Token.objects \
+            .filter(message__review__id__in=review_ids) \
+            .filter(lemma__iregex=r"\w+") \
+            .values('lemma') \
+            .annotate(freq=Sum('frequency')) \
+            .order_by('-freq') \
+            .values_list('lemma', flat=True)
+    else:
+        queryResults = Token.objects \
+            .filter(message__review__id__in=review_ids) \
+            .filter(token__iregex=r"\w+") \
+            .values('token') \
+            .annotate(freq=Sum('frequency')) \
+            .order_by('-freq') \
+            .values_list('token', flat=True)
 
     return queryResults[0:x]

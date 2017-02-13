@@ -53,9 +53,14 @@ def do(iqueue, cqueue):
             # entire corpus of reviews.
             tfidf = dict()
             if num_tokens is not None:
-                for entry in tfs:
-                    (token, tf) = (entry['token'], entry['tf'])
-                    tfidf[token] = tf / float(num_tokens) * IDF.get(token, 0)
+                if USE_LEMMA:
+                    for entry in tfs:
+                        (lemma, tf) = (entry['lemma'], entry['tf'])
+                        tfidf[lemma] = tf / float(num_tokens) * IDF.get(lemma, 0)
+                else:
+                    for entry in tfs:
+                        (token, tf) = (entry['token'], entry['tf'])
+                        tfidf[token] = tf / float(num_tokens) * IDF.get(token, 0)
 
             cqueue.put((review_id, tfidf))
         except Exception as e:
