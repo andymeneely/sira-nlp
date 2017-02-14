@@ -88,6 +88,8 @@ class Message(models.Model):
     sender = models.EmailField()
     text = models.TextField(default='')
 
+    sentiment = fields.JSONField(default=dict)
+
     # Navigation Fields
     review = models.ForeignKey('Review')
 
