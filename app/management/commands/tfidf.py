@@ -3,11 +3,15 @@
 """
 
 import math
-import numpy
 import csv
 import gc
+import operator
 import random
+import itertools
+import traceback
+import re
 
+from collections import OrderedDict
 from datetime import datetime as dt
 
 from django.conf import settings
@@ -19,23 +23,76 @@ from django.db.models.fields import Field
 from app import TFIDF_TOKENS_PATH, TFIDF_LEMMAS_PATH
 from app.lib import helpers, logger
 from app.lib.nlp import tfidf
-from app.lib.nlp.lemmatizer import Lemmatizer
 from app.models import *
 from app.queryStrings import *
 
-
-ALL_TOKENS = list()
 TF_IDFS = None
 DECIMAL_PLACES = 100
 
-def tfidf_to_csv(review_ids, tf_idfs, use_lemma):
+def merge_dicts(dict_list):
+    """
+    Given a list of dictionaries, merge them all, appending values for
+    duplicate keys to a list. Return a dictionary containing all unique keys
+    and their maximum value.
+    """
+    d = {}
+    for dic in dict_list:
+        for key in dic.keys():
+            try:
+                d[key].append(dic[key])
+            except KeyError:
+                d[key] = [dic[key]]
+
+    top_kv = {}
+    for k, v in d.items():
+        top_kv[k] = max(v)
+
+    return top_kv
+
+def tfidf_to_csv(review_ids, tf_idfs, use_lemma, top=100):
     """ Convert the given TF-IDF dictionary to a CSV and write to disk. """
-    global ALL_TOKENS, DECIMAL_PLACES
+    global DECIMAL_PLACES
+    logger.info('Saving TF-IDF to a CSV...')
     try:
-        tokens_dict = {t:i for (i, t) in enumerate(ALL_TOKENS)}
         rows = []
-        review_ids = [i for i in review_ids if i is not None]
-        r_ids = sorted(list(review_ids))
+        r_ids = sorted(list([i for i in review_ids if i is not None]))
+
+        # Sort the TF-IDF values and gather their keys.
+        sorted_tf_idfs = {}
+        regex = re.compile('^[a-zA-Z]+$')
+        for r in r_ids:
+            temp = dict(sorted(tf_idfs[r].items(), key=operator.itemgetter(1),
+                        reverse=True))
+            # We only care about a subset of the keys.
+            if len(temp.keys()) > 0:
+                c = 0
+                top_items = []
+                for j, k in temp.items():
+                    if regex.search(j) is not None and c < top:
+                        top_items.append((j, k))
+                        c += 1
+                sorted_tf_idfs[r] = dict(top_items)
+
+                del temp
+                del top_items
+                gc.collect()
+
+        # Merge the dictionaries so we can get max value for each token.
+        top_kv = merge_dicts([v for k, v in sorted_tf_idfs.items()])
+
+        # Sort the tokens by highest-lowest value.
+        top_tokens = OrderedDict(sorted(top_kv.items(),
+                                 key=operator.itemgetter(1), reverse=True))
+
+        # Enumerate the tokens to ensure that order is maintained when writing
+        # to the CSV file.
+        tokens_dict = {t:i for (i, t) in enumerate(top_tokens.keys())
+                       if i < top}
+
+        del top_tokens
+        del top_kv
+        del sorted_tf_idfs
+        gc.collect()
 
         directory = TFIDF_TOKENS_PATH
         if use_lemma:
@@ -45,13 +102,12 @@ def tfidf_to_csv(review_ids, tf_idfs, use_lemma):
                             quoting=csv.QUOTE_MINIMAL)
             wr.writerow(['review_id'] + list(tokens_dict.keys()))
 
-            c = 0
             rows = []
             for r in r_ids:
-                row = ['']*len(ALL_TOKENS)
+                row = ['']*len(tokens_dict.keys())
                 for tok, val in tf_idfs[r].items():
-                    if tok in tokens_dict.keys():
-                        row[tokens_dict[tok]] = round(val, DECIMAL_PLACES)
+                    if tok in tokens_dict.keys() and tok in tf_idfs[r].keys():
+                        row[tokens_dict[tok]] = round(tf_idfs[r][tok], DECIMAL_PLACES)
 
                 row = [r] + row
                 rows.append(row)
@@ -60,7 +116,6 @@ def tfidf_to_csv(review_ids, tf_idfs, use_lemma):
                     logger.warning('Collecting garbage...')
                     rows = []
                     gc.collect()
-                c += 1
 
             # Write any remaining entries to the CSV.
             wr.writerows(rows)
@@ -68,6 +123,7 @@ def tfidf_to_csv(review_ids, tf_idfs, use_lemma):
         return True
     except Exception as e:
         logger.error(e)
+        traceback.print_exc()
         return False
 
 # For some strange reason, moving these operations into their own functions
@@ -90,7 +146,7 @@ def load_tfidf_dict(review_ids, idf_dict, num_procs=8, use_lemma=False):
 
     return tf_idfs
 
-@Field.register_lookup
+#@Field.register_lookup
 class AnyLookup(lookups.In):
     def get_rhs_op(self, connection, rhs):
         return '= ANY(ARRAY(%s))' % rhs
@@ -115,11 +171,6 @@ class Command(BaseCommand):
                 help='If unspecified, TF-IDF will be calculated against the '
                 'entire corpus of reviews.')
         parser.add_argument(
-                '--group', type=str, default='pop', choices=['pop', 'fixed',
-                'missed', 'neutral', 'fm', 'nf', 'nm'], help='If specified, '
-                'only reviews within the population and matching the group '
-                'will be printed to stdout or saved to disk.')
-        parser.add_argument(
                 '--save', default=False, action='store_true',
                 help='If included, save the TF-IDF scores to a CSV file. Else, '
                 'print the results to stdout.')
@@ -138,7 +189,7 @@ class Command(BaseCommand):
                 'saved to disk.')
 
     def handle(self, *args, **options):
-        global ALL_TOKENS, TF_IDFS, DECIMAL_PLACES
+        global TF_IDFS, DECIMAL_PLACES
 
         # Grab the command line arguments.
         use_lemma = options.get('lemma', False)
@@ -146,7 +197,6 @@ class Command(BaseCommand):
         save = options.get('save', False)
         DECIMAL_PLACES = options.get('round', 100)
         top = options.get('top', -1)
-        group = options.get('group', 'pop')
         rand = options.get('rand', -1)
 
         # Start the timer.
@@ -156,43 +206,62 @@ class Command(BaseCommand):
             pop_review_ids = None
             pop_review_ids = query_rIDs(population)
 
-            group_review_ids = None
-            if group == 'pop':
-                group_review_ids = pop_review_ids
-            else:
-                group_review_ids = query_rIDs(group)
+            pop_num_docs = len(pop_review_ids)
+            logger.info('Gathered %i review IDs!' % (pop_num_docs))
 
-            try:
-                pop_num_docs = pop_review_ids.count()
-            except (AttributeError, TypeError) as e:
-                print(e)
-                pop_num_docs = len(pop_review_ids)
-            print(pop_num_docs)
-
-            try:
-                group_num_docs = group_review_ids.count()
-            except (AttributeError, TypeError) as e:
-                print(e)
-                group_num_docs = len(group_review_ids)
-            print(group_num_docs)
-
-            if top <= 0:
-                logger.info('Gathering all tokens...')
-                ALL_TOKENS = query_tokens(pop_review_ids, use_lemma)
-            else:
-                logger.info('Gathering the %i most frequent tokens...' %
-                    (top))
-                ALL_TOKENS = query_top_x_tokens(pop_review_ids, top, use_lemma)
-                print(ALL_TOKENS)
-
+            sample_review_ids = pop_review_ids
             if rand > 0:
-                sample_indices = []
-                for i in range(rand):
-                    sample_indices.append(random.randint(0, group_num_docs))
+                sample_review_ids = []
+                if population == 'all':
+                    neutral = query_rIDs_neutral()
+                    sample_review_ids += query_rIDs_random(neutral, rand)
 
-                sample_reviews = [group_review_ids[i] for i in sample_indices]
-                group_review_ids = sample_reviews
-                group_num_docs = len(group_review_ids)
+                    fixed = query_rIDs_fixed()
+                    sample_review_ids += query_rIDs_random(fixed, rand)
+
+                    missed = query_rIDs_missed()
+                    sample_review_ids += query_rIDs_random(missed, rand)
+
+                    del neutral
+                    del fixed
+                    del missed
+                    gc.collect()
+                elif population == 'nm':
+                    neutral = query_rIDs_neutral()
+                    sample_review_ids += query_rIDs_random(neutral, rand)
+
+                    missed = query_rIDs_missed()
+                    sample_review_ids += query_rIDs_random(missed, rand)
+
+                    del neutral
+                    del missed
+                    gc.collect()
+                elif population == 'fm':
+                    fixed = query_rIDs_fixed()
+                    sample_review_ids += query_rIDs_random(fixed, rand)
+
+                    missed = query_rIDs_missed()
+                    sample_review_ids += query_rIDs_random(missed, rand)
+
+                    del fixed
+                    del missed
+                    gc.collect()
+                elif population == 'nf':
+                    fixed = query_rIDs_fixed()
+                    sample_review_ids += query_rIDs_random(fixed, rand)
+
+                    neutral = query_rIDs_neutral()
+                    sample_review_ids += query_rIDs_random(neutral, rand)
+
+                    del fixed
+                    del missed
+                    gc.collect()
+                else:
+                    nums = random.sample(range(pop_review_ids), rand)
+                    for i in nums:
+                        sample_review_ids.append(pop_review_ids[i])
+
+            sample_num_docs = len(sample_review_ids)
 
             logger.info('Calculating the denominator of IDF...')
             df = query_DF(pop_review_ids, use_lemma)
@@ -215,16 +284,15 @@ class Command(BaseCommand):
 
             # Calculate the TF-IDF values and store them in the global: TF_IDFS.
             logger.info('Calculating TF-IDF for {:,} reviews...'
-                        .format(group_num_docs))
-            TF_IDFS = tfidf.compute(group_review_ids, idf, 8, use_lemma)
+                        .format(sample_num_docs))
+            TF_IDFS = tfidf.compute(sample_review_ids, idf, 8, use_lemma)
 
             if save:
-                logger.info('Saving TF-IDF to a CSV...')
-                tfidf_to_csv(group_review_ids, TF_IDFS, use_lemma)
+                tfidf_to_csv(sample_review_ids, TF_IDFS, use_lemma, top)
             else:
                 print(TF_IDFS)
 
-            assert len(TF_IDFS) == group_num_docs
+            assert len(TF_IDFS) == sample_num_docs
         except KeyboardInterrupt:
             logger.warning('Attempting to abort...')
         finally:
