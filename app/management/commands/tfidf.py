@@ -49,7 +49,7 @@ def merge_dicts(dict_list):
 
     return top_kv
 
-def tfidf_to_csv(review_ids, tf_idfs, use_lemma, top=100):
+def to_csv(review_ids, tf_idfs, use_lemma, top=100):
     """ Convert the given TF-IDF dictionary to a CSV and write to disk. """
     global DECIMAL_PLACES
     logger.info('Saving TF-IDF to a CSV...')
@@ -126,19 +126,30 @@ def tfidf_to_csv(review_ids, tf_idfs, use_lemma, top=100):
         traceback.print_exc()
         return False
 
-# For some strange reason, moving these operations into their own functions
-# causes bizarre errors.
-def get_idf_dict(df, num_docs):
-    return False
+def get_idf_dict(df, pop_num_docs, use_lemma=False):
+    """
+    Calculate the IDF for every token in the population.
+
+    NOTE: At first glance, this may seem like it creates a lot of overhead, but
+    at the end of the day, it really doesn't.
+    """
     idf = dict()
+    text = 'token'
+    if use_lemma:
+        text = 'lemma'
     for item in df:
-        (_token, _df) = (item['token'], item['df'])
-        idf[_token] = math.log(float(num_docs / _df))
+        (_term, _df) = (item[text], item['df'])
+        idf[_term] = math.log(float(pop_num_docs / _df))
 
     return idf
 
 def load_tfidf_dict(review_ids, idf_dict, num_procs=8, use_lemma=False):
-    return False
+    """
+    Call the multiprocessed commands for computing TF-IDF, and return the
+    resulting nested dictionary of the form:
+
+    {review_id:{token:score,...},...}
+    """
     logger.info('Calculating TF-IDF for {:,} reviews...'
                 .format(len(review_ids)))
 
@@ -146,10 +157,61 @@ def load_tfidf_dict(review_ids, idf_dict, num_procs=8, use_lemma=False):
 
     return tf_idfs
 
+def get_random_sample(population, pop_review_ids, rand):
+    sample_review_ids = []
+
+    neutral = query_rIDs_neutral()
+    fixed = query_rIDs_fixed()
+    missed = query_rIDs_missed()
+
+    if population == 'all':
+        sample_review_ids += query_rIDs_random(neutral, rand)
+        sample_review_ids += query_rIDs_random(fixed, rand)
+        sample_review_ids += query_rIDs_random(missed, rand)
+    elif population == 'fm':
+        sample_review_ids += query_rIDs_random(fixed, rand)
+        sample_review_ids += query_rIDs_random(missed, rand)
+    elif population == 'nf':
+        sample_review_ids += query_rIDs_random(neutral, rand)
+        sample_review_ids += query_rIDs_random(fixed, rand)
+    elif population == 'nm':
+        sample_review_ids += query_rIDs_random(neutral, rand)
+        sample_review_ids += query_rIDs_random(missed, rand)
+    else:
+        sample_review_ids += query_rIDs_random(pop_review_ids, rand)
+
+    del neutral
+    del fixed
+    del missed
+    gc.collect()
+
+    return sample_review_ids
+
+#@Field.register_lookup
+#class InList(Lookup):
+#    lookup_name = 'inlist'
+#    function = 'INLIST'
+#
+#    def as_sql(self, compiler, connection):
+#        logger.warning('HI!')
+#        lhs, lhs_params = self.process_lhs(compiler, connection)
+#        rhs, rhs_params = self.process_rhs(compiler, connection)
+#        logger.warning(lhs)
+#        logger.warning(lhs_params)
+#        print(type(lhs_params))
+#        logger.warning(rhs)
+#        logger.warning(rhs_params)
+#        print(type(rhs_params))
+#        params = lhs_params + list(rhs_params)
+#        return '(%s) IN %s' % (lhs, rhs), params
+
+
 #@Field.register_lookup
 class AnyLookup(lookups.In):
     def get_rhs_op(self, connection, rhs):
+        logger.warning('How did I get here?')
         return '= ANY(ARRAY(%s))' % rhs
+
 
 class Command(BaseCommand):
     """ Sets up the command line arguments. """
@@ -211,55 +273,8 @@ class Command(BaseCommand):
 
             sample_review_ids = pop_review_ids
             if rand > 0:
-                sample_review_ids = []
-                if population == 'all':
-                    neutral = query_rIDs_neutral()
-                    sample_review_ids += query_rIDs_random(neutral, rand)
-
-                    fixed = query_rIDs_fixed()
-                    sample_review_ids += query_rIDs_random(fixed, rand)
-
-                    missed = query_rIDs_missed()
-                    sample_review_ids += query_rIDs_random(missed, rand)
-
-                    del neutral
-                    del fixed
-                    del missed
-                    gc.collect()
-                elif population == 'nm':
-                    neutral = query_rIDs_neutral()
-                    sample_review_ids += query_rIDs_random(neutral, rand)
-
-                    missed = query_rIDs_missed()
-                    sample_review_ids += query_rIDs_random(missed, rand)
-
-                    del neutral
-                    del missed
-                    gc.collect()
-                elif population == 'fm':
-                    fixed = query_rIDs_fixed()
-                    sample_review_ids += query_rIDs_random(fixed, rand)
-
-                    missed = query_rIDs_missed()
-                    sample_review_ids += query_rIDs_random(missed, rand)
-
-                    del fixed
-                    del missed
-                    gc.collect()
-                elif population == 'nf':
-                    fixed = query_rIDs_fixed()
-                    sample_review_ids += query_rIDs_random(fixed, rand)
-
-                    neutral = query_rIDs_neutral()
-                    sample_review_ids += query_rIDs_random(neutral, rand)
-
-                    del fixed
-                    del missed
-                    gc.collect()
-                else:
-                    nums = random.sample(range(pop_review_ids), rand)
-                    for i in nums:
-                        sample_review_ids.append(pop_review_ids[i])
+                sample_review_ids = get_random_sample(population,
+                                                      pop_review_ids, rand)
 
             sample_num_docs = len(sample_review_ids)
 
@@ -267,28 +282,20 @@ class Command(BaseCommand):
             df = query_DF(pop_review_ids, use_lemma)
 
             logger.info('Calculating IDF...')
-            idf = dict()
-            if use_lemma:
-                for item in df:
-                    (_lemma, _df) = (item['lemma'], item['df'])
-                    idf[_lemma] = math.log(float(pop_num_docs / _df))
-            else:
-                for item in df:
-                    (_token, _df) = (item['token'], item['df'])
-                    idf[_token] = math.log(float(pop_num_docs / _df))
-
+            idf = get_idf_dict(df, pop_num_docs, use_lemma)
 
             # This is a hack. It closes all connections before running
             # parallel computations.
             connections.close_all()
 
             # Calculate the TF-IDF values and store them in the global: TF_IDFS.
-            logger.info('Calculating TF-IDF for {:,} reviews...'
-                        .format(sample_num_docs))
-            TF_IDFS = tfidf.compute(sample_review_ids, idf, 8, use_lemma)
+            TF_IDFS = load_tfidf_dict(sample_review_ids, idf, 8, use_lemma)
+
+            del idf
+            gc.collect()
 
             if save:
-                tfidf_to_csv(sample_review_ids, TF_IDFS, use_lemma, top)
+                to_csv(sample_review_ids, TF_IDFS, use_lemma, top)
             else:
                 print(TF_IDFS)
 

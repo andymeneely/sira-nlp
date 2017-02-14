@@ -36,6 +36,9 @@ def run_all_analyses(message_ids, save=False):
 
 def run_yngve_analysis(message_ids, save=False):
     global PARSER
+    b = dt.now()
+    logger.info('Running Ygnve analysis for %i messages...'
+                % len(message_ids))
     yngve_dict = {}
     for message in message_ids:
         text = query_mID_text(message)
@@ -48,6 +51,8 @@ def run_yngve_analysis(message_ids, save=False):
 
         yngve_dict[message] = yngve
 
+    print("Calc Yngve: " + str(helpers.get_elapsed(b, dt.now())))
+
     if save:
         to_csv(yngve_dict, 'yngve')
 
@@ -55,6 +60,9 @@ def run_yngve_analysis(message_ids, save=False):
 
 def run_frazier_analysis(message_ids, save=False):
     global PARSER
+    b = dt.now()
+    logger.info('Running Frazier analysis for %i messages...'
+                % len(message_ids))
     frazier_dict = {}
     for message in message_ids:
         text = query_mID_text(message)
@@ -67,6 +75,8 @@ def run_frazier_analysis(message_ids, save=False):
 
         frazier_dict[message] = frazier
 
+    print("Calc Frazier: " + str(helpers.get_elapsed(b, dt.now())))
+
     if save:
         to_csv(frazier_dict, 'frazier')
 
@@ -74,18 +84,26 @@ def run_frazier_analysis(message_ids, save=False):
 
 def run_pdensity_analysis(message_ids, save=False):
     global PARSER
+    logger.info('Running P-Density analysis for %i messages...'
+                % len(message_ids))
     raise NotImplementedError('P-density has not been implemented yet.')
 
 def run_cdensity_analysis(message_ids, save=False):
     global PARSER
+    logger.info('Running C-Density analysis for %i messages...'
+                % len(message_ids))
     raise NotImplementedError('C-density has not been implemented yet.')
 
 def to_csv(results, column):
     global DECIMAL_PLACES
+    logger.info('Saving %s to a CSV...' % (column))
     path = {'yngve': YNGVE_PATH, 'frazier': FRAZIER_PATH,
             'pdensity': PDENSITY_PATH, 'cdensity': CDENSITY_PATH}
+    b = dt.now()
     m_ids = sorted(list(results.keys()))
+    print("Sorting Results: " + str(helpers.get_elapsed(b, dt.now())))
     try:
+        b = dt.now()
         with open(path[column], 'a', newline='') as f:
             wr = csv.writer(f, delimiter=',', quotechar='/',
                             quoting=csv.QUOTE_MINIMAL)
@@ -103,12 +121,46 @@ def to_csv(results, column):
                     gc.collect()
                 c += 1
 
+        print("Writing to CSV: " + str(helpers.get_elapsed(b, dt.now())))
         return True
     except Exception as e:
         logger.error(e)
         return False
 
-@Field.register_lookup
+def get_random_sample(population, pop_message_ids, rand):
+    sample_message_ids = []
+
+    if population == 'all':
+        b = dt.now()
+        sample_message_ids += query_mIDs_random(query_mIDs_neutral(), rand)
+        sample_message_ids += query_mIDs_random(query_mIDs_fixed(), rand)
+        sample_message_ids += query_mIDs_random(query_mIDs_missed(), rand)
+        print("Getting Samples: " + str(helpers.get_elapsed(b, dt.now())))
+    elif population == 'fm':
+        b = dt.now()
+        sample_message_ids += query_mIDs_random(query_mIDs_fixed(), rand)
+        sample_message_ids += query_mIDs_random(query_mIDs_missed(), rand)
+        print("Getting Samples: " + str(helpers.get_elapsed(b, dt.now())))
+    elif population == 'nf':
+        b = dt.now()
+        sample_message_ids += query_mIDs_random(query_mIDs_neutral(), rand)
+        sample_message_ids += query_mIDs_random(query_mIDs_fixed(), rand)
+        print("Getting Samples: " + str(helpers.get_elapsed(b, dt.now())))
+    elif population == 'nm':
+        b = dt.now()
+        sample_message_ids += query_mIDs_random(query_mIDs_neutral(), rand)
+        sample_message_ids += query_mIDs_random(query_mIDs_missed(), rand)
+        print("Getting Samples: " + str(helpers.get_elapsed(b, dt.now())))
+    else:
+        b = dt.now()
+        sample_message_ids += query_mIDs_random(pop_message_ids, rand)
+        print("Getting Samples: " + str(helpers.get_elapsed(b, dt.now())))
+
+    gc.collect()
+
+    return sample_message_ids
+
+#@Field.register_lookup
 class AnyLookup(lookups.In):
     def get_rhs_op(self, connection, rhs):
         return '= ANY(ARRAY(%s))' % rhs
@@ -128,9 +180,9 @@ class Command(BaseCommand):
                 'of syntactic complexity analysis to run. If unspecified, all '
                 'available analyses will be executed.')
         parser.add_argument(
-                '--group', type=str, default='all', choices=['all', 'fixed',
+                '--pop', type=str, default='all', choices=['all', 'fixed',
                 'missed', 'neutral', 'fm', 'nf', 'nm'], help='If specified, '
-                'only messages within the given group will be printed to '
+                'only messages within the given population will be printed to '
                 'stdout or saved to disk.')
         parser.add_argument(
                 '--save', default=False, action='store_true',
@@ -151,30 +203,25 @@ class Command(BaseCommand):
         analysis = options.get('analysis', 'all')
         save = options.get('save', False)
         DECIMAL_PLACES = options.get('round', 100)
-        group = options.get('group', 'pop')
+        population = options.get('pop', 'all')
         rand = options.get('rand', -1)
 
         # Start the timer.
         start = dt.now()
         try:
             logger.info('Gathering message IDs...')
-            group_message_ids = None
-            group_message_ids = query_mIDs(group)
+            pop_message_ids = None
+            b = dt.now()
+            pop_message_ids = query_mIDs(population)
+            print("Gathering IDs: " + str(helpers.get_elapsed(b, dt.now())))
 
-            try:
-                group_num_docs = group_message_ids.count()
-            except (AttributeError, TypeError) as e:
-                print(e)
-                group_num_docs = len(group_message_ids)
+            pop_num_docs = len(pop_message_ids)
 
+            sample_message_ids = pop_message_ids
             if rand > 0:
-                sample_indices = []
-                for i in range(rand):
-                    sample_indices.append(random.randint(0, group_num_docs))
+                sample_message_ids = get_random_sample(population, pop_message_ids, rand)
 
-                sample_messages = [group_message_ids[i] for i in sample_indices]
-                group_message_ids = sample_messages
-                group_num_docs = len(group_message_ids)
+            sample_num_docs = len(sample_message_ids)
 
             # This is a hack. It closes all connections before running
             # parallel computations.
@@ -190,16 +237,12 @@ class Command(BaseCommand):
 
             if analysis in ANALYSES.keys():
                 PARSER = BerkeleyParser(1)
-                results = ANALYSES[analysis](group_message_ids, save)
+                results = ANALYSES[analysis](sample_message_ids, save)
 
-            if save:
-                logger.info('Saving TF-IDF to a CSV...')
-                PARSER.deactivate()
-                pass
-            else:
+            if not save:
                 print(results)
-                PARSER.deactivate()
 
+            PARSER.deactivate()
         except KeyboardInterrupt:
             logger.warning('Attempting to abort...')
         finally:

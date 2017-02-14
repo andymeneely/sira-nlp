@@ -33,7 +33,7 @@ def yngve_redux(treestring):
     """
     For the given treestring, return the word count and the Yngve score.
     """
-    print(treestring)
+#    print(treestring)
     tree = Tree.fromstring(treestring)
     total = float(calc_yngve_score(tree, 0))
     words = float(word_score(tree))
