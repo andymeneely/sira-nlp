@@ -4,9 +4,12 @@
 
 import os
 import pexpect
+import re
 
-JAR_PATH = os.path.join(os.path.dirname(__file__) + "/BerkeleyParser-1.7.jar")
-GRMR_PATH = os.path.join(os.path.dirname(__file__) + "/eng_sm6.gr")
+from app import BERKELEY_JAR_PATH as JAR_PATH
+from app import BERKELEY_GRAMMAR_PATH as GRMR_PATH
+from app.lib import logger
+
 
 class BerkeleyParser(object):
     """
@@ -22,7 +25,7 @@ class BerkeleyParser(object):
         self.parser = pexpect.spawn('java -jar %s -gr %s -nThreads %i' %
                                     (JAR_PATH, GRMR_PATH, num_threads))
 
-        self.pattern('\r\n.*\r\n')
+        self.pattern = '\r\n.*\r\n'
         self.parse('')
 
     def parse(self, text):
@@ -32,26 +35,66 @@ class BerkeleyParser(object):
             INPUT:  I am the walrus.
             OUTPUT: '( (S (NP (PRP I)) (VP (VBP am) (NP (DT the) (NN walrus.)))) )'
         """
-        if type(text) = list:
+        if type(text) == list:
             output = []
             for sent in text:
-                self.parser.sendline(sent)
+                self.parser.sendline(self.__escape(sent))
                 self.parser.expect(self.pattern)
-                output.append(self.parser.after)
+                temp = self.__clean(self.parser.after)
+                if type(temp) == str and temp != '':
+                    output.append(temp)
+                else:
+                    for t in temp:
+                        if t != '':
+                            output.append(t)
 
             return output
-        elif type(text) = str:
-            self.parser.sendline(sent)
+        elif type(text) == str:
+            output = []
+            self.parser.sendline(self.__escape(text))
             self.parser.expect(self.pattern)
 
-            return self.parser.after
+            temp = self.__clean(self.parser.after)
+            if type(temp) == str and temp != '':
+                output.append(temp)
+            else:
+                for t in temp:
+                    if t != '':
+                        output.append(t)
+
+            return output
         else:
             raise InputError('Input to the BerkeleyParser must be of type '
-                             'list or str.')
+                             'list or str, not %s' % (str(type(text))))
 
     def deactivate(self):
         """
         Since the Berkeley Parser is Java and heavy on system resources, we
         have to remember to kill it when we're done using it.
         """
+        logger.warning('Deactivating the Berkeley Parser...')
         self.parser.terminate()
+
+    def __clean(self, bytestring):
+        """
+        The output of the Berkeley Parser is a byte encoded string, so we need
+        to decode it and strip the special sequence '\r\n' in order to get a
+        proper treestring.
+        """
+        treestring = bytestring.decode("utf-8")
+        treestring = re.sub(r'\r\n', '', treestring)
+
+        return treestring.split('\n')
+
+    def __escape(self, text):
+        """
+        The Yngve and Frazier algorithms parse treestrings for matching
+        parentheses, so in order to ensure they don't fail, the treestrings
+        need to have parentheses 'escaped'.
+        """
+        text = re.sub(r'\(', '[', text)
+        text = re.sub(r'\)', ']', text)
+
+        return text
+
+
