@@ -17,6 +17,9 @@ BERKELEY_GRAMMAR_PATH = os.path.join(
     )
 
 # Syntactic Complexity Output
+COMPLEXITY_PATH = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'output/complexity.csv'
+    )
 YNGVE_PATH = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'output/yngve.csv'
     )

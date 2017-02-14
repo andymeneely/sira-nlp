@@ -160,50 +160,43 @@ def load_tfidf_dict(review_ids, idf_dict, num_procs=8, use_lemma=False):
 def get_random_sample(population, pop_review_ids, rand):
     sample_review_ids = []
 
-    neutral = query_rIDs_neutral()
-    fixed = query_rIDs_fixed()
-    missed = query_rIDs_missed()
-
     if population == 'all':
-        sample_review_ids += query_rIDs_random(neutral, rand)
-        sample_review_ids += query_rIDs_random(fixed, rand)
-        sample_review_ids += query_rIDs_random(missed, rand)
+        sample_review_ids += query_rIDs_random(query_rIDs_neutral(), rand)
+        sample_review_ids += query_rIDs_random(query_rIDs_fixed(), rand)
+        sample_review_ids += query_rIDs_random(query_rIDs_missed(), rand)
     elif population == 'fm':
-        sample_review_ids += query_rIDs_random(fixed, rand)
-        sample_review_ids += query_rIDs_random(missed, rand)
+        sample_review_ids += query_rIDs_random(query_rIDs_fixed(), rand)
+        sample_review_ids += query_rIDs_random(query_rIDs_missed(), rand)
     elif population == 'nf':
-        sample_review_ids += query_rIDs_random(neutral, rand)
-        sample_review_ids += query_rIDs_random(fixed, rand)
+        sample_review_ids += query_rIDs_random(query_rIDs_neutral(), rand)
+        sample_review_ids += query_rIDs_random(query_rIDs_fixed(), rand)
     elif population == 'nm':
-        sample_review_ids += query_rIDs_random(neutral, rand)
-        sample_review_ids += query_rIDs_random(missed, rand)
+        sample_review_ids += query_rIDs_random(query_rIDs_neutral(), rand)
+        sample_review_ids += query_rIDs_random(query_rIDs_missed(), rand)
     else:
         sample_review_ids += query_rIDs_random(pop_review_ids, rand)
 
-    del neutral
-    del fixed
-    del missed
     gc.collect()
 
     return sample_review_ids
 
 #@Field.register_lookup
-#class InList(Lookup):
-#    lookup_name = 'inlist'
-#    function = 'INLIST'
-#
-#    def as_sql(self, compiler, connection):
-#        logger.warning('HI!')
-#        lhs, lhs_params = self.process_lhs(compiler, connection)
-#        rhs, rhs_params = self.process_rhs(compiler, connection)
-#        logger.warning(lhs)
-#        logger.warning(lhs_params)
-#        print(type(lhs_params))
-#        logger.warning(rhs)
-#        logger.warning(rhs_params)
-#        print(type(rhs_params))
-#        params = lhs_params + list(rhs_params)
-#        return '(%s) IN %s' % (lhs, rhs), params
+class InList(Lookup):
+    lookup_name = 'inlist'
+    function = 'INLIST'
+
+    def as_sql(self, compiler, connection):
+        logger.warning('HI!')
+        lhs, lhs_params = self.process_lhs(compiler, connection)
+        rhs, rhs_params = self.process_rhs(compiler, connection)
+        logger.warning(lhs)
+        logger.warning(lhs_params)
+        print(type(lhs_params))
+        logger.warning(rhs)
+        logger.warning(rhs_params)
+        print(type(rhs_params))
+        params = lhs_params + list(rhs_params)
+        return '(%s) IN %s' % (lhs, rhs), params
 
 
 #@Field.register_lookup

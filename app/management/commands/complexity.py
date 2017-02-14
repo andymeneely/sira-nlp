@@ -5,6 +5,7 @@
 import csv
 import gc
 import random
+import traceback
 
 from datetime import datetime as dt
 
@@ -14,7 +15,7 @@ from django.db import connections
 from django.db.models import Count, lookups, Lookup
 from django.db.models.fields import Field
 
-from app import YNGVE_PATH, FRAZIER_PATH, PDENSITY_PATH, CDENSITY_PATH
+from app import COMPLEXITY_PATH
 from app.lib import helpers, logger
 from app.lib.nlp.BerkeleyParser import BerkeleyParser
 from app.lib.nlp.complexity import *
@@ -27,12 +28,34 @@ PARSER = None
 
 def run_all_analyses(message_ids, save=False):
     """ Collect all results into a dictionary. """
-    results_dict = {'ygnve': run_yngve_analysis(message_ids,save),
-                    'frazier': run_frazier_analysis(message_ids,save),
-                    'pdensity': run_pdensity_analysis(message_ids,save),
-                    'cdensity': run_cdensity_analysis(message_ids,save)}
 
-    return results_dict
+    results = run_syntactic_complexity(message_ids, save)
+
+    return results
+
+def run_syntactic_complexity(message_ids, save=False):
+    global PARSER
+    results = {}
+    for message in message_ids:
+        text = query_mID_text(message)
+        sents = NLTKSentenizer(text).execute()
+        treestrings = PARSER.parse(sents)
+        try:
+            yngve = get_mean_yngve(treestrings)
+        except ZeroDivisionError:
+            yngve = 0
+        try:
+            frazier = get_mean_frazier(treestrings)
+        except ZeroDivisionError:
+            frazier = 0
+
+        results[message] = {'yngve': yngve, 'frazier': frazier}
+        print(results[message])
+
+    if save:
+        to_csv(results, 'yngve', 'frazier')
+
+    return results
 
 def run_yngve_analysis(message_ids, save=False):
     global PARSER
@@ -47,7 +70,7 @@ def run_yngve_analysis(message_ids, save=False):
         try:
             yngve = get_mean_yngve(treestrings)
         except ZeroDivisionError:
-            yngve = 0.0
+            yngve = 0
 
         yngve_dict[message] = yngve
 
@@ -94,25 +117,36 @@ def run_cdensity_analysis(message_ids, save=False):
                 % len(message_ids))
     raise NotImplementedError('C-density has not been implemented yet.')
 
-def to_csv(results, column):
+def to_csv(results, key1, key2=None):
     global DECIMAL_PLACES
-    logger.info('Saving %s to a CSV...' % (column))
-    path = {'yngve': YNGVE_PATH, 'frazier': FRAZIER_PATH,
-            'pdensity': PDENSITY_PATH, 'cdensity': CDENSITY_PATH}
+#    logger.info('Saving %s and %s results to a CSV...' % (key1,key2))
     b = dt.now()
     m_ids = sorted(list(results.keys()))
     print("Sorting Results: " + str(helpers.get_elapsed(b, dt.now())))
     try:
         b = dt.now()
-        with open(path[column], 'a', newline='') as f:
+        with open(COMPLEXITY_PATH, 'a', newline='') as f:
             wr = csv.writer(f, delimiter=',', quotechar='/',
                             quoting=csv.QUOTE_MINIMAL)
-            wr.writerow(['message_id', column])
+            temp = ['message_id', key1]
+            if key2 is not None:
+                temp = temp + [key2]
+            wr.writerow(temp)
+
+            del temp
 
             c = 0
             rows = []
             for m in m_ids:
-                rows.append([m, round(results[m], DECIMAL_PLACES)])
+                temp = []
+                if key2 is not None:
+                    temp = [m, round(results[m][key1], DECIMAL_PLACES),
+                            round(results[m][key2], DECIMAL_PLACES)]
+                else:
+                    temp = [m, round(results[m], DECIMAL_PLACES)]
+
+                rows.append(temp)
+                del temp
 
                 if len(rows) == 200:
                     wr.writerows(rows)
@@ -121,10 +155,16 @@ def to_csv(results, column):
                     gc.collect()
                 c += 1
 
+            wr.writerows(rows)
+            logger.warning('Collecting garbage...')
+            rows = []
+            gc.collect()
+
         print("Writing to CSV: " + str(helpers.get_elapsed(b, dt.now())))
         return True
     except Exception as e:
         logger.error(e)
+        traceback.print_exc()
         return False
 
 def get_random_sample(population, pop_message_ids, rand):
@@ -176,9 +216,9 @@ class Command(BaseCommand):
         """
         parser.add_argument(
                 'analysis', type=str, default='all', choices=['all', 'yngve',
-                'frazier', 'p-density', 'c-density'], help='Specify the type '
-                'of syntactic complexity analysis to run. If unspecified, all '
-                'available analyses will be executed.')
+                'syntactic', 'frazier'], help='Specify the type of complexity '
+                'analysis to run. If unspecified, all available analyses will '
+                'be executed.')
         parser.add_argument(
                 '--pop', type=str, default='all', choices=['all', 'fixed',
                 'missed', 'neutral', 'fm', 'nf', 'nm'], help='If specified, '
@@ -232,10 +272,12 @@ class Command(BaseCommand):
             ANALYSES = {'all': run_all_analyses,
                         'yngve': run_yngve_analysis,
                         'frazier': run_frazier_analysis,
-                        'p-density': run_pdensity_analysis,
-                        'c-density': run_cdensity_analysis}
+                        'syntactic': run_syntactic_complexity}
 
             if analysis in ANALYSES.keys():
+                # The number of threads for the Berkeley Parser is hardcoded
+                # to 1 because setting to any of the other accepted values
+                # (1-4) causes timeouts.
                 PARSER = BerkeleyParser(1)
                 results = ANALYSES[analysis](sample_message_ids, save)
 

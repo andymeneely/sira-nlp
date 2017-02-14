@@ -66,7 +66,7 @@ def calc_frazier_score(tree, parent, parent_label):
                     score = (0 if is_sent(parent_label) else parent + 1.5)
                 elif my_lab != '' and my_lab != "ROOT" and my_lab != "TOP":
                     score = parent+1
-                    c += calc_frazier_score(child, score, my_lab)
+            c += calc_frazier_score(child, score, my_lab)
         return c
 
 def get_mean_frazier(treestrings):
@@ -78,6 +78,7 @@ def get_mean_frazier(treestrings):
         tree = Tree.fromstring(tree_line)
         sentences += 1
         raw_frazier_score = calc_frazier_score(tree, 0, "")
+#        print(raw_frazier_score)
         try:
             total_word_count += word_score(tree)
             total_frazier_score += raw_frazier_score
