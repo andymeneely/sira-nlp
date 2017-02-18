@@ -17,7 +17,7 @@ class PreprocessorTestCase(TestCase):
         expected = [
                 'gulf', 'applied', 'technologies', 'inc', 'say',
                 'sell', 'subsidiary', 'engage', 'pipeline', 'terminal',
-                'operation', '12.2', 'mln', 'dlrs', 'company', 'say', 'sale',
+                'operation', 'mln', 'dlrs', 'company', 'say', 'sale',
                 'subject', 'certain', 'post', 'close', 'adjustment',
                 'explain', 'reuter'
             ]
