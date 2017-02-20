@@ -2,131 +2,93 @@
 @AUTHOR: meyersbs
 """
 
-import math
 import csv
-import gc
-import operator
-import random
-import itertools
+import math
 import traceback
-import re
 
-from collections import OrderedDict
 from datetime import datetime as dt
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connections
-from django.db.models import Count, lookups, Lookup
-from django.db.models.fields import Field
 
 from app import TFIDF_TOKENS_PATH, TFIDF_LEMMAS_PATH
-from app.lib import helpers, logger
-from app.lib.nlp import tfidf
+from app.lib import helpers
+from app.lib.logger import *
+from app.lib.nlp import tfidf, tokenremover
 from app.models import *
 from app.queryStrings import *
 
-TF_IDFS = None
-DECIMAL_PLACES = 100
 
-def merge_dicts(dict_list):
+def get_types(tfidfs, max_length, top):
     """
-    Given a list of dictionaries, merge them all, appending values for
-    duplicate keys to a list. Return a dictionary containing all unique keys
-    and their maximum value.
+    Return unique types (tokens/lemmas) composed from multiple documents.
+
+    Parameters
+    ----------
+    tfidfs: dict
+        A dictionary with review identifier as key and the correponding value
+        is either {'token': tfidf} or {'lemma': tfidf} of all token or lemma in
+        the code review.
+    max_length: int
+        The maximum length of the types that must be included.
+    top: int
+        Number of types to select from each code review. The assumption is that
+        the {'token': tfidf} or {'lemma': tfidf} dictionaries corresponding to
+        each review identifier is order by tfidf. The assumption is enforced by
+        app.lib.nlp.tfidf.
+
+    Returns
+    -------
+    types: list
+        A list of unique types identified from all reviews.
     """
-    d = {}
-    for dic in dict_list:
-        for key in dic.keys():
-            try:
-                d[key].append(dic[key])
-            except KeyError:
-                d[key] = [dic[key]]
+    types = set()
+    for tfidf in tfidfs.values():
+        types |= set(
+                tokenremover.TokenRemover(
+                    tfidf.keys(), configuration={'WL': {'length': max_length}}
+                ).execute()[:top]
+            )
+    return types
 
-    top_kv = {}
-    for k, v in d.items():
-        top_kv[k] = max(v)
 
-    return top_kv
+def write_csvs(tf_idfs, filepath, chunksize, types):
+    """ Writer TF-IDF dictionary to one or more CSV files. """
+    info('  Saving TF-IDF to a CSV file(s)')
+    chunks = helpers.chunk(list(tf_idfs.items()), size=chunksize)
+    for (index, chunk) in enumerate(chunks):
+        _write_chunk(filepath.format(index), dict(chunk), types)
 
-def to_csv(review_ids, tf_idfs, use_lemma, top=100):
-    """ Convert the given TF-IDF dictionary to a CSV and write to disk. """
-    global DECIMAL_PLACES
-    logger.info('Saving TF-IDF to a CSV...')
-    try:
-        rows = []
-        r_ids = sorted(list([i for i in review_ids if i is not None]))
 
-        # Sort the TF-IDF values and gather their keys.
-        sorted_tf_idfs = {}
-        regex = re.compile('^[a-zA-Z]+$')
-        for r in r_ids:
-            temp = dict(sorted(tf_idfs[r].items(), key=operator.itemgetter(1),
-                        reverse=True))
-            # We only care about a subset of the keys.
-            if len(temp.keys()) > 0:
-                c = 0
-                top_items = []
-                for j, k in temp.items():
-                    if regex.search(j) is not None and c < top:
-                        top_items.append((j, k))
-                        c += 1
-                sorted_tf_idfs[r] = dict(top_items)
+def _write_chunk(filepath, tfidfs, master_types):
+    debug('_write_chunk: {}'.format(filepath))
+    types = set()
+    for tfidf in tfidfs.values():
+        types |= set(tfidf.keys())
+    types &= master_types
+    debug('{:,} unique types'.format(len(types)))
 
-                del temp
-                del top_items
-                gc.collect()
+    types_list = list(types)
+    indices = {type_: index for (index, type_) in enumerate(types_list)}
+    rows = [['review_id'] + types_list]
+    for (r, tfidf) in tfidfs.items():
+        row = [''] * len(types)
+        for token in (set(tfidf.keys()) & types):
+            row[indices[token]] = '{:.6e}'.format(tfidf[token])
+        rows.append([r] + row)
+    _write_csv(filepath, rows)
 
-        # Merge the dictionaries so we can get max value for each token.
-        top_kv = merge_dicts([v for k, v in sorted_tf_idfs.items()])
 
-        # Sort the tokens by highest-lowest value.
-        top_tokens = OrderedDict(sorted(top_kv.items(),
-                                 key=operator.itemgetter(1), reverse=True))
+def _write_csv(filepath, rows):
+    debug('_write_csv: {} {}'.format(filepath, len(rows)))
+    with open(filepath, 'w', newline='') as f:
+        wr = csv.writer(f)
+        wr.writerows(rows)
+        info('  {:,} row(s) written to {}'.format(len(rows), filepath))
 
-        # Enumerate the tokens to ensure that order is maintained when writing
-        # to the CSV file.
-        tokens_dict = {t:i for (i, t) in enumerate(top_tokens.keys())
-                       if i < top}
 
-        del top_tokens
-        del top_kv
-        del sorted_tf_idfs
-        gc.collect()
-
-        directory = TFIDF_TOKENS_PATH
-        if use_lemma:
-            directory = TFIDF_LEMMAS_PATH
-        with open(directory, 'a', newline='') as f:
-            wr = csv.writer(f, delimiter=',', quotechar='/',
-                            quoting=csv.QUOTE_MINIMAL)
-            wr.writerow(['review_id'] + list(tokens_dict.keys()))
-
-            rows = []
-            for r in r_ids:
-                row = ['']*len(tokens_dict.keys())
-                for tok, val in tf_idfs[r].items():
-                    if tok in tokens_dict.keys() and tok in tf_idfs[r].keys():
-                        row[tokens_dict[tok]] = round(tf_idfs[r][tok], DECIMAL_PLACES)
-
-                row = [r] + row
-                rows.append(row)
-                if len(rows) == 200:
-                    wr.writerows(rows)
-                    logger.warning('Collecting garbage...')
-                    rows = []
-                    gc.collect()
-
-            # Write any remaining entries to the CSV.
-            wr.writerows(rows)
-
-        return True
-    except Exception as e:
-        logger.error(e)
-        traceback.print_exc()
-        return False
-
-def get_idf_dict(df, pop_num_docs, use_lemma=False):
+def get_idf_dict(df, pop_num_docs, use_tokens=False):
     """
     Calculate the IDF for every token in the population.
 
@@ -134,28 +96,24 @@ def get_idf_dict(df, pop_num_docs, use_lemma=False):
     at the end of the day, it really doesn't.
     """
     idf = dict()
-    text = 'token'
-    if use_lemma:
-        text = 'lemma'
+    text = 'token' if use_tokens else 'lemma'
     for item in df:
         (_term, _df) = (item[text], item['df'])
         idf[_term] = math.log(float(pop_num_docs / _df))
-
     return idf
 
-def load_tfidf_dict(review_ids, idf_dict, num_procs=8, use_lemma=False):
+
+def load_tfidf_dict(review_ids, idf_dict, num_procs=8, use_tokens=False):
     """
     Call the multiprocessed commands for computing TF-IDF, and return the
     resulting nested dictionary of the form:
 
     {review_id:{token:score,...},...}
     """
-    logger.info('Calculating TF-IDF for {:,} reviews...'
-                .format(len(review_ids)))
-
-    tf_idfs = tfidf.compute(review_ids, idf_dict, num_procs, use_lemma)
-
+    info('  Calculating TF-IDF for {:,} reviews'.format(len(review_ids)))
+    tf_idfs = tfidf.compute(review_ids, idf_dict, num_procs, not use_tokens)
     return tf_idfs
+
 
 def get_random_sample(population, pop_review_ids, rand):
     sample_review_ids = []
@@ -176,34 +134,7 @@ def get_random_sample(population, pop_review_ids, rand):
     else:
         sample_review_ids += query_rIDs_random(pop_review_ids, rand)
 
-    gc.collect()
-
     return sample_review_ids
-
-#@Field.register_lookup
-class InList(Lookup):
-    lookup_name = 'inlist'
-    function = 'INLIST'
-
-    def as_sql(self, compiler, connection):
-        logger.warning('HI!')
-        lhs, lhs_params = self.process_lhs(compiler, connection)
-        rhs, rhs_params = self.process_rhs(compiler, connection)
-        logger.warning(lhs)
-        logger.warning(lhs_params)
-        print(type(lhs_params))
-        logger.warning(rhs)
-        logger.warning(rhs_params)
-        print(type(rhs_params))
-        params = lhs_params + list(rhs_params)
-        return '(%s) IN %s' % (lhs, rhs), params
-
-
-#@Field.register_lookup
-class AnyLookup(lookups.In):
-    def get_rhs_op(self, connection, rhs):
-        logger.warning('How did I get here?')
-        return '= ANY(ARRAY(%s))' % rhs
 
 
 class Command(BaseCommand):
@@ -216,85 +147,89 @@ class Command(BaseCommand):
         """
         """
         parser.add_argument(
-                '--lemma', default=False, action='store_true',
-                help='If included, TF-IDF will be calculated on lemmas instead '
-                'of tokens.')
+                '--processes', dest='processes', type=int,
+                default=settings.CPU_COUNT,
+                help='Number of processes to spawn. Default is {}'.format(
+                        settings.CPU_COUNT
+                    )
+            )
         parser.add_argument(
-                '--pop', type=str, default='all', choices=['all', 'fixed',
-                'missed', 'fm', 'nf', 'nm', '2008', '2009', '2010', '2011',
-                '2012', '2013', '2014', '2015', '2016', 'random', 'neutral'],
+                '--use-tokens', default=False, action='store_true',
+                help='When set, TF-IDF will be calculated on tokens instead'
+                     ' of lemmas.'
+            )
+        parser.add_argument(
+                '--population', type=str, default='all',
+                choices=['all', 'fm', 'nf', 'nm'],
                 help='If unspecified, TF-IDF will be calculated against the '
-                'entire corpus of reviews.')
+                     'entire corpus of reviews. Default is all.'
+            )
         parser.add_argument(
-                '--save', default=False, action='store_true',
-                help='If included, save the TF-IDF scores to a CSV file. Else, '
-                'print the results to stdout.')
+                '--chunksize', dest='chunksize', type=int, default=5000,
+                help='Number of rows in each CSV chunk. Default is 1000.'
+            )
         parser.add_argument(
-                '--round', type=int, default=100, help="If specified, TF-IDF "
-                "scores will be rounded to the given number of decimal "
-                "places. The default is 100 (don't round).")
+                '--maxlength', dest='maxlength', type=int, default=35,
+                help='Maximum length of the token/lemma to include in the'
+                     'analysis. Default is 35.'
+            )
         parser.add_argument(
-                '--top', type=int, default=-1, help='If specified, TF-IDF '
-                'will only be calculated for the most frequent number of '
-                'tokens provided. The default is to calculate for all '
-                'tokens.')
+                '--top', type=int, default=100,
+                help='If specified, TF-IDF will only be calculated for the '
+                'most frequent number of tokens provided. The default is to '
+                'calculate for all tokens. Default is 100.'
+            )
         parser.add_argument(
-                '--rand', type=int, default=-1, help='If specified, a random '
-                'sampling of the given size will be printed to stdout or '
-                'saved to disk.')
+                '--random', type=int, default=None,
+                help='If specified, a random sampling of the given size will '
+                'be printed to stdout or saved to disk. Default is 1000.'
+            )
 
     def handle(self, *args, **options):
-        global TF_IDFS, DECIMAL_PLACES
-
         # Grab the command line arguments.
-        use_lemma = options.get('lemma', False)
-        population = options.get('pop', 'all')
-        save = options.get('save', False)
-        DECIMAL_PLACES = options.get('round', 100)
-        top = options.get('top', -1)
-        rand = options.get('rand', -1)
+        processes = options['processes']
+        use_tokens = options['use_tokens']
+        population = options['population']
+        chunksize = options['chunksize']
+        max_length = options['maxlength']
+        top = options['top']
+        random = options['random']
 
-        # Start the timer.
-        start = dt.now()
+        begin = dt.now()
         try:
-            logger.info('Gathering review IDs...')
-            pop_review_ids = None
-            pop_review_ids = query_rIDs(population)
+            info('tfidf Command')
 
+            pop_review_ids = query_rIDs(population)
             pop_num_docs = len(pop_review_ids)
-            logger.info('Gathered %i review IDs!' % (pop_num_docs))
+            info('  Population has {:,} reviews'.format(pop_num_docs))
 
             sample_review_ids = pop_review_ids
-            if rand > 0:
-                sample_review_ids = get_random_sample(population,
-                                                      pop_review_ids, rand)
-
+            if random is not None:
+                sample_review_ids = get_random_sample(
+                        population, pop_review_ids, random
+                    )
             sample_num_docs = len(sample_review_ids)
 
-            logger.info('Calculating the denominator of IDF...')
-            df = query_DF(pop_review_ids, use_lemma)
+            info('  Computing the denominator of IDF')
+            df = query_DF(pop_review_ids, use_tokens)
 
-            logger.info('Calculating IDF...')
-            idf = get_idf_dict(df, pop_num_docs, use_lemma)
+            info('  Computing the IDF in TF-IDF')
+            idf = get_idf_dict(df, pop_num_docs, use_tokens)
 
-            # This is a hack. It closes all connections before running
-            # parallel computations.
-            connections.close_all()
+            connections.close_all()  # Hack
+            tfidfs = load_tfidf_dict(
+                    sample_review_ids, idf, processes, use_tokens
+                )
 
-            # Calculate the TF-IDF values and store them in the global: TF_IDFS.
-            TF_IDFS = load_tfidf_dict(sample_review_ids, idf, 8, use_lemma)
+            types = get_types(tfidfs, max_length, top)
+            info('  {:,} types chosen'.format(len(types)))
+            filepath = TFIDF_TOKENS_PATH if use_tokens else TFIDF_LEMMAS_PATH
+            write_csvs(tfidfs, filepath, chunksize, types)
 
-            del idf
-            gc.collect()
-
-            if save:
-                to_csv(sample_review_ids, TF_IDFS, use_lemma, top)
-            else:
-                print(TF_IDFS)
-
-            assert len(TF_IDFS) == sample_num_docs
+            assert len(tfidfs) == sample_num_docs
         except KeyboardInterrupt:
-            logger.warning('Attempting to abort...')
+            warning('Attempting to abort.')
         finally:
-            logger.info('Time: {:.2f} minutes.'
-                .format(helpers.get_elapsed(start, dt.now())))
+            info('Time: {:.2f} mins'.format(
+                    helpers.get_elapsed(begin, dt.now())
+                ))
