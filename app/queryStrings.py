@@ -2,6 +2,7 @@
 @AUTHOR: meyersbs
 """
 
+import math
 import random
 
 from django.contrib.postgres import fields
@@ -239,10 +240,11 @@ def query_rIDs_all():
 
 def query_rIDs_random(review_ids, rand):
     """ Returns a list of all review IDs in the corpus. """
-    queryResults = list(Review.objects.filter(id__in=review_ids) \
-        .order_by('?').values_list('id', flat=True)[0:rand])
-
-    return queryResults
+    queryResults = list(
+            Review.objects.filter(id__in=review_ids)
+            .order_by('?').values_list('id', flat=True)
+        )
+    return random.sample(queryResults, math.floor(len(queryResults) * rand))
 
 def query_rIDs_year(year):
     """ Returns a list of review IDs from the specified year. """
