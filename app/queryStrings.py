@@ -2,10 +2,12 @@
 @AUTHOR: meyersbs
 """
 
+import json
 import random
 
 from django.contrib.postgres import fields
 from django.db.models import Count, Sum, Q
+from django.db.models.functions import Cast
 from itertools import chain
 
 from app.models import *
@@ -57,6 +59,34 @@ def query_DF(review_ids, use_lemma=False):
         queryResults = ReviewTokenView.objects \
             .filter(review_id__in=review_ids).values('token') \
             .annotate(df=Count('token')).order_by('-df')
+
+    return queryResults
+
+#### Complexity ################################################################
+def query_rIDs_empty():
+    """
+    Return a list of review IDs that have messages containing a complexity
+    field that has not been populated (denoted by '{}').
+    """
+    queryResults = Message.objects.filter(complexity__exact={}) \
+        .values_list('review_id', flat=True)
+
+    return queryResults
+
+# Doesn't Work.
+def query_rIDs_zeros():
+    """
+    Return a list of review IDs that have messages containing a complexity
+    field populated with all zeros: {'yngve': 0, 'pdensity': 0, 'frazier': 0}.
+    """
+    q1 = json.dumps({'yngve': 0.0})
+    q2 = Q(complexity__contains={'frazier': 0.1})
+    q3 = Q(complexity__contains={'pdensity': 0.0})
+
+    queryResults = Message.objects.annotate(comp=Cast('complexity', models.TextField())) \
+        .values_list('review_id', 'comp')
+
+#    print(queryResults)
 
     return queryResults
 
@@ -237,6 +267,7 @@ def query_rIDs_all():
 
     ALL_RIDS = list(queryResults)
 
+#    print(ALL_RIDS)
     return ALL_RIDS
 
 def query_rIDs_random(review_ids, rand):
@@ -288,16 +319,22 @@ def query_rIDs_neutral():
     """
     Returns a list of review IDs that have not fixed or missed a vulnerability.
     """
-    global NEUTRAL_RIDS
+    global NEUTRAL_RIDS, ALL_RIDS, FIXED_RIDS, MISSED_RIDS
     if len(NEUTRAL_RIDS) > 0:
         return NEUTRAL_RIDS
 
-    missed = query_rIDs_missed()
-    nm = query_rIDs_nm(ret='raw')
-    queryResults = nm.exclude(id__in=missed) \
-        .values_list('id', flat=True)
+    fixed = query_rIDs_fixed()
+    nf = query_rIDs_nf()
 
-    NEUTRAL_RIDS = list(queryResults)
+    if ALL_RIDS == []:
+        query_rIDs_all()
+    if FIXED_RIDS == []:
+        query_rIDs_fixed()
+    if MISSED_RIDS == []:
+        query_rIDs_missed()
+
+    NEUTRAL_RIDS = list(set(ALL_RIDS) - set(FIXED_RIDS))
+    NEUTRAL_RIDS = list(set(NEUTRAL_RIDS) - set(MISSED_RIDS))
 
     return NEUTRAL_RIDS
 

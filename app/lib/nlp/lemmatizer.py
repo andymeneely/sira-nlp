@@ -35,7 +35,7 @@ class Lemmatizer(object):
                                   "the NLTKLemmatizer.")
 
 
-def fix(token, lemma, next=None, prev=None):
+def fix(token, lemma, prev=None, next=None):
     """
     Attempts to fix lemmatization errors with hardcoded rules.
     """

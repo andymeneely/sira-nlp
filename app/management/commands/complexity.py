@@ -23,6 +23,8 @@ from app.lib.nlp.sentenizer import NLTKSentenizer
 from app.models import *
 from app.queryStrings import *
 
+from splat.complexity.idea_density import *
+
 DECIMAL_PLACES = 100
 PARSER = None
 
@@ -33,13 +35,50 @@ def run_all_analyses(message_ids, save=False):
 
     return results
 
-def run_syntactic_complexity(message_ids, save=False):
+def run_syntactic_complexity_corenlp(parse_list):
+    """
+    This is a special function for putting the complexity results into the
+    database. Use with caution!
+    """
+
+    new_list = []
+
+    for treestring in parse_list:
+        tree = re.sub(r'  ', ' ', treestring)
+        tree = re.sub(r'\n', '', tree)
+        tree = re.sub(r'ROOT', '', tree)
+        new_list.append(tree)
+
+    try:
+        yngve = get_mean_yngve(new_list)
+    except ZeroDivisionError:
+        yngve = 'X'
+    try:
+        frazier = get_mean_frazier(new_list)
+    except ZeroDivisionError:
+        frazier = 'X'
+    try:
+        # calc_idea() returns the tuple, (mean, min, max) pdensity.
+        pdensity = calc_idea(new_list)[0]
+    except (ZeroDivisionError, IndexError):
+        pdensity = 'X'
+
+    return {'yngve': yngve, 'frazier': frazier, 'pdensity': pdensity}
+
+def run_syntactic_complexity(message_ids, save=False, no_mID=False):
     global PARSER
     results = {}
+    results_list = []
     for message in message_ids:
-        text = query_mID_text(message)
-        sents = NLTKSentenizer(text).execute()
-        treestrings = PARSER.parse(sents)
+        text = ''
+        if no_mID:
+            text = message
+            sents = NLTKSentenizer(text).execute()
+            treestrings = BerkeleyParser(1).parse(sents)
+        else:
+            text = query_mID_text(message)
+            sents = NLTKSentenizer(text).execute()
+            treestrings = PARSER.parse(sents)
         try:
             yngve = get_mean_yngve(treestrings)
         except ZeroDivisionError:
@@ -48,16 +87,24 @@ def run_syntactic_complexity(message_ids, save=False):
             frazier = get_mean_frazier(treestrings)
         except ZeroDivisionError:
             frazier = 0
+        try:
+            # calc_idea() returns the tuple, (mean, min, max) pdensity.
+            pdensity = calc_idea(treestrings)[0]
+        except ZeroDivisionError:
+            pdensity = 0
 
-        results[message] = {'yngve': yngve, 'frazier': frazier}
-        print(results[message])
+        results[message] = {'yngve': yngve, 'frazier': frazier,
+                            'pdensity': pdensity}
+
+        if no_mID:
+            return results[message]
 
     if save:
-        to_csv(results, 'yngve', 'frazier')
+        to_csv(results, 'yngve', 'frazier', 'pdensity')
 
     return results
 
-def run_yngve_analysis(message_ids, save=False):
+def run_yngve_analysis(message_ids, save=False, parser=None):
     global PARSER
     b = dt.now()
     logger.info('Running Ygnve analysis for %i messages...'
@@ -81,7 +128,7 @@ def run_yngve_analysis(message_ids, save=False):
 
     return yngve_dict
 
-def run_frazier_analysis(message_ids, save=False):
+def run_frazier_analysis(message_ids, save=False, parser=None):
     global PARSER
     b = dt.now()
     logger.info('Running Frazier analysis for %i messages...'
@@ -105,19 +152,17 @@ def run_frazier_analysis(message_ids, save=False):
 
     return frazier_dict
 
-def run_pdensity_analysis(message_ids, save=False):
-    global PARSER
+def run_pdensity_analysis(message_ids, save=False, parser=None):
     logger.info('Running P-Density analysis for %i messages...'
                 % len(message_ids))
     raise NotImplementedError('P-density has not been implemented yet.')
 
-def run_cdensity_analysis(message_ids, save=False):
-    global PARSER
+def run_cdensity_analysis(message_ids, save=False, parser=None):
     logger.info('Running C-Density analysis for %i messages...'
                 % len(message_ids))
     raise NotImplementedError('C-density has not been implemented yet.')
 
-def to_csv(results, key1, key2=None):
+def to_csv(results, key1, key2=None, key3=None):
     global DECIMAL_PLACES
 #    logger.info('Saving %s and %s results to a CSV...' % (key1,key2))
     b = dt.now()
@@ -131,6 +176,8 @@ def to_csv(results, key1, key2=None):
             temp = ['message_id', key1]
             if key2 is not None:
                 temp = temp + [key2]
+            if key3 is not None:
+                temp = temp + [key3]
             wr.writerow(temp)
 
             del temp
@@ -139,7 +186,11 @@ def to_csv(results, key1, key2=None):
             rows = []
             for m in m_ids:
                 temp = []
-                if key2 is not None:
+                if key3 is not None and key2 is not None:
+                    temp = [m, round(results[m][key1], DECIMAL_PLACES),
+                            round(results[m][key2], DECIMAL_PLACES),
+                            round(results[m][key3], DECIMAL_PLACES)]
+                elif key2 is not None:
                     temp = [m, round(results[m][key1], DECIMAL_PLACES),
                             round(results[m][key2], DECIMAL_PLACES)]
                 else:

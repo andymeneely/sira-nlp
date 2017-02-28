@@ -178,6 +178,8 @@ def get_random_sample(population, pop_review_ids, rand):
 
     gc.collect()
 
+    print(len(set(sample_review_ids)))
+
     return sample_review_ids
 
 #@Field.register_lookup

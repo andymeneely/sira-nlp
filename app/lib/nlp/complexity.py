@@ -1,6 +1,7 @@
 """
 @AUTHOR: meyersbs
 """
+import re
 
 from app.lib import logger
 from nltk.tree import Tree
@@ -44,12 +45,21 @@ def get_mean_yngve(treestrings):
     """ Average all of the yngve scores for the given input. """
     c = 0
     total = 0
+    if type(treestrings) != list:
+        raise ValueError('Input to get_mean_yngve() must be a list of strings.')
+
     for treestring in treestrings:
         results = yngve_redux(treestring)
         total += results[0]
         c += results[1]
 
-    return float(total / c)
+    try:
+        score = float(total / c)
+    except ZeroDivisionError:
+        logger.warning('ZeroDivisionError for Yngve calculation.')
+        score = 0.0
+
+    return score
 
 def calc_frazier_score(tree, parent, parent_label):
     """ Calculate the Frazier scores for the given input. """
@@ -72,13 +82,15 @@ def calc_frazier_score(tree, parent, parent_label):
 def get_mean_frazier(treestrings):
     """ Average all of the Frazier scores for the given input. """
     sentences, total_frazier_score, total_word_count = 0, 0, 0
+    if type(treestrings) != list:
+        raise ValueError('Input to get_mean_frazier() must be a list of '
+                         'strings.')
     for tree_line in treestrings:
         if tree_line.strip() == "":
             continue
         tree = Tree.fromstring(tree_line)
         sentences += 1
         raw_frazier_score = calc_frazier_score(tree, 0, "")
-#        print(raw_frazier_score)
         try:
             total_word_count += word_score(tree)
             total_frazier_score += raw_frazier_score
@@ -86,6 +98,10 @@ def get_mean_frazier(treestrings):
             logger.warning('ZeroDivisionError for the treestring: ' + str(tree))
             pass
 
-    score = float(total_frazier_score) / float(total_word_count)
+    try:
+        score = float(total_frazier_score) / float(total_word_count)
+    except ZeroDivisionError:
+        logger.warning('ZeroDivisionError for Frazier calculation.')
+        score = 0.0
 
     return score

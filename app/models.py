@@ -89,6 +89,7 @@ class Message(models.Model):
     text = models.TextField(default='')
 
     sentiment = fields.JSONField(default=dict)
+    complexity = fields.JSONField(default=dict)
 
     # Navigation Fields
     review = models.ForeignKey('Review')
