@@ -2,15 +2,16 @@ import os
 
 # TF-IDF Output
 TFIDF_TOKENS_PATH = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'output/tfidf_tokens.csv'
+        os.path.dirname(os.path.abspath(__file__)), 'output/tokens.{}.csv'
     )
 TFIDF_LEMMAS_PATH = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'output/tfidf_lemmas.csv'
+        os.path.dirname(os.path.abspath(__file__)), 'output/lemmas.(}.csv'
     )
 
 # Berkeley Parser
 BERKELEY_JAR_PATH = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'lib/nlp/BerkeleyParser-1.7.jar'
+        os.path.dirname(os.path.abspath(__file__)),
+        'lib/nlp/BerkeleyParser-1.7.jar'
     )
 BERKELEY_GRAMMAR_PATH = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'lib/nlp/eng_sm6.gr'
@@ -32,4 +33,3 @@ PDENSITY_PATH = os.path.join(
 CDENSITY_PATH = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'output/cdensity.csv'
     )
-

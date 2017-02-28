@@ -2,7 +2,7 @@
 @AUTHOR: meyersbs
 """
 
-import json
+import math
 import random
 
 from django.contrib.postgres import fields
@@ -29,15 +29,13 @@ NF_MIDS = []
 FM_MIDS = []
 
 #### TF-IDF ####################################################################
-def query_TF_dict(review_id, use_lemma=False):
+def query_TF_dict(review_id, use_tokens=False):
     """
     Returns the numerator of TF, the number of occurrences of the token in
     the review.
     """
-    column = ''
-    if use_lemma:
-        column = 'lemma'
-    else:
+    column = 'lemma'
+    if use_tokens:
         column = 'token'
 
     queryResults = Token.objects.filter(message__review__id=review_id) \
@@ -45,20 +43,20 @@ def query_TF_dict(review_id, use_lemma=False):
 
     return queryResults
 
-def query_DF(review_ids, use_lemma=False):
+def query_DF(review_ids, use_tokens=False):
     """
     Returns the denominator of DF, the number of documents in the population
     that contain the token at least once.
     """
     queryResults = None
-    if use_lemma:
-        queryResults = ReviewLemmaView.objects \
-            .filter(review_id__in=review_ids).values('lemma') \
-            .annotate(df=Count('lemma')).order_by('-df')
-    else:
+    if use_tokens:
         queryResults = ReviewTokenView.objects \
             .filter(review_id__in=review_ids).values('token') \
             .annotate(df=Count('token')).order_by('-df')
+    else:
+        queryResults = ReviewLemmaView.objects \
+            .filter(review_id__in=review_ids).values('lemma') \
+            .annotate(df=Count('lemma')).order_by('-df')
 
     return queryResults
 
@@ -272,10 +270,11 @@ def query_rIDs_all():
 
 def query_rIDs_random(review_ids, rand):
     """ Returns a list of all review IDs in the corpus. """
-    queryResults = list(Review.objects.filter(id__in=review_ids) \
-        .order_by('?').values_list('id', flat=True)[0:rand])
-
-    return queryResults
+    queryResults = list(
+            Review.objects.filter(id__in=review_ids)
+            .order_by('?').values_list('id', flat=True)
+        )
+    return random.sample(queryResults, math.floor(len(queryResults) * rand))
 
 def query_rIDs_year(year):
     """ Returns a list of review IDs from the specified year. """
@@ -381,42 +380,34 @@ def query_rIDs_nm():
     return NM_RIDS
 
 #### Tokens ####################################################################
-def query_tokens(review_ids, use_lemma=False):
-    if use_lemma:
-        queryResults = ReviewLemmaView.objects.distinct('lemma') \
-            .filter(review_id__in=review_ids) \
-            .values_list('lemma', flat=True)
-    else:
+def query_tokens(review_ids, use_tokens=False):
+    if use_tokens:
         queryResults = ReviewTokenView.objects.distinct('token') \
             .filter(review_id__in=review_ids) \
             .values_list('token', flat=True)
+    else:
+        queryResults = ReviewLemmaView.objects.distinct('lemma') \
+            .filter(review_id__in=review_ids) \
+            .values_list('lemma', flat=True)
 
     return queryResults
 
-def query_tokens_all(use_lemma=False):
-    if use_lemma:
-        queryResults = ReviewLemmaView.objects.distinct('lemma') \
-            .values_list('lemma', flat=True)
-    else:
+def query_tokens_all(use_tokens=False):
+    if use_tokens:
         queryResults = ReviewTokenView.objects.distinct('token') \
             .values_list('token', flat=True)
+    else:
+        queryResults = ReviewLemmaView.objects.distinct('lemma') \
+            .values_list('lemma', flat=True)
 
     return queryResults
 
-def query_top_x_tokens(review_ids, x, use_lemma=False):
+def query_top_x_tokens(review_ids, x, use_tokens=False):
     message_ids = Message.objects.distinct('id') \
         .filter(review_id__in=review_ids) \
         .values_list('id', flat=True)
 
-    if use_lemma:
-        queryResults = Token.objects \
-            .filter(message__review__id__in=review_ids) \
-            .filter(lemma__iregex=r"\w+") \
-            .values('lemma') \
-            .annotate(freq=Sum('frequency')) \
-            .order_by('-freq') \
-            .values_list('lemma', flat=True)
-    else:
+    if use_tokens:
         queryResults = Token.objects \
             .filter(message__review__id__in=review_ids) \
             .filter(token__iregex=r"\w+") \
@@ -424,5 +415,13 @@ def query_top_x_tokens(review_ids, x, use_lemma=False):
             .annotate(freq=Sum('frequency')) \
             .order_by('-freq') \
             .values_list('token', flat=True)
+    else:
+        queryResults = Token.objects \
+            .filter(message__review__id__in=review_ids) \
+            .filter(lemma__iregex=r"\w+") \
+            .values('lemma') \
+            .annotate(freq=Sum('frequency')) \
+            .order_by('-freq') \
+            .values_list('lemma', flat=True)
 
     return queryResults[0:x]
