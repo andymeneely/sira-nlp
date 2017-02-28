@@ -56,19 +56,13 @@ def get_types(tfidfs, max_length, top):
 def write_csvs(tf_idfs, filepath, chunksize, types):
     """ Writer TF-IDF dictionary to one or more CSV files. """
     info('  Saving TF-IDF to a CSV file(s)')
-    chunks = helpers.chunk(list(tf_idfs.items()), size=chunksize)
+    chunks = helpers.chunk(list(types), size=chunksize)
     for (index, chunk) in enumerate(chunks):
-        _write_chunk(filepath.format(index), dict(chunk), types)
+        _write_chunk(filepath.format(index), tf_idfs, set(chunk))
 
 
-def _write_chunk(filepath, tfidfs, master_types):
+def _write_chunk(filepath, tfidfs, types):
     debug('_write_chunk: {}'.format(filepath))
-    types = set()
-    for tfidf in tfidfs.values():
-        types |= set(tfidf.keys())
-    types &= master_types
-    debug('{:,} unique types'.format(len(types)))
-
     types_list = list(types)
     indices = {type_: index for (index, type_) in enumerate(types_list)}
     rows = [['review_id'] + types_list]
@@ -180,7 +174,7 @@ class Command(BaseCommand):
                 'calculate for all tokens. Default is 100.'
             )
         parser.add_argument(
-                '--random', type=int, default=None,
+                '--random', type=float, default=None,
                 help='If specified, a random sampling of the given size will '
                 'be printed to stdout or saved to disk. Default is 1000.'
             )
