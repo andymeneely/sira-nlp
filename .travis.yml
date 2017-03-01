@@ -15,7 +15,7 @@ before_install:
   - pip install nltk==3.2.1
   - pip install psycopg2==2.6.2
   - pip install SPLAT-library==0.4.2
-  - pip install pexpect psutil matplotlib codecov nose termcolor sqlparse json jsonb
+  - pip install pexpect psutil matplotlib codecov nose termcolor sqlparse jsonb
   - travis_wait 30 python -m nltk.downloader stopwords
   - travis_wait 30 python -m nltk.downloader names
   - travis_wait 30 python -m nltk.downloader cmudict
