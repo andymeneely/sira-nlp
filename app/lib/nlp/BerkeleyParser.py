@@ -38,15 +38,18 @@ class BerkeleyParser(object):
         if type(text) == list:
             output = []
             for sent in text:
-                self.parser.sendline(self.__escape(sent))
-                self.parser.expect(self.pattern)
-                temp = self.__clean(self.parser.after)
-                if type(temp) == str and temp != '':
-                    output.append(temp)
+                if type(sent) != str:
+                    pass
                 else:
-                    for t in temp:
-                        if t != '':
-                            output.append(t)
+                    self.parser.sendline(self.__escape(sent))
+                    self.parser.expect(self.pattern)
+                    temp = self.__clean(self.parser.after)
+                    if type(temp) == str and temp != '':
+                        output.append(temp)
+                    else:
+                        for t in temp:
+                            if t != '':
+                                output.append(t)
 
             return output
         elif type(text) == str:
@@ -58,21 +61,19 @@ class BerkeleyParser(object):
             if type(temp) == str and temp != '':
                 output.append(temp)
             else:
-                for t in temp:
-                    if t != '':
-                        output.append(t)
+                output.append('')
 
             return output
         else:
-            raise InputError('Input to the BerkeleyParser must be of type '
+            raise ValueError('Input to the BerkeleyParser must be of type '
                              'list or str, not %s' % (str(type(text))))
 
-    def deactivate(self):
+    def deactivate(self, lg=logger):
         """
         Since the Berkeley Parser is Java and heavy on system resources, we
         have to remember to kill it when we're done using it.
         """
-        logger.warning('Deactivating the Berkeley Parser...')
+        lg.warning('Deactivating the Berkeley Parser...')
         self.parser.terminate()
 
     def __clean(self, bytestring):

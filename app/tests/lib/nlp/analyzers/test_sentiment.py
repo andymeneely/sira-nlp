@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from json import JSONDecodeError
+
 from app.lib.nlp import analyzers
 
 
@@ -8,6 +10,10 @@ class SentimentAnalyzerTestCase(TestCase):
         pass
 
     def test_analyze(self):
+        expected = {'vpos': 0, 'pos': 0, 'neut': 0, 'neg': 0, 'vneg': 0}
+        actual = analyzers.SentimentAnalyzer('').analyze()
+        self.assertEqual(expected, actual)
+
         data = (
                 'Gulf Applied Technologies Inc said it sold its subsidiaries '
                 'engaged in pipeline and terminal operations for 12.2 mln '

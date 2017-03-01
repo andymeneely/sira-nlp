@@ -79,7 +79,7 @@ def calc_frazier_score(tree, parent, parent_label):
             c += calc_frazier_score(child, score, my_lab)
         return c
 
-def get_mean_frazier(treestrings):
+def get_mean_frazier(treestrings, lg=logger):
     """ Average all of the Frazier scores for the given input. """
     sentences, total_frazier_score, total_word_count = 0, 0, 0
     if type(treestrings) != list:
@@ -91,17 +91,14 @@ def get_mean_frazier(treestrings):
         tree = Tree.fromstring(tree_line)
         sentences += 1
         raw_frazier_score = calc_frazier_score(tree, 0, "")
-        try:
-            total_word_count += word_score(tree)
-            total_frazier_score += raw_frazier_score
-        except ZeroDivisionError:
-            logger.warning('ZeroDivisionError for the treestring: ' + str(tree))
-            pass
+
+        total_word_count += word_score(tree)
+        total_frazier_score += raw_frazier_score
 
     try:
         score = float(total_frazier_score) / float(total_word_count)
     except ZeroDivisionError:
-        logger.warning('ZeroDivisionError for Frazier calculation.')
+        lg.warning('ZeroDivisionError for Frazier calculation.')
         score = 0.0
 
     return score

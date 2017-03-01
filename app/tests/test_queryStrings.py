@@ -10,7 +10,7 @@ from app.queryStrings import *
 
 class QueryStringsTestCase(TestCase):
     def setUp(self):
-        pass
+        self.assertEquals(True, True)
 '''
     def test_query_TF_dict(self)
         # Sub-Test 1

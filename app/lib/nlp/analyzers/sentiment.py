@@ -39,5 +39,6 @@ class SentimentAnalyzer(analyzers.Analyzer):
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
             traceback.print_exception(extype, exvalue, extrace)
+            return sentiment
 
         return sentiment
