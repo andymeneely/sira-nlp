@@ -30,9 +30,7 @@ test:
   username: postgres
 
 before_script:
-  - ls
-  - cp sira-nlp/app/linsights/dbsettings.py.template sira-nlp/app/linsights/dbsettings.py
-  - cd sira-nlp
+  - cp linsights/dbsettings.py.template linsights/dbsettings.py
 #  - "psql -c 'create database travis_ci_test;' -U postgres"
 #  - "rake db:migrate"
 
