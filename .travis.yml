@@ -1,5 +1,8 @@
 language: python
 
+services:
+  - postgresql
+
 matrix:
   include:
     - python: 3.4
@@ -20,6 +23,16 @@ before_install:
   - travis_wait 30 python -m nltk.downloader punkt
   - travis_wait 30 python -m nltk.downloader averaged_perceptron_tagger
   - travis_wait 30 python -m nltk.downloader wordnet
+  - cp app/linsights/dbsettings.py.template app/linsights/dbsettings.py
+
+test:
+  adaptor: postgresql
+  database: travis_ci_test
+  username: postgres
+
+#before_script:
+#  - "psql -c 'create database travis_ci_test;' -U postgres"
+#  - "rake db:migrate"
 
 script:
   - ENV='TEST' coverage run manage.py test

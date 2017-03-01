@@ -20,4 +20,7 @@ def get(environment):
         SETTINGS['default']['NAME'] = 'linsights_dev'
     elif environment == 'TEST':
         SETTINGS['default']['NAME'] = 'linsights_test'
+    elif environment == 'TRAVIS':
+        SETTINGS['default']['NAME'] = 'travis_ci_test'
+        SETTINGS['default']['USER'] = 'postgres'
     return SETTINGS

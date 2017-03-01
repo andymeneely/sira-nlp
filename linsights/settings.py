@@ -3,7 +3,7 @@ import multiprocessing
 import sys
 
 ENVIRONMENT = os.environ.get('ENV', 'DEV')
-if ENVIRONMENT not in ['DEV', 'TEST', 'PROD']:
+if ENVIRONMENT not in ['DEV', 'TEST', 'PROD', 'TRAVIS']:
     raise Exception('{} is an unknown environment'.format(ENVIRONMENT))
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -12,7 +12,7 @@ if ENVIRONMENT == 'PROD':
     DATA_DIR = '/home/artifacts/linsights/'
 elif ENVIRONMENT == 'DEV':
     DATA_DIR = os.path.join(BASE_DIR, 'app/tests/data')
-elif ENVIRONMENT == 'TEST':
+elif ENVIRONMENT in ['TEST', 'TRAVIS']:
     DATA_DIR = os.path.join(BASE_DIR, 'app/tests/data')
 
 DATABASES = {
