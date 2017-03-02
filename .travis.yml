@@ -23,10 +23,7 @@ postgres:
 #  - postgresql
 
 env:
-  - DJANGO=1.10
-  - DB=postgres
-  - ENV=TRAVIS
-  - PGVERSION=9.5
+  - DJANGO=1.10 DB=postgres ENV=TRAVIS PGVERSION=9.5
 
 before_install:
 #  - travis_retry wget https://bootstrap.pypa.io/get-pip.py
