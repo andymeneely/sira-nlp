@@ -1,8 +1,8 @@
 language: python
-#sudo: required
+sudo: required
 
-dist:
-  trusty
+#dist:
+#  trusty
 
 python:
   - "3.5"
@@ -13,9 +13,13 @@ addons:
 
 # Travis is all sorts of messed up when it comes to these
   postgresql: "9.5"
+  packages:
+    - postgresql-9.5
+    - postgresql-contrib-9.5
+    - postgis
 #  postgresql: "9.6"
 
-test:
+postgres:
   adapter: postgresql
   database: travis_ci_test
   username: postgres
@@ -29,6 +33,13 @@ env:
 before_install:
 #  - travis_retry wget https://bootstrap.pypa.io/get-pip.py
 #  - python get-pip.py
+  - sudo /etc/init.d/postgresql stop
+  - wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+  - sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main 9.5" >> /etc/apt/sources.list.d/postgresql.list'
+  - sudo apt update
+  - sudo apt install postgresql-9.5 postgresql-contrib-9.5 postgis
+  - sudo /etc/init.d/postgresql restart
+  - psql --version
   - travis_wait 30 pip install -r requirements.txt
   - travis_wait 30 python -m nltk.downloader stopwords
   - travis_wait 30 python -m nltk.downloader names
@@ -40,7 +51,7 @@ before_install:
 
 before_script:
   - cp linsights/dbsettings.py.template linsights/dbsettings.py
-  - "psql -c 'create database travis_ci_test;' -U postgres"
+  - psql -c 'create database travis_ci_test;' -U postgres
 #  - "rake db:migrate"
 
 script:
