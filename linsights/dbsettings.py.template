@@ -23,5 +23,5 @@ def get(environment):
     elif environment == 'TRAVIS':
         SETTINGS['default']['NAME'] = 'travis_ci_test'
         SETTINGS['default']['USER'] = 'postgres'
-        SETTINGS['default']['PORT'] = ''
+        SETTINGS['default']['HOST'] = '127.0.0.1'
     return SETTINGS
