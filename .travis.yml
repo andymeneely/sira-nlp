@@ -41,3 +41,7 @@ script:
 after_success:
   - codecov
   - nosetests
+
+# Temporarily
+notifications:
+  email: false
