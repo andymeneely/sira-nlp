@@ -4,6 +4,9 @@ services:
   - postgresql
 
 addons:
+  packages:
+    - postgresql-9.5
+    - postgresql-contrib-9.5
   postgresql: "9.5"
 
 matrix:
