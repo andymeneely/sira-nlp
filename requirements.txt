@@ -3,6 +3,7 @@ Django==1.10.1
 requests==2.11.1
 nltk==3.2.1
 psycopg2==2.6.2
+SPLAT-library=0.4.2
 pexpect
 psutil
 matplotlib
