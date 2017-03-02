@@ -46,11 +46,11 @@ before_script:
 #  - "rake db:migrate"
 
 script:
-  - coverage run manage.py test
+  - coverage run manage.py test app.tests
 
 after_success:
   - codecov
-  - nosetests
+#  - nosetests
 
 # Temporarily
 notifications:
