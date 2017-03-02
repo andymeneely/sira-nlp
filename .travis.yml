@@ -5,7 +5,12 @@ python:
   - "3.5"
 
 addons:
-  postgresql: "9.4"
+# Does not support 'CREATE SEQUENCE IF NOT EXISTS' in migration 0007.
+#  postgresql: "9.4"
+
+# Travis is all sorts of messed up when it comes to psql9.5
+#  postgresql: "9.5"
+  postgresql: "9.5"
 
 postgres:
   adapter: postgresql
