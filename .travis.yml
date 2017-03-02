@@ -26,7 +26,7 @@ before_install:
   - travis_wait 30 python -m nltk.downloader wordnet
 
 test:
-  adaptor: postgresql
+  adapter: postgresql
   database: travis_ci_test
   username: postgres
 
