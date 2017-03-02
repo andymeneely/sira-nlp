@@ -8,11 +8,11 @@ addons:
 # Does not support 'CREATE SEQUENCE IF NOT EXISTS' in migration 0007.
 #  postgresql: "9.4"
 
-# Travis is all sorts of messed up when it comes to psql9.5
+# Travis is all sorts of messed up when it comes to these
 #  postgresql: "9.5"
-  postgresql: "9.6"
+#  postgresql: "9.6"
 
-postgres:
+test:
   adapter: postgresql
   database: travis_ci_test
   username: postgres
