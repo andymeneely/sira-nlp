@@ -1,5 +1,5 @@
 language: python
-sudo: required
+#sudo: required
 
 dist:
   trusty
@@ -19,8 +19,8 @@ postgres:
   database: travis_ci_test
   username: postgres
 
-#services:
-#  - postgresql
+services:
+  - postgresql
 
 env:
   - DJANGO=1.10 DB=postgres ENV=TRAVIS PGVERSION=9.5
@@ -34,9 +34,9 @@ before_install:
 #  - sudo apt-get update
 #  - sudo apt-get install postgresql-9.5 postgresql-contrib-9.5 postgis
 #  - sudo /etc/init.d/postgresql restart
-  - wget https://gist.github.com/petere/5893799/raw/apt.postgresql.org.sh
+#  - wget https://gist.github.com/petere/5893799/raw/apt.postgresql.org.sh
 #  - wget https://gist.github.com/petere/6023944/raw/pg-travis-test.sh
-  - sudo sh ./apt.postgresql.org.sh
+#  - sudo sh ./apt.postgresql.org.sh
   - psql --version
   - travis_wait 30 pip install -r requirements.txt
   - travis_wait 30 python -m nltk.downloader stopwords
@@ -50,7 +50,6 @@ before_install:
 before_script:
   - cp linsights/dbsettings.py.template linsights/dbsettings.py
   - psql -c 'create database travis_ci_test;' -U postgres
-#  - "rake db:migrate"
 
 script:
   - coverage run manage.py test app.tests

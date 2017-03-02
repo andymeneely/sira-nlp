@@ -24,6 +24,7 @@ from app.models import *
 from app.queryStrings import *
 
 from splat.complexity.idea_density import *
+from splat.complexity import *
 
 DECIMAL_PLACES = 100
 PARSER = None
@@ -44,7 +45,7 @@ def run_syntactic_complexity_corenlp(parse_list):
     new_list = []
 
     for treestring in parse_list:
-        tree = re.sub(r'  ', ' ', treestring)
+        tree = re.sub(r' {2,}', ' ', treestring)
         tree = re.sub(r'\n', '', tree)
         tree = re.sub(r'ROOT', '', tree)
         new_list.append(tree)
@@ -59,11 +60,29 @@ def run_syntactic_complexity_corenlp(parse_list):
         frazier = 'X'
     try:
         # calc_idea() returns the tuple, (mean, min, max) pdensity.
-        pdensity = calc_idea(new_list)[0]
+        result = calc_idea(new_list)
+        pdensity = result[0]
+        pdensityMin = result[1]
+        pdensityMax = result[2]
     except (ZeroDivisionError, IndexError):
         pdensity = 'X'
+        pdensityMin = 'X'
+        pdensityMax = 'X'
+    try:
+        # calc_content() returns the tuple, (mean, min, max) cdensity.
+        result = calc_content_density(new_list)
+        cdensity = result[0]
+        cdensityMin = result[1]
+        cdensityMax = result[2]
+    except (ZeroDivisionError, IndexError):
+        cdensity = 'X'
+        cdensityMin = 'X'
+        cdensityMax = 'X'
 
-    return {'yngve': yngve, 'frazier': frazier, 'pdensity': pdensity}
+    return {'yngve': yngve, 'frazier': frazier, 'pdensity': pdensity,
+            'pdensity-min': pdensityMin, 'pdensity-max': pdensityMax,
+            'cdensity': cdensity, 'cdensity-min': cdensityMin,
+            'cdensity-max': cdensityMax}, new_list
 
 def run_syntactic_complexity(message_ids, save=False, no_mID=False):
     global PARSER

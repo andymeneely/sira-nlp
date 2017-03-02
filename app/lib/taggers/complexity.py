@@ -52,10 +52,12 @@ def do(iqueue, cqueue):
                             print("Skipped " + str(m.id) + ":\t" + str(m.complexity))
                 else:
                     for m in messages:
-                        m.complexity = (
-                            analyzers.ComplexityAnalyzer(m.text).analyze()
-                        )
+                        results = analyzers.ComplexityAnalyzer(m.text).analyze()
+#                        print(str(m.id) + ":\t" + str(results[0]) + "\n" + str(results[1]))
+                        m.complexity = (results[0])
+                        m.parse = (results[1])
                         print(str(m.id) + ":\t" + str(m.complexity))
+#                        print(str(m.id) + ":\t" + str(m.parse))
                         m.save()
                 count += 1
             except Error as err:
