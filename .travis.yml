@@ -1,15 +1,18 @@
 language: python
 #sudo: required
 
+dist:
+  trusty
+
 python:
   - "3.5"
 
 addons:
 # Does not support 'CREATE SEQUENCE IF NOT EXISTS' in migration 0007.
-  postgresql: "9.4"
+#  postgresql: "9.4"
 
 # Travis is all sorts of messed up when it comes to these
-#  postgresql: "9.5"
+  postgresql: "9.5"
 #  postgresql: "9.6"
 
 test:
