@@ -234,6 +234,7 @@ def query_mID_text(message_id):
     queryResults = Message.objects.filter(id__exact=message_id) \
         .values_list('text', flat=True)
 
+    print(queryResults[0])
     return queryResults[0]
 
 #### Reviews ###################################################################
