@@ -10,7 +10,7 @@ addons:
 
 # Travis is all sorts of messed up when it comes to psql9.5
 #  postgresql: "9.5"
-  postgresql: "9.5"
+  postgresql: "9.6"
 
 postgres:
   adapter: postgresql
