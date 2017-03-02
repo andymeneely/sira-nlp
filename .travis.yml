@@ -3,9 +3,12 @@ language: python
 services:
   - postgresql
 
+addons:
+  postgresql: "9.5"
+
 matrix:
   include:
-    - python: 3.4
+    - python: 3.5
 
 before_install:
   - travis_retry wget https://bootstrap.pypa.io/get-pip.py
@@ -15,7 +18,7 @@ before_install:
   - pip install nltk==3.2.1
   - pip install psycopg2==2.6.2
   - pip install SPLAT-library==0.4.2
-  - pip install pexpect psutil matplotlib codecov nose termcolor sqlparse jsonb
+  - pip install pexpect psutil matplotlib codecov nose termcolor sqlparse
   - travis_wait 30 python -m nltk.downloader stopwords
   - travis_wait 30 python -m nltk.downloader names
   - travis_wait 30 python -m nltk.downloader cmudict
