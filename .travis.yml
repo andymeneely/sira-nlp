@@ -32,7 +32,7 @@ before_install:
 
 before_script:
   - cp linsights/dbsettings.py.template linsights/dbsettings.py
-#  - "psql -c 'create database travis_ci_test;' -U postgres"
+  - "psql -c 'create database travis_ci_test;' -U postgres"
 #  - "rake db:migrate"
 
 script:
