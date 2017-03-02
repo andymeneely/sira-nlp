@@ -10,6 +10,9 @@ matrix:
   include:
     - python: 3.5
 
+env:
+  - DJANGO=1.10 DB=postgres ENV=TRAVIS
+
 before_install:
   - travis_retry wget https://bootstrap.pypa.io/get-pip.py
   - python get-pip.py
@@ -34,7 +37,7 @@ test:
 
 before_script:
   - cp linsights/dbsettings.py.template linsights/dbsettings.py
-  - "psql -c 'create database travis_ci_test;' -U postgres"
+#  - "psql -c 'create database travis_ci_test;' -U postgres"
 #  - "rake db:migrate"
 
 script:
