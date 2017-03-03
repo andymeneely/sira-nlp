@@ -39,17 +39,17 @@ def do(iqueue, cqueue):
             try:
                 if zeros:
                     for m in messages:
-                        if(m.complexity["yngve"] == 0 and
-                           m.complexity["frazier"] == 0 and
-                           m.complexity["pdensity"] == 0):
-                              m.complexity = (
-                                  analyzers.ComplexityAnalyzer(m.text).analyze()
-                              )
-                              print(str(m.id) + ":\t" + str(m.complexity))
-                              m.save()
+#                        print(m.parse)
+                        if m.parse == []:
+#                            print(m.parse)
+                            results = analyzers.ComplexityAnalyzer(m.text).analyze()
+                            m.complexity = (results[0])
+                            m.parse = (results[1])
+                            print(str(m.id) + ":\t" + str(m.complexity))
+                            m.save()
                         else:
                             pass
-                            print("Skipped " + str(m.id) + ":\t" + str(m.complexity))
+#                            print("Skipped " + str(m.id) + ":\t" + str(m.complexity))
                 else:
                     for m in messages:
                         results = analyzers.ComplexityAnalyzer(m.text).analyze()
