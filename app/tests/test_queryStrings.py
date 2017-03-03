@@ -2,15 +2,26 @@ import os
 import signal
 import subprocess
 
-from unittest import TestCase
+from django.conf import settings
+from django.db import connections
 
-from app.lib import helpers
+from app.lib import loaders
 from app.queryStrings import *
+from app.tests import testcases
 
 
-class QueryStringsTestCase(TestCase):
-    def setUp(self):
-        self.assertEquals(True, True)
+class QueryStringsTestCase(testcases.SpecialTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        loader = loaders.ReviewLoader(settings, num_processes=2)
+        _ = loader.load()
+        review_ids = list(Review.objects.all().values_list('id', flat=True))
+        connections.close_all()
+        loader = loaders.MessageLoader(
+                settings, num_processes=2, review_ids=review_ids
+            )
+        _ = loader.load()
+
 '''
     def test_query_TF_dict(self)
         # Sub-Test 1
