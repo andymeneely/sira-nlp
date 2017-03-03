@@ -275,7 +275,7 @@ def query_rIDs_random(review_ids, rand):
             Review.objects.filter(id__in=review_ids)
             .order_by('?').values_list('id', flat=True)
         )
-    return random.sample(queryResults, math.floor(len(queryResults) * rand))
+    return random.sample(queryResults, math.floor(len(queryResults) / rand))
 
 def query_rIDs_year(year):
     """ Returns a list of review IDs from the specified year. """

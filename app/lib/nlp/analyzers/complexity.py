@@ -1,7 +1,8 @@
 import sys
 import traceback
 
-from json import JSONDecodeError
+from json import JSONDecodeError as JSONDE
+from json.decoder import JSONDecodeError as DJSONDE
 
 import requests
 
@@ -16,6 +17,10 @@ PARAMS = {'properties': "{'annotators': 'tokenize,ssplit,pos,parse'}"}
 DEFAULT_COMPLEXITY = {'yngve': 0, 'frazier': 0,
                       'pdensity': 0, 'pdensity-min': 0, 'pdensity-max': 0,
                       'cdensity': 0, 'cdensity-min': 0, 'cdensity-max': 0}
+FAILED_COMPLEXITY = {'yngve': 'JSONDecodeError', 'frazier': 'JSONDecodeError',
+                     'pdensity': 'JSONDecodeError', 'pdensity-min': 'JSONDecodeError',
+                     'pdensity-max': 'JSONDecodeError', 'cdensity': 'JSONDecodeError',
+                     'cdensity-min': 'JSONDecodeError', 'cdensity-max': 'JSONDecodeError'}
 DEFAULT_PARSE = []
 
 
@@ -38,15 +43,21 @@ class ComplexityAnalyzer(analyzers.Analyzer):
                 )
             response.raise_for_status()
             parse_list = []
-            for sentence in response.json()['sentences']:
-                parse_list.append(sentence['parse'].replace('\n', ''))
+            try:
+                for sentence in response.json()['sentences']:
+                    parse_list.append(sentence['parse'].replace('\n', ''))
 
-            complexity, parse = comp.run_syntactic_complexity_corenlp(parse_list)
+                complexity, parse = comp.run_syntactic_complexity_corenlp(parse_list)
+            except (JSONDE, DJSONDE):
+                complexity = FAILED_COMPLEXITY.copy()
+                parse = 'JSONDecodeError'
 
         except Exception as error:
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
             traceback.print_exception(extype, exvalue, extrace)
+        finally:
+            return complexity, parse
 
         return complexity, parse

@@ -7,6 +7,9 @@ import gc
 import random
 import traceback
 
+from json import JSONDecodeError as jde
+from json.decoder import JSONDecodeError as djde
+
 from datetime import datetime as dt
 
 from django.conf import settings
@@ -54,10 +57,14 @@ def run_syntactic_complexity_corenlp(parse_list):
         yngve = get_mean_yngve(new_list)
     except ZeroDivisionError:
         yngve = 'X'
+    except JSONDecodeError:
+        yngve = 'JSONDecodeError'
     try:
         frazier = get_mean_frazier(new_list)
     except ZeroDivisionError:
         frazier = 'X'
+    except JSONDecodeError:
+        frazier = 'JSONDecodeError'
     try:
         # calc_idea() returns the tuple, (mean, min, max) pdensity.
         result = calc_idea(new_list)
@@ -68,6 +75,14 @@ def run_syntactic_complexity_corenlp(parse_list):
         pdensity = 'X'
         pdensityMin = 'X'
         pdensityMax = 'X'
+    except (jde, djde):
+        pdensity = 'JSONDecodeError'
+        pdensityMin = 'JSONDecodeError'
+        pdensityMax = 'JSONDecodeError'
+    except TypeError:
+        pdensity = 'InvalidTreeString'
+        pdensityMin = 'InvalidTreeString'
+        pdensityMax = 'InvalidTreestring'
     try:
         # calc_content() returns the tuple, (mean, min, max) cdensity.
         result = calc_content_density(new_list)
@@ -78,6 +93,14 @@ def run_syntactic_complexity_corenlp(parse_list):
         cdensity = 'X'
         cdensityMin = 'X'
         cdensityMax = 'X'
+    except (jde, djde):
+        cdensity = 'JSONDecodeError'
+        cdensityMin = 'JSONDecodeError'
+        cdensityMax = 'JSONDecodeError'
+    except TypeError:
+        cdensity = 'InvalidPOSTag'
+        cdensityMin = 'InvalidPOSTag'
+        cdensityMax = 'InvalidPOSTag'
 
     return {'yngve': yngve, 'frazier': frazier, 'pdensity': pdensity,
             'pdensity-min': pdensityMin, 'pdensity-max': pdensityMax,

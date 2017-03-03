@@ -40,7 +40,8 @@ def do(iqueue, cqueue):
                 if zeros:
                     for m in messages:
 #                        print(m.parse)
-                        if m.parse == []:
+                        if(m.complexity['pdensity'] == 'X' or
+                           m.complexity['cdensity'] == 'X'):
 #                            print(m.parse)
                             results = analyzers.ComplexityAnalyzer(m.text).analyze()
                             m.complexity = (results[0])
