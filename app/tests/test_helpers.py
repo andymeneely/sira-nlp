@@ -2,6 +2,7 @@
 @AUTHOR: nuthanmunaiah
 """
 import csv
+import queue
 
 from unittest import TestCase
 from collections import OrderedDict
@@ -220,4 +221,16 @@ class HelpersTestCase(TestCase):
 
         actual = [helpers.truncate(item, length=3) for item in data]
 
+        self.assertListEqual(expected, actual)
+
+    def test_chunk(self):
+        data = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
+        expected = [['a', 'b'], ['c', 'd'], ['e', 'f'], ['g', 'h'], ['i', 'j'], ['k']]
+        actual = list(helpers.chunk(data, 2))
+        self.assertListEqual(expected, actual)
+
+    def test_to_list(self):
+        data = queue.Queue()
+        expected = list()
+        actual = helpers.to_list(data)
         self.assertListEqual(expected, actual)

@@ -39,22 +39,28 @@ def fix(token, lemma, prev=None, next=None):
     """
     Attempts to fix lemmatization errors with hardcoded rules.
     """
-    if token.lower() == "ca":
+    if not token and not lemma and not prev and not next:
+        raise ValueError("Recieved invalid input to lemmatizer.fix()")
+    elif token.lower() == "ca":
         if next and next[0] and next[0].lower() == "n't":
             return "can"
+        else:
+            return lemma.lower()
     elif token.lower() == "as":
         return "as"
     elif token.lower() == "left":
         if prev and prev[1] == wordnet.VERB:
             return "leave"
+        else:
+            return lemma.lower()
     elif token in MAP:
         return MAP[token]
     elif lemma in VERBS:
         return VERBS[lemma]
     elif token in VERBS:
         return VERBS[token]
-
-    return lemma.lower()
+    else:
+        return lemma.lower()
 
 
 class NLTKLemmatizer(Lemmatizer):

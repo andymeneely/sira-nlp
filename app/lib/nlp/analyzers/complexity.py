@@ -25,8 +25,8 @@ DEFAULT_PARSE = []
 
 
 class ComplexityAnalyzer(analyzers.Analyzer):
-    def __init__(self, text, url='http://interlagos-02.main.ad.rit.edu:9000'):
-#    def __init__(self, text, url='http://localhost:9000/'):
+#    def __init__(self, text, url='http://interlagos-02.main.ad.rit.edu:9000'):
+    def __init__(self, text, url='http://localhost:9000/'):
         super(ComplexityAnalyzer, self).__init__(text)
         self.url = url
 

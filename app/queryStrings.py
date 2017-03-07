@@ -71,23 +71,6 @@ def query_rIDs_empty():
 
     return queryResults
 
-# Doesn't Work.
-def query_rIDs_zeros():
-    """
-    Return a list of review IDs that have messages containing a complexity
-    field populated with all zeros: {'yngve': 0, 'pdensity': 0, 'frazier': 0}.
-    """
-    q1 = json.dumps({'yngve': 0.0})
-    q2 = Q(complexity__contains={'frazier': 0.1})
-    q3 = Q(complexity__contains={'pdensity': 0.0})
-
-    queryResults = Message.objects.annotate(comp=Cast('complexity', models.TextField())) \
-        .values_list('review_id', 'comp')
-
-#    print(queryResults)
-
-    return queryResults
-
 #### Messages ##################################################################
 def query_mIDs(population):
     """ Passthrough function for determining which queries to run. """
@@ -234,8 +217,7 @@ def query_mID_text(message_id):
     queryResults = Message.objects.filter(id__exact=message_id) \
         .values_list('text', flat=True)
 
-    print(queryResults[0])
-    return queryResults[0]
+    return list(queryResults)[0] if len(list(queryResults)) > 0 else -1
 
 #### Reviews ###################################################################
 def query_rIDs(population):
@@ -266,7 +248,6 @@ def query_rIDs_all():
 
     ALL_RIDS = list(queryResults)
 
-#    print(ALL_RIDS)
     return ALL_RIDS
 
 def query_rIDs_random(review_ids, rand):
@@ -323,15 +304,12 @@ def query_rIDs_neutral():
     if len(NEUTRAL_RIDS) > 0:
         return NEUTRAL_RIDS
 
-    fixed = query_rIDs_fixed()
-    nf = query_rIDs_nf()
-
-    if ALL_RIDS == []:
-        query_rIDs_all()
     if FIXED_RIDS == []:
         query_rIDs_fixed()
     if MISSED_RIDS == []:
         query_rIDs_missed()
+    if ALL_RIDS == []:
+        query_rIDs_all()
 
     NEUTRAL_RIDS = list(set(ALL_RIDS) - set(FIXED_RIDS))
     NEUTRAL_RIDS = list(set(NEUTRAL_RIDS) - set(MISSED_RIDS))

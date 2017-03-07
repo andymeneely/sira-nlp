@@ -73,6 +73,12 @@ class LemmatizerTestCase(TestCase):
 
         self.assertEqual(expected, actual)
 
+        expected = 'ca'
+        actual = fix('ca', 'ca', ('hollywood', wordnet.NOUN),
+                     ('usa', wordnet.NOUN))
+
+        self.assertEqual(expected, actual)
+
         expected = ['as', 'long']
         actual = NLTKLemmatizer(['as', 'long']).execute()
 
@@ -85,6 +91,11 @@ class LemmatizerTestCase(TestCase):
 
         expected = 'leave'
         actual = fix('left', 'left', ('is', wordnet.VERB), None)
+
+        self.assertEqual(expected, actual)
+
+        expected = 'left'
+        actual = fix('left', 'left', ('alone', wordnet.NOUN), None)
 
         self.assertEqual(expected, actual)
 
@@ -113,3 +124,6 @@ class LemmatizerTestCase(TestCase):
         actual = fix("'re", "'re", ('they', wordnet.NOUN), None)
 
         self.assertEqual(expected, actual)
+
+        # Sub-Test 5
+        self.assertRaises(ValueError, fix, None, None, None, None)

@@ -24,9 +24,8 @@ class ComplexityTestCase(TestCase):
         actual = get_mean_yngve(parse)
         self.assertEqual(expected, actual)
 
-        with self.assertRaises(ValueError):
-            get_mean_yngve([''])
-            get_mean_yngve(0.0)
+        self.assertRaises(ValueError, get_mean_yngve, [''])
+        self.assertRaises(ValueError, get_mean_yngve, 0.0)
 
     def test_yngve_redux(self):
         sent = "Colorless green ideas sleep furiously"
