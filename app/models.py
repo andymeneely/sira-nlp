@@ -91,12 +91,28 @@ class Message(models.Model):
     sentiment = fields.JSONField(default=dict)
     complexity = fields.JSONField(default=dict)
     parse = fields.JSONField(default=dict)
+    polite = fields.JSONField(default=dict)
 
     # Navigation Fields
     review = models.ForeignKey('Review')
 
     class Meta:
         db_table = 'message'
+
+
+class Sentence(models.Model):
+    """ Defines the schema for the sentence table. """
+    text = models.TextField(default='')
+
+    parses = fields.JSONField(default=dict)
+    metrics = fields.JSONField(default=dict)
+
+    # Navigation Fields
+    message = models.ForeignKey('Message')
+    review = models.ForeignKey('Review')
+
+    class Meta:
+        db_table = 'sentence'
 
 
 class Token(models.Model):

@@ -11,4 +11,4 @@ codecov
 nose
 termcolor
 sqlparse
-
+scikit-learn

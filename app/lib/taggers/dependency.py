@@ -37,12 +37,37 @@ def do(iqueue, cqueue):
         with transaction.atomic():
             try:
                 for message in messages:
-                    parses = list(message.parse)
-                    sents = list(sentenizer.NLTKSentenizer(message.text).execute())
-                    response = analyzers.PolitenessAnalyzer(message.text, parses, sents).analyze()
-                    print(response)
-                    message.polite = response
-                    message.save()
+                    sentences = sentenizer.NLTKSentenizer(message.text).execute()
+                    for sentence in sentences:
+                        result = {}
+                        result['sent'] = sentence
+                        response = analyzers.DependencyAnalyzer(sentence).analyze()
+#                        print(response)
+                        parse = []
+                        depparse = []
+                        for dep in response['deps']:
+                            temp = str(dep['dep'] + "(" +
+                                       dep['governorGloss'].lower() + "-"
+                                       + str(dep['governor']) + ", " +
+                                       dep['dependentGloss'] + "-" +
+                                       str(dep['dependent']) + ")")
+                            depparse.append(temp)
+                        result['depparse'] = depparse
+                        for p in response['parse']:
+                            temp = re.sub(r' {2,}', ' ', p)
+                            temp = re.sub(r'\n', '', temp)
+                            temp = re.sub(r'ROOT', '', temp)
+                            parse.append(temp)
+                            result['treeparse'] = temp
+#                        print(sentence)
+#                        print(depparse)
+#                        print(parse)
+                        print(result)
+                        print('====================\n')
+#                        print(depparse['basicDependencies'])
+#                        print(depparse)
+#                        s = Sentence(review_id=review_id, message_id=message.id,
+#                                     text=sentence, dependency=depparse)
                     count += 1
             except Error as err:
                 sys.stderr.write('Exception\n')
@@ -64,16 +89,16 @@ def stream(review_ids, iqueue, num_doers):
         iqueue.put(parallel.EOI)
 
 
-class PolitenessTagger(taggers.Tagger):
+class DependencyTagger(taggers.Tagger):
     def __init__(self, settings, num_processes, review_ids):
-        super(PolitenessTagger, self).__init__(settings, num_processes)
+        super(DependencyTagger, self).__init__(settings, num_processes)
         self.review_ids = review_ids
 
     def tag(self):
         iqueue = parallel.manager.Queue(self.settings.QUEUE_SIZE)
 
         process = self._start_streaming(iqueue)
-        count = parallel.run(do, aggregate, iqueue, self.num_processes)
+        count = parallel.run(do, aggregate, iqueue, 1)
         process.join()
 
         return count
@@ -81,7 +106,7 @@ class PolitenessTagger(taggers.Tagger):
     def _start_streaming(self, iqueue):
         process = multiprocessing.Process(
                 target=stream,
-                args=(self.review_ids, iqueue, self.num_processes)
+                args=(self.review_ids, iqueue, 1)
             )
         process.start()
 

@@ -1,3 +1,4 @@
+
 [submodule "app/lib/external/politeness"]
 	path = app/lib/external/politeness
-	url = https://github.com/sudhof/politeness.git
+	url = https://github.com/meyersbs/politeness.git
