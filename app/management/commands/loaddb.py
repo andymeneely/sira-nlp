@@ -16,10 +16,10 @@ from app.lib.logger import *
 from app.models import *
 
 
-def refresh_view(name):
-    with connection.cursor() as cursor:
-        cursor.execute('REFRESH MATERIALIZED VIEW {};'.format(name))
-        info('  {} refreshed'.format(name))
+#def refresh_view(name):
+#    with connection.cursor() as cursor:
+#        cursor.execute('REFRESH MATERIALIZED VIEW {};'.format(name))
+#        info('  {} refreshed'.format(name))
 
 
 class Command(BaseCommand):
@@ -69,12 +69,18 @@ class Command(BaseCommand):
             loader = loaders.MessageLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} messages loaded'.format(count))
+            loader = loaders.SentenceLoader(settings, processes, ids)
+            count = loader.load()
+            info('  {:,} sentences loaded'.format(count))
             loader = loaders.TokenLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} tokens loaded'.format(count))
 
-            with multiprocessing.Pool(2) as pool:
-                pool.map(refresh_view, ['vw_review_token', 'vw_review_lemma'])
+            with connection.cursor() as cursor:
+                cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_token'))
+                cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_lemma'))
+#            with multiprocessing.Pool(2) as pool:
+#                pool.map(refresh_view, ['vw_review_token', 'vw_review_lemma'])
         except KeyboardInterrupt:
             warning('Attempting to abort.')
         finally:

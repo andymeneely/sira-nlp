@@ -36,38 +36,32 @@ def do(iqueue, cqueue):
         count = 0
         with transaction.atomic():
             try:
-                for message in messages:
-                    sentences = sentenizer.NLTKSentenizer(message.text).execute()
-                    for sentence in sentences:
-                        result = {}
-                        result['sent'] = sentence
-                        response = analyzers.DependencyAnalyzer(sentence).analyze()
-#                        print(response)
-                        parse = []
-                        depparse = []
-                        for dep in response['deps']:
-                            temp = str(dep['dep'] + "(" +
-                                       dep['governorGloss'].lower() + "-"
-                                       + str(dep['governor']) + ", " +
-                                       dep['dependentGloss'] + "-" +
-                                       str(dep['dependent']) + ")")
-                            depparse.append(temp)
-                        result['depparse'] = depparse
-                        for p in response['parse']:
-                            temp = re.sub(r' {2,}', ' ', p)
-                            temp = re.sub(r'\n', '', temp)
-                            temp = re.sub(r'ROOT', '', temp)
-                            parse.append(temp)
-                            result['treeparse'] = temp
-#                        print(sentence)
-#                        print(depparse)
-#                        print(parse)
-                        print(result)
-                        print('====================\n')
-#                        print(depparse['basicDependencies'])
-#                        print(depparse)
-#                        s = Sentence(review_id=review_id, message_id=message.id,
-#                                     text=sentence, dependency=depparse)
+                for sentence in sentences:
+                    result = {}
+                    result['sent'] = sentence.text
+
+                    response = analyzers.DependencyAnalyzer(sentence).analyze()
+
+                    parse = []
+                    depparse = []
+                    for dep in response['deps']:
+                        temp = str(dep['dep'] + "(" +
+                                   dep['governorGloss'].lower() + "-"
+                                   + str(dep['governor']) + ", " +
+                                   dep['dependentGloss'] + "-" +
+                                   str(dep['dependent']) + ")")
+                        depparse.append(temp)
+                    result['depparse'] = depparse
+                    for p in response['parse']:
+                        temp = re.sub(r' {2,}', ' ', p)
+                        temp = re.sub(r'\n', '', temp)
+                        temp = re.sub(r'ROOT', '', temp)
+                        parse.append(temp)
+                        result['treeparse'] = temp
+                    print(result)
+                    print('====================\n')
+#                    s = Sentence(review_id=review_id, message_id=message.id,
+#                                 text=sentence, dependency=depparse)
                     count += 1
             except Error as err:
                 sys.stderr.write('Exception\n')
@@ -80,10 +74,10 @@ def do(iqueue, cqueue):
 
 def stream(review_ids, iqueue, num_doers):
     for review_id in review_ids:
-        messages = list(
-                Message.objects.filter(review_id=review_id).exclude(text='')
+        sentences = list(
+                Sentence.objects.filter(review_id=review_id).exclude(text='')
             )
-        iqueue.put((review_id, messages))
+        iqueue.put((review_id, sentences))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)
