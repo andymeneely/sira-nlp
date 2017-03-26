@@ -8,4 +8,4 @@ from app.lib.taggers.complexity import ComplexityTagger
 
 from app.lib.taggers.politeness import PolitenessTagger
 
-from app.lib.taggers.dependency import DependencyTagger
+from app.lib.taggers.sentenceparse import SentenceParseTagger

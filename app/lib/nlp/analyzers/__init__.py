@@ -6,4 +6,4 @@ from app.lib.nlp.analyzers.complexity import ComplexityAnalyzer
 
 from app.lib.nlp.analyzers.politeness import PolitenessAnalyzer
 
-from app.lib.nlp.analyzers.dependency import DependencyAnalyzer
+from app.lib.nlp.analyzers.sentenceparse import SentenceParseAnalyzer

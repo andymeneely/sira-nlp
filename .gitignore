@@ -115,3 +115,4 @@ linsights/dbsettings.py
 # Unversioned files
 app/management/commands/frequency.py
 app/output/*
+app/dumps/*

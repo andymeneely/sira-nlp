@@ -4,6 +4,9 @@ requests==2.11.1
 nltk==3.2.1
 psycopg2==2.6.2
 SPLAT-library==0.4.2
+scipy==0.18.1
+scikit-learn==0.18.1
+numpy==1.12.0
 pexpect
 psutil
 matplotlib
@@ -11,4 +14,3 @@ codecov
 nose
 termcolor
 sqlparse
-scikit-learn

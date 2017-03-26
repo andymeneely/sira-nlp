@@ -38,13 +38,15 @@ def do(iqueue, cqueue):
             try:
                 for (posted, sender, text, message_id) in messages:
                     for sent in sentenizer.NLTKSentenizer(text).execute():
+                        print(sent)
                         objects.append(Sentence(
                                 review_id=review_id,
                                 message_id=message_id,
                                 text=sent
                             ))
-                    if len(objects) > 0:
-                        Sentence.objects.bulk_create(objects)
+                if len(objects) > 0:
+                    Sentence.objects.bulk_create(objects)
+                    print("Saved!")
             except Error as err:
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Review  {}\n'.format(review_id))
