@@ -17,8 +17,10 @@ CORENLP_MAP = {'0': 'vneg', '1': 'neg', '2': 'neut', '3': 'pos', '4': 'vpos'}
 
 
 class SentimentAnalyzer(analyzers.Analyzer):
-    def __init__(self, text, url='http://interlagos-02.main.ad.rit.edu:41194/'):
-#    def __init__(self, text, url='http://localhost:9000/'):
+#    def __init__(self, text, url='http://interlagos-02.main.ad.rit.edu:41194/'):
+    def __init__(self, text, url='http://localhost:41194/'):
+#    def __init__(self, text, url='http://overkill.main.ad.rit.edu:41194/'):
+#    def __init__(self, text, url='http://archeology.gccis.rit.edu:9000/'):
         super(SentimentAnalyzer, self).__init__(text)
         self.url = url
 
@@ -35,7 +37,7 @@ class SentimentAnalyzer(analyzers.Analyzer):
             response.raise_for_status()
             for sentence in response.json()['sentences']:
                 sentiment[CORENLP_MAP[sentence['sentimentValue']]] += 1
-        except (JSONDecodeError, RequestException) as error:
+        except (JSONDecodeError, RequestException) as error: # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()

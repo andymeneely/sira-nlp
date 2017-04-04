@@ -10,14 +10,12 @@ from app.lib.nlp import analyzers
 
 from app.lib.external.politeness.model import *
 
-DEFAULT_POLITENESS = {'polite': 'X', 'impolite': 'X'}
-
+DEFAULT_POLITENESS = {'polite': '0', 'impolite': '0'}
 
 class PolitenessAnalyzer(analyzers.Analyzer):
-    def __init__(self, text, parses, sents):
+    def __init__(self, text, depparses):
         super(PolitenessAnalyzer, self).__init__(text)
-        self.parses = parses
-        self.sents = sents
+        self.depparses = depparses
 
     def analyze(self):
         politeness = DEFAULT_POLITENESS.copy()
@@ -25,17 +23,13 @@ class PolitenessAnalyzer(analyzers.Analyzer):
             return {'polite': 'EmptyText', 'impolite': 'EmptyText'}
 
         try:
-            data = {'sentences': self.sents, 'parses': self.parses}
-            politeness = subprocess.Popen(['/home/bsm9339/.venv2.7/bin/python',
-                                           '/home/bsm9339/politeness/model.py', json.dumps(data)], stdout=subprocess.PIPE).communicate()[0]
-#            print(politeness)
-            politeness = json.loads(politeness.decode('utf-8').strip('\n'))
-            print(politeness)
-        except JSONDecodeError as error:
+            data = {'sentences': [self.text], 'parses': [self.depparses]}
+            politeness = score(data)
+        except Exception as error: # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
             traceback.print_exception(extype, exvalue, extrace)
-            return politeness
+            politeness = {'polite': str(extype), 'impolite': str(extype)}
 
         return politeness

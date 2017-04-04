@@ -21,7 +21,7 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break  # All doers are done
-            continue
+            continue # pragma: no cover
 
         (review, bug_ids) = item
         try:
@@ -36,7 +36,7 @@ def aggregate(oqueue, cqueue, num_doers):
                 if review_bugs:
                     ReviewBug.objects.bulk_create(review_bugs)
                 count += 1
-        except Error as err:
+        except Error as err: # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Review  {}\n'.format(review.id))
             extype, exvalue, extrace = sys.exc_info()

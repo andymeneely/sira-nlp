@@ -5,12 +5,11 @@ import traceback
 from django.db import Error, transaction
 from django.db.models import Q
 
-from app.lib import taggers
+from app.lib import taggers, logger
 from app.lib.nlp import analyzers, sentenizer
 from app.lib.utils import parallel
 from app.models import *
 
-ZEROS = False
 
 def aggregate(oqueue, cqueue, num_doers):
     count, done = 0, 0
@@ -20,48 +19,29 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break
-            continue
+            continue # pragma: no cover
         count += item
     oqueue.put(count)
 
 
 def do(iqueue, cqueue):
-    global ZEROS
     while True:
         item = iqueue.get()
         if item == parallel.EOI:
             cqueue.put(parallel.DD)
             break
 
-        (review_id, messages, zeros) = item
+        (sent) = item
         count = 0
         with transaction.atomic():
             try:
-                if zeros:
-                    for m in messages:
-#                        print(m.parse)
-                        if(m.complexity['pdensity'] == 'X' or
-                           m.complexity['cdensity'] == 'X'):
-#                            print(m.parse)
-                            results = analyzers.ComplexityAnalyzer(m.text).analyze()
-                            m.complexity = (results[0])
-                            m.parse = (results[1])
-                            print(str(m.id) + ":\t" + str(m.complexity))
-                            m.save()
-                        else:
-                            pass
-#                            print("Skipped " + str(m.id) + ":\t" + str(m.complexity))
-                else:
-                    for m in messages:
-                        results = analyzers.ComplexityAnalyzer(m.text).analyze()
-#                        print(str(m.id) + ":\t" + str(results[0]) + "\n" + str(results[1]))
-                        m.complexity = (results[0])
-                        m.parse = (results[1])
-                        print(str(m.id) + ":\t" + str(m.complexity))
-#                        print(str(m.id) + ":\t" + str(m.parse))
-                        m.save()
+                results = analyzers.ComplexityAnalyzer(sent.text, sent.parses['treeparse']).analyze()
+
+                sent.metrics['complexity'] = results
+                sent.save()
+
                 count += 1
-            except Error as err:
+            except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Review  {}\n'.format(review_id))
                 extype, exvalue, extrace = sys.exc_info()
@@ -70,22 +50,18 @@ def do(iqueue, cqueue):
         cqueue.put(count)
 
 
-def stream(review_ids, iqueue, num_doers, zeros):
-    for review_id in review_ids:
-        messages = list(
-                Message.objects.filter(review_id=review_id).exclude(text='')
-            )
-        iqueue.put((review_id, messages, zeros))
+def stream(sentences, iqueue, num_doers):
+    for sentence in sentences:
+        iqueue.put((sentence))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)
 
 
 class ComplexityTagger(taggers.Tagger):
-    def __init__(self, settings, num_processes, review_ids, zeros):
+    def __init__(self, settings, num_processes, sentObjects):
         super(ComplexityTagger, self).__init__(settings, num_processes)
-        self.review_ids = review_ids
-        self.zeros = zeros
+        self.sentObjects = sentObjects
 
     def tag(self):
         iqueue = parallel.manager.Queue(self.settings.QUEUE_SIZE)
@@ -99,9 +75,8 @@ class ComplexityTagger(taggers.Tagger):
     def _start_streaming(self, iqueue):
         process = multiprocessing.Process(
                 target=stream,
-                args=(self.review_ids, iqueue, self.num_processes, self.zeros)
+                args=(self.sentObjects, iqueue, self.num_processes)
             )
-#        print(self.review_ids)
         process.start()
 
         return process

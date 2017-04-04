@@ -51,16 +51,10 @@ class Command(BaseCommand):
         population = options['population']
         begin = dt.now()
         try:
-            ids = []
-            pop_ops = {'all': query_rIDs_all,
-                       'fixed': query_rIDs_fixed,
-                       'missed': query_rIDs_missed,
-                       'neutral': query_rIDs_neutral,
-                       'empty': query_rIDs_empty,}
-            ids = pop_ops[population]()
+            sents = Sentence.objects.exclude(text='').iterator()
 
             connections.close_all()
-            tagger = taggers.PolitenessTagger(settings, processes, ids)
+            tagger = taggers.PolitenessTagger(settings, processes, sents)
             tagger.tag()
 
         except KeyboardInterrupt:

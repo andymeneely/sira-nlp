@@ -18,9 +18,9 @@ DEFAULT_PARSE = {'deps': [], 'trees': []}
 
 class SentenceParseAnalyzer(analyzers.Analyzer):
 #    def __init__(self, text, url='http://overkill.main.edu.rit.edu:41194'):
-#    def __init__(self, text, url='http://localhost:9000/'):
+    def __init__(self, text, url='http://localhost:41194/'):
 #    def __init__(self, text, url='http://archeology.gccis.rit.edu:9000/'):
-    def __init__(self, text, url='http://magnycours-02.main.ad.rit.edu:41194/'):
+#    def __init__(self, text, url='http://magnycours-02.main.ad.rit.edu:41194/'):
         super(SentenceParseAnalyzer, self).__init__(text)
         self.url = url
 
@@ -38,12 +38,12 @@ class SentenceParseAnalyzer(analyzers.Analyzer):
             for sentence in response.json()['sentences']:
                 parse['trees'] = sentence['parse']
                 parse['deps'] = sentence['enhancedPlusPlusDependencies']
-            return parse
-        except (JSONDecodeError, RequestException, JDError) as error:
+#            return parse
+        except (JSONDecodeError, RequestException, JDError) as error: # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
             traceback.print_exception(extype, exvalue, extrace)
-            return {'deps': 'X', 'trees': 'X'}
+            parse = {'deps': 'X', 'trees': 'X'}
 
         return parse

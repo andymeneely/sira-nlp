@@ -16,12 +16,6 @@ from app.lib.logger import *
 from app.models import *
 
 
-#def refresh_view(name):
-#    with connection.cursor() as cursor:
-#        cursor.execute('REFRESH MATERIALIZED VIEW {};'.format(name))
-#        info('  {} refreshed'.format(name))
-
-
 class Command(BaseCommand):
     """
     Sets up command line arguments.
@@ -69,9 +63,11 @@ class Command(BaseCommand):
             loader = loaders.MessageLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} messages loaded'.format(count))
+            connections.close_all()  # Hack
             loader = loaders.SentenceLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} sentences loaded'.format(count))
+            connections.close_all()  # Hack
             loader = loaders.TokenLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} tokens loaded'.format(count))
@@ -79,9 +75,7 @@ class Command(BaseCommand):
             with connection.cursor() as cursor:
                 cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_token'))
                 cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_lemma'))
-#            with multiprocessing.Pool(2) as pool:
-#                pool.map(refresh_view, ['vw_review_token', 'vw_review_lemma'])
-        except KeyboardInterrupt:
+        except KeyboardInterrupt: # pragma: no cover
             warning('Attempting to abort.')
         finally:
             info('Time: {:.2f} mins'.format(get_elapsed(begin, dt.now())))

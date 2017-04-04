@@ -19,8 +19,6 @@ from app.lib.nlp import analyzers, sentenizer
 from app.lib.utils import parallel
 from app.models import *
 
-from bulk_update.helper import bulk_update
-
 def clean_depparse(dep):
     """
     Given a dependency dictionary, return a formatted string representation.
@@ -41,12 +39,11 @@ def clean_treeparse(tree):
         cleaned_tree = re.sub(r'ROOT', '', cleaned_tree)
         return cleaned_tree
     except TypeError as e:
-        # BEN: I saw one regex fail because the given tree was '[]'
         logger.error("REGEX FAILED: " + str(tree))
         return "RegexFailed"
 
 def aggregate(oqueue, cqueue, num_doers):
-    count, done, cnt, threshhold = 0, 0, 0, 1000
+    count, done = 0, 0
     sentences = []
     while True:
         item = cqueue.get()
@@ -54,21 +51,10 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break
-            continue
-        else:
-            sentences.append(item[0])
-            sent_len = len(sentences)
-            if sent_len > threshhold:
-                start = dt.now()
-                bulk_update(sentences[sent_len-threshhold:],
-                            update_fields=['parses'])
-                logger.info("Saved " + str(threshhold) +
-                            " rows in {:.2f} minutes."
-                            .format(helpers.get_elapsed(start, dt.now())))
-                sentences = []
-#            logger.warning("CQUEUE SIZE: " + str(cqueue.qsize()))
-            continue
-        count += item
+            continue # pragma: no cover
+
+        Sentence.objects.filter(id=item[1]).update(parses=item[2])
+        count += item[0]
     oqueue.put(count)
 
 def do(iqueue, cqueue):
@@ -78,14 +64,12 @@ def do(iqueue, cqueue):
             cqueue.put(parallel.DD)
             break
 
-        (sentence) = item
-        count = 0
+        (sent_id, sent_text) = item
         result = {}
         with transaction.atomic():
             try:
                 # Hand the sentence text off to the analyzer
-                resp = analyzers.SentenceParseAnalyzer(sentence.text).analyze()
-#                time.sleep(1)
+                resp = analyzers.SentenceParseAnalyzer(sent_text).analyze()
                 parse, depparse = [], []
                 # If the SentenceParseAnalyzer failed to parse the sentence
                 if resp['deps'] == 'X' or resp['trees'] == 'X':
@@ -96,23 +80,17 @@ def do(iqueue, cqueue):
                     result['depparse'] = depparse
                     result['treeparse'] = clean_treeparse(resp['trees'])
 
-                sentence.parses = result
-#                logger.info("PROCESSED: " + str(sentence.id))
-                count += 1
-            except Error as err:
+            except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
-                sys.stderr.write('  Sentence  {}\n'.format(sentence.id))
+                sys.stderr.write('  Sentence  {}\n'.format(sent_id))
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 
-        # Give the aggregate() function some time to handle the cqueue.
-        if cqueue.qsize() > 1000:
-            time.sleep(10)
-        cqueue.put((sentence, count))
+        cqueue.put((1, sent_id, result))
 
 def stream(sentences, iqueue, num_doers):
     for sentence in sentences:
-        iqueue.put((sentence))
+        iqueue.put((sentence.id, sentence.text))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)

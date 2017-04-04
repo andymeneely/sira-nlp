@@ -35,10 +35,11 @@ def find_last_occurrence(depparse):
     object returns data.
     """
     start = -1
-    for item in reversed(depparse):
+    for i, item in enumerate(reversed(depparse)):
         if item[0:4] == 'ROOT':
-            start = depparse.index(item)
+            start = len(depparse) - i - 1
             break
+
     return start
 
 def get_depparse(text):
@@ -67,7 +68,7 @@ def get_depparse(text):
         results['parses'].append(depparse[start:])
     return results
 
-def populate_dependencies():
+def populate_dependencies(out_to_file=True):
     """
     For the annotated StackExchange and Wikipedia data files, generate the
     dependency parses and format the data in the expected format for the
@@ -84,8 +85,11 @@ def populate_dependencies():
             print(cnt)
             cnt+=1
 
-    with open(PARSED_STACK_EXCHANGE, 'w') as f:
-        f.write(json.dumps(stack_sents[1:]))
+    if out_to_file: # pragma: no cover
+        with open(PARSED_STACK_EXCHANGE, 'w') as f:
+            f.write(json.dumps(stack_sents[1:]))
+    else:
+        return stack_sents[1:]
 
     wiki_sents = []
     cnt = 0
@@ -98,8 +102,12 @@ def populate_dependencies():
             print(cnt)
             cnt+=1
 
-    with open(PARSED_WIKIPEDIA, 'w') as f:
-        f.write(json.dumps(wiki_sents[1:]))
+    if out_to_file: # pragma: no cover
+        with open(PARSED_WIKIPEDIA, 'w') as f:
+            f.write(json.dumps(wiki_sents[1:]))
+    else:
+        return wiki_sents[1:]
+
 ################################################################################
 
 class Command(BaseCommand):

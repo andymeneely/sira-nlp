@@ -19,7 +19,7 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break
-            continue
+            continue # pragma: no cover
         count += item
     oqueue.put(count)
 
@@ -38,7 +38,6 @@ def do(iqueue, cqueue):
             try:
                 for (posted, sender, text, message_id) in messages:
                     for sent in sentenizer.NLTKSentenizer(text).execute():
-                        print(sent)
                         objects.append(Sentence(
                                 review_id=review_id,
                                 message_id=message_id,
@@ -46,8 +45,7 @@ def do(iqueue, cqueue):
                             ))
                 if len(objects) > 0:
                     Sentence.objects.bulk_create(objects)
-                    print("Saved!")
-            except Error as err:
+            except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Review  {}\n'.format(review_id))
                 extype, exvalue, extrace = sys.exc_info()
@@ -62,12 +60,8 @@ def stream(review_ids, settings, iqueue, num_doers):
 
         messages = []
         for message in Message.objects.filter(review_id__exact=review_id):
-#        for message in review.document['messages']:
-#            print(message)
-#            (posted, sender, message_id) = (message['date'], message['sender'], message['id'])
-#            (posted, sender, message_id) = (message.posted, message.sender, message.id)
             if message.sender in settings.BOTS:
-                continue
+                continue # pragma: no cover
             messages.append((message.posted, message.sender, message.text, message.id))
         iqueue.put((review_id, messages))
 

@@ -11,53 +11,44 @@ from requests.exceptions import RequestException
 from app.lib.nlp import analyzers
 from app.management.commands import complexity as comp
 
-HEADERS = {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'}
-PARAMS = {'properties': "{'annotators': 'tokenize,ssplit,pos,parse'}"}
+DEFAULT_COMPLEXITY = {'yngve': 0, 'frazier': 0, 'pdensity': 0, 'cdensity': 0}
 
-DEFAULT_COMPLEXITY = {'yngve': 0, 'frazier': 0,
-                      'pdensity': 0, 'pdensity-min': 0, 'pdensity-max': 0,
-                      'cdensity': 0, 'cdensity-min': 0, 'cdensity-max': 0}
-FAILED_COMPLEXITY = {'yngve': 'JSONDecodeError', 'frazier': 'JSONDecodeError',
-                     'pdensity': 'JSONDecodeError', 'pdensity-min': 'JSONDecodeError',
-                     'pdensity-max': 'JSONDecodeError', 'cdensity': 'JSONDecodeError',
-                     'cdensity-min': 'JSONDecodeError', 'cdensity-max': 'JSONDecodeError'}
-DEFAULT_PARSE = []
+'''
+################################################################################
+import signal
+
+class timeout:
+    def __init__(self, seconds=1, error_message='Timeout'):
+        self.seconds = seconds
+        self.error_message = error_message
+    def handle_timeout(self, signum, frame):
+        raise TimeoutError(self.error_message)
+    def __enter__(self):
+        signal.signal(signal.SIGALRM, self.handle_timeout)
+        signal.alarm(self.seconds)
+    def __exit__(self, type, value, traceback):
+        signal.alarm(0)
+################################################################################
+'''
 
 
 class ComplexityAnalyzer(analyzers.Analyzer):
-    def __init__(self, text, url='http://overkill.main.ad.rit.edu:41194'):
-#    def __init__(self, text, url='http://localhost:9000/'):
+    def __init__(self, text, treeparse):
         super(ComplexityAnalyzer, self).__init__(text)
-        self.url = url
+        self.treeparse = treeparse
 
     def analyze(self):
         complexity = DEFAULT_COMPLEXITY.copy()
-        parse = DEFAULT_PARSE.copy()
         if self.text.strip() == '':
-            return complexity, parse
+            return complexity
 
         try:
-            response = requests.post(
-                    self.url, params=PARAMS, headers=HEADERS,
-                    data=self.text.encode('UTF-8')
-                )
-            response.raise_for_status()
-            parse_list = []
-            try:
-                for sentence in response.json()['sentences']:
-                    parse_list.append(sentence['parse'].replace('\n', ''))
-
-                complexity, parse = comp.run_syntactic_complexity_corenlp(parse_list)
-            except (JSONDE, DJSONDE):
-                complexity = FAILED_COMPLEXITY.copy()
-                parse = 'JSONDecodeError'
-
-        except Exception as error:
+            complexity = comp.get_syntactic_complexity(self.treeparse)
+        except Exception as error: # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
             traceback.print_exception(extype, exvalue, extrace)
-        finally:
-            return complexity, parse
+            complexity = dict.fromkeys(complexity, str(extype))
 
-        return complexity, parse
+        return complexity

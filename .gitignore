@@ -116,3 +116,4 @@ linsights/dbsettings.py
 app/management/commands/frequency.py
 app/output/*
 app/dumps/*
+tests/*

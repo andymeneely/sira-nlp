@@ -336,6 +336,11 @@ class LoaddbTestCase(TransactionTestCase):
             )
         self.assertCountEqual(expected, actual, msg='Data: vw_review_lemma')
 
+        # Sentences
+#        expected = []
+#        actual = list(Sentence.objects.all())
+#        print(len(actual))
+
     def test_handle_issue_4(self):
         '''Test fix for issue #4
 

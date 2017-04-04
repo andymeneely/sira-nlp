@@ -23,7 +23,7 @@ QUOTED_TEXT_RE = re.compile('^>+ ?.*$', flags=re.MULTILINE)
 # Match code review diff location along with a line of contextual content.
 # E.g., http://codereview.chromium.org/15076/diff/1/6
 #       File chrome/browser/net/dns_master.cc (right):
-CODEREVIEW_URL_RE = re.compile(
+CODEREVIEW_URL_RE = re.compile( # pragma: no cover
         '^https?:\/\/(codereview.chromium.org|chromiumcodereview.appspot.com)'
         '\/\d+\/diff\/.*\n.*\n', flags=re.MULTILINE
     )
@@ -43,7 +43,6 @@ BUG_ID_PATTERNS = [
     'chromium:',
     '.'
 ]
-
 
 def chunk(lst, size):
     """ Break the specified list up into smaller lists of the given size. """
@@ -73,7 +72,7 @@ def get_json(url, parameters):
     (status, json) = (None, None)
     response = requests.get(url, parameters, allow_redirects=False)
     status = response.status_code
-    if status == requests.codes.ok:
+    if status == requests.codes.ok: # pragma: no cover
         json = response.json()
 
     return (status, json)

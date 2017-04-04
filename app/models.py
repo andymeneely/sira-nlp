@@ -84,6 +84,7 @@ class VulnerabilityBug(models.Model):
 
 class Message(models.Model):
     """ Defines the schema for the message table. """
+    id = models.AutoField(primary_key=True)
     posted = models.DateTimeField()
     sender = models.EmailField()
     text = models.TextField(default='')
@@ -102,10 +103,11 @@ class Message(models.Model):
 
 class Sentence(models.Model):
     """ Defines the schema for the sentence table. """
+    id = models.AutoField(primary_key=True)
     text = models.TextField(default='')
 
     parses = fields.JSONField(default=dict)
-    metrics = fields.JSONField(default=dict)
+    metrics = fields.JSONField(default={'sentiment': {}, 'complexity': {}, 'politeness': {}})
 
     # Navigation Fields
     message = models.ForeignKey('Message')

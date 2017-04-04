@@ -18,7 +18,7 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break
-            continue
+            continue # pragma: no cover
         count += item
     oqueue.put(count)
 
@@ -45,7 +45,7 @@ def do(iqueue, cqueue):
 
                 if len(objects) > 0:
                     Token.objects.bulk_create(objects)
-            except Error as err:
+            except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Review  {}\n'.format(review_id))
                 extype, exvalue, extrace = sys.exc_info()

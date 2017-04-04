@@ -154,7 +154,7 @@ has_negative.__name__ = "HASNEGATIVE"
 # For debugging, prints exceptions
 VERBOSE_ERRORS = False
 
-def check_elems_for_strategy(elems, strategy_fnc):
+def check_elems_for_strategy(elems, strategy_fnc): # pragma: no cover
     # given a strategy lambda function, 
     # see if strategy present in at least one elem
     for elem in elems:
@@ -197,7 +197,7 @@ POLITENESS_FEATURES = map(fnc2feature_name, chain(DEPENDENCY_STRATEGIES, TEXT_ST
 #print POLITENESS_FEATURES
 
 
-def get_politeness_strategy_features(document):
+def get_politeness_strategy_features(document): # pragma: no cover
     """
     :param document- pre-processed request document
     :type document- dict with 'sentences', 'parses',

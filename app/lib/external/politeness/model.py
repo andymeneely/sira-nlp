@@ -11,26 +11,26 @@ a pre-trained politeness SVM.
 #####
 # Ensure the proper python dependencies exist
 
-try:
+try: # pragma: no cover
     import numpy as np
 except:
     sys.stderr.write("Package not found: Politeness model requires python package numpy\n")
     sys.exit(2)
 
-try:
+try: # pragma: no cover
     import scipy
     from scipy.sparse import csr_matrix
 except:
     sys.stderr.write("Package not found: Politeness model requires python package scipy\n")
     sys.exit(2)
 
-try:
+try: # pragma: no cover
     import sklearn
 except:
     sys.stderr.write("Package not found: Politeness model requires python package scikit-learn\n")
     sys.exit(2)
 
-try:
+try: # pragma: no cover
     import nltk
 except:
     sys.stderr.write("Package not found: Politeness model requires python package nltk\n")
@@ -42,21 +42,14 @@ except:
 
 packages2versions = [("scikit-learn", sklearn, "0.18.1"), ("numpy", np, "1.12.0"), ("nltk", nltk, "3.2.1"), ("scipy", scipy, "0.18.1")]
 
-for name, package, expected_v in packages2versions:
+for name, package, expected_v in packages2versions: # pragma: no cover
     if package.__version__ < expected_v:
         sys.stderr.write("Warning: package '%s', expected version >= %s, detected %s. Code functionality not guaranteed.\n" % (name, expected_v, package.__version__))
 
 
 ####
 
-try:
-    from politeness.features.vectorizer import PolitenessFeatureVectorizer
-except ImportError as e:
-    print("ImportError: " + str(e))
-    try:
-        from app.lib.external.politeness.features.vectorizer import PolitenessFeatureVectorizer
-    except ImportError as i:
-        print("ImportError: " + str(i))
+from app.lib.external.politeness.features.vectorizer import PolitenessFeatureVectorizer
 
 ####
 # Serialized model filename
@@ -69,7 +62,7 @@ MODEL_FILENAME = os.path.join(os.path.split(__file__)[0], 'politeness-svm.p')
 clf = cPickle.load(open(MODEL_FILENAME, 'rb'), encoding='latin1', fix_imports=True)
 vectorizer = PolitenessFeatureVectorizer()
 
-def score(request):
+def score(request): # pragma: no cover
     """
     :param request - The request document to score
     :type request - dict with 'sentences' and 'parses' field
@@ -93,7 +86,7 @@ def score(request):
     """
     # vectorizer returns {feature-name: value} dict
     features = vectorizer.features(request)
-    fv = [features[f] for f in sorted(features.iterkeys())]
+    fv = [features[f] for f in sorted(features.keys())]
     # Single-row sparse matrix
     X = csr_matrix(np.asarray([fv]))
     probs = clf.predict_proba(X)
@@ -103,7 +96,7 @@ def score(request):
 
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
 
     """
     Sample classification of requests

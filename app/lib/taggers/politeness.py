@@ -6,8 +6,8 @@ import traceback
 from django.db import Error, transaction
 from django.db.models import Q
 
-from app.lib import taggers
-from app.lib.nlp import analyzers, sentenizer
+from app.lib import taggers, logger
+from app.lib.nlp import analyzers
 from app.lib.utils import parallel
 from app.models import *
 
@@ -20,8 +20,9 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break
-            continue
-        count += item
+            continue # pragma: no cover
+
+        count += item[0]
     oqueue.put(count)
 
 
@@ -32,42 +33,35 @@ def do(iqueue, cqueue):
             cqueue.put(parallel.DD)
             break
 
-        (review_id, messages) = item
-        count = 0
+        (sent) = item
         with transaction.atomic():
             try:
-                for message in messages:
-                    parses = list(message.parse)
-                    sents = list(sentenizer.NLTKSentenizer(message.text).execute())
-                    response = analyzers.PolitenessAnalyzer(message.text, parses, sents).analyze()
-                    print(response)
-                    message.polite = response
-                    message.save()
-                    count += 1
-            except Error as err:
+                results = analyzers.PolitenessAnalyzer(sent.text,
+                                                       sent.parses['depparse'],
+                                                  ).analyze()
+                sent.metrics['politeness'] = results
+                sent.save()
+            except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
-                sys.stderr.write('  Review  {}\n'.format(review_id))
+                sys.stderr.write('  Sentence  {}\n'.format(sentence.id))
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 
-        cqueue.put(count)
+        cqueue.put((1, sent.id))
 
 
-def stream(review_ids, iqueue, num_doers):
-    for review_id in review_ids:
-        messages = list(
-                Message.objects.filter(review_id=review_id).exclude(text='')
-            )
-        iqueue.put((review_id, messages))
+def stream(sentenceObjects, iqueue, num_doers):
+    for sentence in sentenceObjects:
+        iqueue.put((sentence))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)
 
 
 class PolitenessTagger(taggers.Tagger):
-    def __init__(self, settings, num_processes, review_ids):
+    def __init__(self, settings, num_processes, sentenceObjects):
         super(PolitenessTagger, self).__init__(settings, num_processes)
-        self.review_ids = review_ids
+        self.sentenceObjects = sentenceObjects
 
     def tag(self):
         iqueue = parallel.manager.Queue(self.settings.QUEUE_SIZE)
@@ -81,7 +75,7 @@ class PolitenessTagger(taggers.Tagger):
     def _start_streaming(self, iqueue):
         process = multiprocessing.Process(
                 target=stream,
-                args=(self.review_ids, iqueue, self.num_processes)
+                args=(self.sentenceObjects, iqueue, self.num_processes)
             )
         process.start()
 

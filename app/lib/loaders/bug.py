@@ -22,7 +22,7 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break  # All doers are done
-            continue
+            continue # pragma: no cover
 
         (bug, cves) = item
         try:
@@ -41,7 +41,7 @@ def aggregate(oqueue, cqueue, num_doers):
                 if objects:
                     VulnerabilityBug.objects.bulk_create(objects)
                 count += 1
-        except Error as err:
+        except Error as err: # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Bug  {}\n'.format(bug.id))
             extype, exvalue, extrace = sys.exc_info()

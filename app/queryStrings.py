@@ -6,6 +6,7 @@ import math
 import random
 
 from django.contrib.postgres import fields
+from django.db import connection
 from django.db.models import Count, Sum, Q
 from django.db.models.functions import Cast
 from itertools import chain
@@ -304,12 +305,14 @@ def query_rIDs_neutral():
     if len(NEUTRAL_RIDS) > 0:
         return NEUTRAL_RIDS
 
-    if FIXED_RIDS == []:
-        query_rIDs_fixed()
-    if MISSED_RIDS == []:
-        query_rIDs_missed()
-    if ALL_RIDS == []:
-        query_rIDs_all()
+    fixed = query_rIDs_fixed()
+    missed = query_rIDs_missed()
+    all = query_rIDs_all()
+
+#    queryResults = Review.objects \
+#        .exclude(Q(id__in=missed) | Q(id__in=fixed)) \
+#        .values_list('id', flat=True)
+#    NEUTRAL_RIDS = list(queryResults)
 
     NEUTRAL_RIDS = list(set(ALL_RIDS) - set(FIXED_RIDS))
     NEUTRAL_RIDS = list(set(NEUTRAL_RIDS) - set(MISSED_RIDS))

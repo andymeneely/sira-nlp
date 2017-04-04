@@ -12,14 +12,16 @@ LAST_LOG = ""
 def debug(message):
     """ Prepend '\r[DBG]' to the given message and print to stderr in blue. """
     global LAST_LOG
-    if 'DEBUG' in os.environ:
+    if 'DEBUG' in os.environ: # pragma: no cover
         LAST_LOG = message
         cprint('\r[DBG] {0}'.format(message), 'blue', file=sys.stderr)
-
+    else:
+        LAST_LOG = message
 
 def info(message):
     """ Prepend '\r[INF]' to the given message and print to stdout in white. """
     global LAST_LOG
+    LAST_LOG = message
     cprint('\r[INF] {0}'.format(message), 'white', file=sys.stdout)
 
 
