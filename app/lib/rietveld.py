@@ -96,7 +96,7 @@ class Rietveld(object):
                 error('[HTTP {}] {}?{}'.format(
                         scode, url, to_querystring(parameters)
                     ))
-        except exceptions.RequestException as exception:
+        except exceptions.RequestException as exception: # pragma: no cover
             error('{}\n{}'.format(exception.request.url, exception))
 
         return (status, ids, cursor)
@@ -130,7 +130,7 @@ class Rietveld(object):
             else:
                 error('[HTTP {}] {}'.format(scode, url))
                 errors.put(rid, block=True)
-        except exceptions.RequestException as exception:
+        except exceptions.RequestException as exception: # pragma: no cover
             error('{}\n{}'.format(exception.request.url, exception))
             errors.put(rid, block=True)
 
@@ -149,7 +149,7 @@ class Rietveld(object):
                 sleep(seconds=1)
             else:
                 error('[HTTP {}] {}'.format(scode, url))
-        except exceptions.RequestException as exception:
+        except exceptions.RequestException as exception: # pragma: no cover
             error('{}\n{}'.format(exception.request.url, exception))
 
         return (status, patchset)

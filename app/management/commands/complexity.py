@@ -25,54 +25,48 @@ from splat.complexity.idea_density import *
 from splat.complexity import *
 
 #@timeout_decorator.timeout(30)
-def get_syntactic_complexity(treeparse, use_signals=False):
-    """
-    This is a special function for putting the complexity results into the
-    database. Use with caution!
-    """
-
-#    treeparse = "(S " + treeparse + " )"
+def get_syntactic_complexity(treeparse):
     treeparse = [treeparse]
+
     try:
         yngve = get_mean_yngve(treeparse)
-    except ZeroDivisionError:
+    except ZeroDivisionError: # pragma: no cover
         yngve = 'ZeroDivisionError'
-    except JSONDecodeError:
+    except JSONDecodeError: # pragma: no cover
         yngve = 'JSONDecodeError'
-#    print("YNGVE")
+
     try:
         frazier = get_mean_frazier(treeparse)
-    except ZeroDivisionError:
+    except ZeroDivisionError: # pragma: no cover
         frazier = 'ZeroDivisionError'
-    except JSONDecodeError:
+    except JSONDecodeError: # pragma: no cover
         frazier = 'JSONDecodeError'
-#    print("FRAZIER")
+
     try:
         # calc_idea() returns the tuple, (mean, min, max) pdensity.
         result = calc_idea(treeparse)
         pdensity = result[0]
-    except TypeError:
+    except TypeError: # pragma: no cover
         pdensity = 'InvalidTreeString'
-    except Exception:
+    except Exception: # pragma: no cover
         extype, _, _ = sys.exc_info()
         pdensity = str(extype)
-#    print("PDENSITY")
+
     try:
         # calc_content() returns the tuple, (mean, min, max) cdensity.
         result = calc_content_density(treeparse)
         cdensity = result[0]
-    except TypeError:
+    except TypeError: # pragma: no cover
         cdensity = 'InvalidPOSTag'
-    except Exception:
+    except Exception: # pragma: no cover
         extype, _, _ = sys.exc_info()
         cdensity = str(extype)
-#    print("CDENSITY")
 
     return {'yngve': yngve, 'frazier': frazier, 'pdensity': pdensity,
             'cdensity': cdensity}
 
 #@Field.register_lookup
-class AnyLookup(lookups.In):
+class AnyLookup(lookups.In): # pragma: no cover
     def get_rhs_op(self, connection, rhs):
         return '= ANY(ARRAY(%s))' % rhs
 
@@ -82,7 +76,7 @@ class Command(BaseCommand):
     help = 'Calculate and display the syntactic complexity scores for a ' \
            'messages within a group of code review.'
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser): # pragma: no cover
         """
 
         """
@@ -97,7 +91,7 @@ class Command(BaseCommand):
                 "repopulate parses for. Defualt is 'all'."
             )
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options): # pragma: no cover
         """
 
         """
@@ -108,16 +102,16 @@ class Command(BaseCommand):
             sents = []
             if condition == 'all':
                 sents = Sentence.objects.exclude(text='').iterator()
-            elif condition == 'empty':
+            elif condition == 'empty': # pragma: no cover
                 sents = Sentence.objects.filter(metrics__complexity={}).exclude(text='').iterator()
-            elif condition == 'failed':
+            elif condition == 'failed': # pragma: no cover
                 sents = Sentence.objects.filter(metrics__complexity={}).exclude(text='').iterator()
 
             connections.close_all()
             tagger = taggers.ComplexityTagger(settings, processes, sents)
             tagger.tag()
 
-        except KeyboardInterrupt:
+        except KeyboardInterrupt: # pragma: no cover
             logger.warning('Attempting to abort...')
         finally:
             logger.info('Time: {:.2f} minutes.'

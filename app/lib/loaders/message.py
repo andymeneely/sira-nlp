@@ -23,7 +23,7 @@ def aggregate(oqueue, cqueue, num_doers):
     oqueue.put(count)
 
 
-def do(iqueue, cqueue):
+def do(iqueue, cqueue): # pragma: no cover
     while True:
         item = iqueue.get()
         if item == parallel.EOI:
