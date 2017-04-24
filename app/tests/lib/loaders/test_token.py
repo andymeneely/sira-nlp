@@ -23,7 +23,7 @@ class TokenLoaderTestCase(test.TestCase):
     def test_load(self):
         expected = [
                 ('frederic.jacob.78', 'frederic.jacob.78', 1, 'NN'),
-                ('@', '@', 3, 'NNP'),
+                ('@', '@', 2, 'NNP'),
                 ('gmail.com', 'gmail.com', 1, 'NN'),
                 ('changed', 'change', 1, 'VBD'),
                 ('reviewers', 'reviewer', 1, 'NNS'),
@@ -33,7 +33,7 @@ class TokenLoaderTestCase(test.TestCase):
                 ('chromium.org', 'chromium.org', 1, 'NN'),
                 (',', ',', 1, ','),
                 ('pkasting', 'pkasting', 1, 'VBG'),
-                ('@', '@', 3, 'CD'),
+                ('@', '@', 1, 'CD'),
                 ('google.com', 'google.com', 1, 'NN')
             ]
 

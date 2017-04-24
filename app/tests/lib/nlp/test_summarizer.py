@@ -37,7 +37,6 @@ class SummarizerTestCase(TestCase):
                 ('.', '.', 2, '.'),
                 ('The', 'the', 1, 'DT'),
                 ('company', 'company', 1, 'NN'),
-                ('said', 'say', 2, 'VBD'),
                 ('the', 'the', 1, 'DT'),
                 ('sale', 'sale', 1, 'NN'),
                 ('is', 'be', 1, 'VBZ'),
@@ -49,13 +48,11 @@ class SummarizerTestCase(TestCase):
                 ('adjustments', 'adjustment', 1, 'NNS'),
                 (',', ',', 1, ','),
                 ('which', 'which', 1, 'WDT'),
-                ('it', 'it', 2, 'PRP'),
                 ('did', 'do', 1, 'VBD'),
                 ('not', 'not', 1, 'RB'),
                 ('explain', 'explain', 1, 'VB'),
-                ('.', '.', 2, '.'),
                 ('Reuter', 'reuter', 1, 'NN'),
             ]
         actual = summarizer.Summarizer(data).execute()
 
-        self.assertEqual(expected, actual)
+        self.assertCountEqual(expected, actual)
