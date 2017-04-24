@@ -6,6 +6,7 @@
 from django.contrib.postgres import fields
 from django.db import models
 
+
 class Review(models.Model):
     """ Defines the schema for the review table. """
     id = models.BigIntegerField(primary_key=True)
@@ -89,11 +90,6 @@ class Message(models.Model):
     sender = models.EmailField()
     text = models.TextField(default='')
 
-    sentiment = fields.JSONField(default=dict)
-    complexity = fields.JSONField(default=dict)
-    parse = fields.JSONField(default=dict)
-    polite = fields.JSONField(default=dict)
-
     # Navigation Fields
     review = models.ForeignKey('Review')
 
@@ -107,7 +103,9 @@ class Sentence(models.Model):
     text = models.TextField(default='')
 
     parses = fields.JSONField(default=dict)
-    metrics = fields.JSONField(default={'sentiment': {}, 'complexity': {}, 'politeness': {}})
+    metrics = fields.JSONField(
+            default={'sentiment': {}, 'complexity': {}, 'politeness': {}}
+        )
 
     # Navigation Fields
     message = models.ForeignKey('Message')
@@ -127,7 +125,7 @@ class Token(models.Model):
     pos = models.CharField(max_length=10, default='')
 
     # Navigation Fields
-    message = models.ForeignKey('Message')
+    sentence = models.ForeignKey('Sentence')
 
     class Meta:
         db_table = 'token'

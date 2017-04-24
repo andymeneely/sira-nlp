@@ -39,7 +39,7 @@ def query_TF_dict(review_id, use_tokens=False):
     if use_tokens:
         column = 'token'
 
-    queryResults = Token.objects.filter(message__review__id=review_id) \
+    queryResults = Token.objects.filter(sentence__review_id=review_id) \
         .values(column).annotate(tf=Sum('frequency'))
 
     return queryResults
@@ -391,7 +391,7 @@ def query_top_x_tokens(review_ids, x, use_tokens=False):
 
     if use_tokens:
         queryResults = Token.objects \
-            .filter(message__review__id__in=review_ids) \
+            .filter(sentence__review_id__in=review_ids) \
             .filter(token__iregex=r"\w+") \
             .values('token') \
             .annotate(freq=Sum('frequency')) \
@@ -399,7 +399,7 @@ def query_top_x_tokens(review_ids, x, use_tokens=False):
             .values_list('token', flat=True)
     else:
         queryResults = Token.objects \
-            .filter(message__review__id__in=review_ids) \
+            .filter(sentence__review_id__in=review_ids) \
             .filter(lemma__iregex=r"\w+") \
             .values('lemma') \
             .annotate(freq=Sum('frequency')) \
