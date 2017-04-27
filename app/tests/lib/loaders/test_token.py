@@ -26,24 +26,24 @@ class TokenLoaderTestCase(test.TestCase):
 
     def test_load(self):
         expected = {
-                'frederic.jacob.78@gmail.com changed reviewers:': set([
-                    ('frederic.jacob.78', 'frederic.jacob.78', 1, 'NN'),
-                    ('@', '@', 1, 'NNP'),
-                    ('gmail.com', 'gmail.com', 1, 'NN'),
-                    ('changed', 'change', 1, 'VBD'),
-                    ('reviewers', 'reviewer', 1, 'NNS'),
-                    (':', ':', 1, ':')
-                ]),
-                '+ dgozman@chromium.org, pkasting@google.com': set([
-                    ('+', '+', 1, 'JJ'),
-                    ('dgozman', 'dgozman', 1, 'NN'),
-                    ('@', '@', 1, 'NNP'),
-                    ('chromium.org', 'chromium.org', 1, 'NN'),
-                    (',', ',', 1, ','),
-                    ('pkasting', 'pkasting', 1, 'VBG'),
-                    ('@', '@', 1, 'CD'),
-                    ('google.com', 'google.com', 1, 'NN')
-                ])
+                'frederic.jacob.78@gmail.com changed reviewers:': [
+                    (1, 'frederic.jacob.78', 'frederic.jacob.78', 'NN'),
+                    (2, '@', '@', 'NNP'),
+                    (3, 'gmail.com', 'gmail.com', 'NN'),
+                    (4, 'changed', 'change', 'VBD'),
+                    (5, 'reviewers', 'reviewer', 'NNS'),
+                    (6, ':', ':', ':')
+                ],
+                '+ dgozman@chromium.org, pkasting@google.com': [
+                    (1, '+', '+', 'JJ'),
+                    (2, 'dgozman', 'dgozman', 'NN'),
+                    (3, '@', '@', 'NNP'),
+                    (4, 'chromium.org', 'chromium.org', 'NN'),
+                    (5, ',', ',', ','),
+                    (6, 'pkasting', 'pkasting', 'VBG'),
+                    (7, '@', '@', 'CD'),
+                    (8, 'google.com', 'google.com', 'NN')
+                ]
             }
 
         _ = self.loader.load()
@@ -54,9 +54,11 @@ class TokenLoaderTestCase(test.TestCase):
                 message__posted='2015-07-30 10:32:31.936180'
             )
         for sentence in sentences:
-            actual[sentence.text] = set(
-                    Token.objects.filter(sentence=sentence).values_list(
-                        'token', 'lemma', 'frequency', 'pos'
+            actual[sentence.text] = list(
+                    Token.objects.filter(sentence=sentence)
+                    .order_by('position')
+                    .values_list(
+                        'position', 'token', 'lemma', 'pos'
                     )
                 )
         self.assertEqual(expected, actual, msg='Data:Token')

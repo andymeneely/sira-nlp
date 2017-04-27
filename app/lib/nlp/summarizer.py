@@ -7,14 +7,12 @@ class Summarizer(object):
 
     def execute(self):
         tokens = tokenizer.NLTKTokenizer(self.text).execute()
-
         lemmas = lemmatizer.NLTKLemmatizer(tokens).execute()
         pos = postagger.PosTagger(tokens).execute()
-        frequency = counter.Counter(pos).execute()
 
         summary = [
-                (t, l, frequency[p], p[1])
-                for (t, l, p) in zip(tokens, lemmas, pos)
+                (index + 1, t, l, p[1])
+                for (index, (t, l, p)) in enumerate(zip(tokens, lemmas, pos))
             ]
 
-        return list(set(summary))
+        return summary

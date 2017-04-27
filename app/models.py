@@ -119,9 +119,9 @@ class Token(models.Model):
     """ Defines the schema for the token table. """
     id = models.AutoField(primary_key=True)
 
+    position = models.PositiveIntegerField()
     token = models.TextField(default='', db_index=True)
     lemma = models.TextField(default='', db_index=True)
-    frequency = models.PositiveIntegerField(default=0)
     pos = models.CharField(max_length=10, default='')
 
     # Navigation Fields
