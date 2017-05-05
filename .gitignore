@@ -117,3 +117,5 @@ app/management/commands/frequency.py
 app/output/*
 app/dumps/*
 tests/*
+app/lib/external/uncertainty/binary-*.p
+app/lib/external/uncertainty/multiclass-*.p

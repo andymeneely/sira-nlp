@@ -446,8 +446,9 @@ class QueryStringsTestCase(testcases.SpecialTestCase):
         # Sub-Test 39 - query_top_x_tokens()
         data = [2189523002, 2189523002]
 
-        expected = ['chromium.org', 'the', 'be', 'cq', 'to']
-        actual = qs.query_top_x_tokens(data, 5)
+        expected = ['the', 'chromium.org', 'be', 'cq', 'pfeldman', 'to',
+                    'patchset', 'done', 'check', 'bit']
+        actual = qs.query_top_x_tokens(data, 10)
         self.assertEqual(sorted(expected), sorted(list(actual)))
 
         expected = ['chromium.org', 'was', 'CQ', 'The', 'Done']
