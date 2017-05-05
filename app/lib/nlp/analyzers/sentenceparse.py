@@ -1,8 +1,8 @@
 import sys
 import traceback
 
-from json import JSONDecodeError
-from json.decoder import JSONDecodeError as JDError
+from json import decoder
+from simplejson import scanner
 
 import collections
 import requests
@@ -39,7 +39,8 @@ class SentenceParseAnalyzer(analyzers.Analyzer):
                 parse['trees'] = sentence['parse']
                 parse['deps'] = sentence['enhancedPlusPlusDependencies']
 #            return parse
-        except (JSONDecodeError, RequestException, JDError) as error: # pragma: no cover
+        except (decoder.JSONDecodeError, RequestException,
+                scanner.JSONDecodeError) as error:  # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
