@@ -286,22 +286,25 @@ class LoaddbTestCase(TransactionTestCase):
         # Tokens
         expected = {
                 'frederic.jacob.78@gmail.com changed reviewers:': [
-                    (1, 'frederic.jacob.78', 'frederic.jacob.78', 'NN'),
-                    (2, '@', '@', 'NNP'),
-                    (3, 'gmail.com', 'gmail.com', 'NN'),
-                    (4, 'changed', 'change', 'VBD'),
-                    (5, 'reviewers', 'reviewer', 'NNS'),
-                    (6, ':', ':', ':')
+                    (
+                        1, 'frederic.jacob.78', 'frederic.jacob.78',
+                        'frederic.jacob.78', 'NN'
+                    ),
+                    (2, '@', '@', '@', 'NNP'),
+                    (3, 'gmail.com', 'gmail.com', 'gmail.com', 'NN'),
+                    (4, 'changed', 'chang', 'change', 'VBD'),
+                    (5, 'reviewers', 'review', 'reviewer', 'NNS'),
+                    (6, ':', ':', ':', ':')
                 ],
                 '+ dgozman@chromium.org, pkasting@google.com': [
-                    (1, '+', '+', 'JJ'),
-                    (2, 'dgozman', 'dgozman', 'NN'),
-                    (3, '@', '@', 'NNP'),
-                    (4, 'chromium.org', 'chromium.org', 'NN'),
-                    (5, ',', ',', ','),
-                    (6, 'pkasting', 'pkasting', 'VBG'),
-                    (7, '@', '@', 'CD'),
-                    (8, 'google.com', 'google.com', 'NN')
+                    (1, '+', '+', '+', 'JJ'),
+                    (2, 'dgozman', 'dgozman', 'dgozman', 'NN'),
+                    (3, '@', '@', '@', 'NNP'),
+                    (4, 'chromium.org', 'chromium.org', 'chromium.org', 'NN'),
+                    (5, ',', ',', ',', ','),
+                    (6, 'pkasting', 'pkast', 'pkasting', 'VBG'),
+                    (7, '@', '@', '@', 'CD'),
+                    (8, 'google.com', 'google.com', 'google.com', 'NN')
                 ]
             }
 
@@ -315,7 +318,7 @@ class LoaddbTestCase(TransactionTestCase):
                     Token.objects.filter(sentence=sentence)
                     .order_by('position')
                     .values_list(
-                        'position', 'token', 'lemma', 'pos'
+                        'position', 'token', 'stem', 'lemma', 'pos'
                     )
                 )
         self.assertEqual(expected, actual, msg='Data:Token')

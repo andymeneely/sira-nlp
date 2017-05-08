@@ -37,10 +37,10 @@ def do(iqueue, cqueue):  # pragma: no cover
             try:
                 for (sentence_id, sentence_text) in sentences:
                     summary = summarizer.Summarizer(sentence_text).execute()
-                    for (position, token, lemma, pos) in set(summary):
+                    for (position, token, stem, lemma, pos) in summary:
                         objects.append(Token(
                                 sentence_id=sentence_id, position=position,
-                                token=token, lemma=lemma, pos=pos
+                                token=token, stem=stem, lemma=lemma, pos=pos
                             ))
 
                 if len(objects) > 0:

@@ -121,6 +121,7 @@ class Token(models.Model):
 
     position = models.PositiveIntegerField()
     token = models.TextField(default='', db_index=True)
+    stem = models.TextField(default='', db_index=True)
     lemma = models.TextField(default='', db_index=True)
     pos = models.CharField(max_length=10, default='')
 
