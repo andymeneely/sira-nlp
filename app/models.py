@@ -124,6 +124,7 @@ class Token(models.Model):
     stem = models.TextField(default='', db_index=True)
     lemma = models.TextField(default='', db_index=True)
     pos = models.CharField(max_length=10, default='')
+    chunk = models.CharField(max_length=10, default='')
 
     # Navigation Fields
     sentence = models.ForeignKey('Sentence')

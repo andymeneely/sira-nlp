@@ -1,4 +1,5 @@
-from app.lib.nlp import counter, lemmatizer, postagger, stemmer, tokenizer
+from app.lib.nlp import chunktagger, counter, lemmatizer, postagger, stemmer, \
+                        tokenizer
 
 
 class Summarizer(object):
@@ -10,11 +11,12 @@ class Summarizer(object):
         lemmas = lemmatizer.NLTKLemmatizer(tokens).execute()
         stems = stemmer.Stemmer(tokens).execute()
         pos = postagger.PosTagger(tokens).execute()
+        chunk = chunktagger.ChunkTagger().parse(pos)
 
-        summary = zip(tokens, stems, lemmas, pos)
+        summary = zip(tokens, stems, lemmas, pos, chunk)
         summary = [
-                (index + 1, t, s, l, p[1])
-                for (index, (t, s, l, p)) in enumerate(summary)
+                (index + 1, t, s, l, p[1], c[1])
+                for (index, (t, s, l, p, c)) in enumerate(summary)
             ]
 
         return summary
