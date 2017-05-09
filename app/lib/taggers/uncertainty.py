@@ -22,35 +22,39 @@ def aggregate(oqueue, cqueue, num_doers):
                 break
             continue # pragma: no cover
 
-        count += item[0]
+        count += 1
     oqueue.put(count)
 
 
-def do(iqueue, cqueue):
+def do(iqueue, cqueue): # pragma: no cover
     while True:
         item = iqueue.get()
         if item == parallel.EOI:
             cqueue.put(parallel.DD)
             break
 
-        (sent) = item
+        (sent, tokens) = item
         with transaction.atomic():
             try:
-                results = analyzers.UncertaintyAnalyzer(sent.text).analyze()
-                sent.metrics['uncertainty'] = results
+                results = analyzers.UncertaintyAnalyzer(tokens).analyze()
+                sent.metrics['uncertainty'] = results[0]
                 sent.save()
+                for i, token in enumerate(tokens):
+                    token.uncertainty = results[1][i]
+                    token.save()
             except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
-                sys.stderr.write('  Sentence  {}\n'.format(sentence.id))
+                sys.stderr.write('  Sentence  {}\n'.format(sent.id))
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 
-        cqueue.put((1, sent.id))
+        cqueue.put(1)
 
 
 def stream(sentenceObjects, iqueue, num_doers):
     for sentence in sentenceObjects:
-        iqueue.put((sentence))
+        tokens = list(Token.objects.filter(sentence_id__is=sentence.id))
+        iqueue.put((sentence, tokens))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)
