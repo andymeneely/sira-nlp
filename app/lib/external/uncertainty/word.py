@@ -19,7 +19,8 @@ class Word(object):
         for feature in components[6:]:
             feature = re.sub(r"\|\|", "|", feature)
             index = feature.rindex(':')
-            self.features[feature[:index]] = float(feature[index + 1:])
+            #print(feature[index + 1:])
+            self.features[feature[:index]] = float(feature[index + 1:].replace("|", ""))
 
     def get_features(self):
         return self.features

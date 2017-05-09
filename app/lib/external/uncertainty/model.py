@@ -10,15 +10,15 @@ import sys
 import warnings
 
 from collections import Counter
-from data.merge import *
-from word import *
-from sentence import *
+from app.lib.external.uncertainty.data.merge import *
+from app.lib.external.uncertainty.word import *
+from app.lib.external.uncertainty.sentence import *
 
 #from matplotlib.mlab import PCA
 from nltk.stem.porter import *
 from random import shuffle
-from SuperChunker import *
-from features.features import *
+from app.lib.external.uncertainty.SuperChunker import *
+from app.lib.external.uncertainty.features.features import *
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -27,16 +27,16 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 warnings.filterwarnings("ignore", category=FutureWarning, module="__main__")
 
-DATA_FILE = 'data/merged_data'
+DATA_FILE = 'app/lib/external/uncertainty/data/merged_data'
 
-BIN_CUE_MODEL = "binary-cue-model.p"
-BIN_CUE_VECTORIZER = "binary-cue-vectorizer.p"
-BIN_SENT_MODEL = "binary-sent-model.p"
-BIN_SENT_VECTORIZER = "binary-sent-vectorizer.p"
-MULTI_CUE_MODEL = "multiclass-cue-model.p"
-MULTI_CUE_VECTORIZER = "multiclass-cue-vectorizer.p"
-MULTI_SENT_MODEL = "multiclass-sent-model.p"
-MULTI_SENT_VECTORIZER = "multiclass-sent-vectorizer.p"
+BIN_CUE_MODEL = "app/lib/external/uncertainty/binary-cue-model.p"
+BIN_CUE_VECTORIZER = "app/lib/external/uncertainty/binary-cue-vectorizer.p"
+BIN_SENT_MODEL = "app/lib/external/uncertainty/binary-sent-model.p"
+BIN_SENT_VECTORIZER = "app/lib/external/uncertainty/binary-sent-vectorizer.p"
+MULTI_CUE_MODEL = "app/lib/external/uncertainty/multiclass-cue-model.p"
+MULTI_CUE_VECTORIZER = "app/lib/external/uncertainty/multiclass-cue-vectorizer.p"
+MULTI_SENT_MODEL = "app/lib/external/uncertainty/multiclass-sent-model.p"
+MULTI_SENT_VECTORIZER = "app/lib/external/uncertainty/multiclass-sent-vectorizer.p"
 
 PRINTER = pprint.PrettyPrinter(indent=4)
 STEMMER = PorterStemmer()
@@ -50,6 +50,7 @@ def _get_lines(filepath):
     lines = None
     with open(filepath) as file:
         lines = file.readlines()
+        lines.append('')
     return lines
 
 def _get_sentences(filepath):
@@ -271,8 +272,8 @@ def classify(command, test_file, binary=True):
 
         preds = classifier.predict(X)
 
-        _classification_report(z, preds, text="WORD:\t\t")
-        return z, list(preds)
+        #_classification_report(z, preds, text="WORD:\t\t")
+        return [z, list(preds)]
     elif command == 'sent':
         X, y = Sentences(_get_sentences(test_file)).get_data(binary=binary)
 
@@ -289,11 +290,12 @@ def classify(command, test_file, binary=True):
             A, _, _ = sent.words.get_data(binary=binary)
             A = vectorizer.transform(A)
             cls = _classify_sentence(classifier, A, binary=binary)
-            preds.append(cls[0])
+            #print("CLS: " + str(cls))
+            preds.append([cls[0], list(cls[1])])
             sents.append(_tag_sent(sent, cls[1]))
 
-        _classification_report(sents, preds)
-        return sents, preds
+        #_classification_report(sents, preds)
+        return [sents, preds]
 
 def _tag_sent(sent, labels):
     sent = sent.get_sent().split()
@@ -484,6 +486,7 @@ def features(data_file):
                                pos_tag(tok)[0][1], 'X', 'X']
                         for k, v in sorted(val.items()):
                             row.append(str(k) + ":" + str(v))
+                        #print(row)
                         tsv_writer.writerow(row)
 
 def merge(json_data, tagged_data):

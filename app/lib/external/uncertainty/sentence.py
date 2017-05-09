@@ -1,4 +1,4 @@
-from word import *
+from app.lib.external.uncertainty.word import *
 
 __all__ = ['Sentence', 'Sentences']
 
