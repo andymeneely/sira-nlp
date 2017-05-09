@@ -33,48 +33,50 @@ class QueryStringsTestCase(testcases.SpecialTestCase):
         _ = loader.load()
         loader = loaders.TokenLoader(settings, num_processes=2, review_ids=review_ids)
         _ = loader.load()
+        loader = loaders.SentenceLoader(settings, num_processes=2, review_ids=review_ids)
+        _ = loader.load()
 
         with connection.cursor() as cursor:
             cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_token'))
             cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_lemma'))
 
     def test_queryStrings(self):
-        # Sub-Test 1 - query_TF_dict(use_tokens=True)
+        # Sub-Test 1 - query_TF_dict()
         expected = [{'token': 'starting', 'tf': 1},
                     {'token': 'Created', 'tf': 1}, {'token': 'Revert', 'tf': 1},
                     {'token': 'a', 'tf': 1}, {'token': 'Simplify', 'tf': 1},
                     {'token': 'of', 'tf': 1}, {'token': 'navigation', 'tf': 1}]
-        actual = qs.query_TF_dict(1444413002, True)
+        actual = qs.query_TF_dict(1444413002, key='token')
         self.assertEqual(len(expected), len(list(actual)))
         for entry in expected:
             self.assertTrue(entry in list(actual))
 
-        # Sub-Test 2 - query_TF_dict(use_tokens=False)
+        # Sub-Test 2 - query_TF_dict()
         expected = [{'lemma': 'created', 'tf': 1}, {'lemma': 'start', 'tf': 1},
                     {'lemma': 'a', 'tf': 1}, {'lemma': 'revert', 'tf': 1},
                     {'lemma': 'simplify', 'tf': 1},
                     {'lemma': 'navigation', 'tf': 1}, {'lemma': 'of', 'tf': 1}]
-        actual = qs.query_TF_dict(1444413002, False)
+        actual = qs.query_TF_dict(1444413002, key='lemma')
         self.assertEqual(len(expected), len(list(actual)))
         for entry in expected:
             self.assertTrue(entry in list(actual))
 
-        # Sub-Test 3 - query_DF(use_tokens=True)
+        # Sub-Test 3 - query_DF()
         expected = [{'token': 'a', 'df': 1}, {'token': 'starting', 'df': 1},
                     {'token': 'navigation', 'df': 1}, {'token': 'of', 'df': 1},
                     {'token': 'Revert', 'df': 1}, {'token': 'Created', 'df': 1},
                     {'token': 'Simplify', 'df': 1}]
-        actual = qs.query_DF([1444413002], True)
+        actual = qs.query_DF([1444413002], key='token')
         self.assertEqual(len(expected), len(list(actual)))
         for entry in expected:
             self.assertTrue(entry in list(actual))
 
-        # Sub-Test 4 - query_DF(use_tokens=False)
+        # Sub-Test 4 - query_DF()
         expected = [{'df': 1, 'lemma': 'created'}, {'df': 1, 'lemma': 'a'},
                     {'df': 1, 'lemma': 'navigation'}, {'df': 1, 'lemma': 'of'},
                     {'df': 1, 'lemma': 'start'}, {'df': 1, 'lemma': 'simplify'},
                     {'df': 1, 'lemma': 'revert'}]
-        actual = qs.query_DF([1444413002], False)
+        actual = qs.query_DF([1444413002], key='lemma')
         self.assertEqual(len(expected), len(list(actual)))
         for entry in expected:
             self.assertTrue(entry in list(actual))
@@ -419,7 +421,7 @@ class QueryStringsTestCase(testcases.SpecialTestCase):
                     'ps40001', 'rebaselined', 'reviewer', 'semicolon', 'send',
                     'style', 'the', 'this', 'title', 'to', 'unused', 'upload',
                     'used', 'with']
-        actual = qs.query_tokens(data, use_tokens=False)
+        actual = qs.query_tokens(data, key='lemma')
         self.assertEqual(sorted(expected), sorted(actual))
 
         expected = ['``', '-', ':', '.', "''", "(", ")", "@", "#", "+", 'after',
@@ -431,26 +433,31 @@ class QueryStringsTestCase(testcases.SpecialTestCase):
                     'proper', 'ps20001', 'ps40001', 'rebaselined', 'reviewers',
                     'semicolon', 'sent', 'style', 'the', 'The', 'This', 'title',
                     'to', 'Unused', 'uploaded', 'used', 'was', 'with']
-        actual = qs.query_tokens(data, use_tokens=True)
+        actual = qs.query_tokens(data, key='token')
         self.assertEqual(sorted(expected), sorted(actual))
 
         # Sub-Test 38 - query_tokens_all()
         expected = 1643
-        actual = qs.query_tokens_all()
+        actual = qs.query_tokens_all(key='lemma')
         self.assertEqual(expected, len(list(actual)))
 
         expected = 2003
-        actual = qs.query_tokens_all(True)
+        actual = qs.query_tokens_all(key='token')
         self.assertEqual(expected, len(list(actual)))
 
         # Sub-Test 39 - query_top_x_tokens()
-        data = [2189523002, 2189523002]
+        actual = qs.query_top_x_tokens(data, 10, key='lemma')
+        self.assertEqual(10, len(list(actual)))
 
-        expected = ['the', 'chromium.org', 'be', 'cq', 'pfeldman', 'to',
-                    'patchset', 'done', 'check', 'bit']
-        actual = qs.query_top_x_tokens(data, 10)
-        self.assertEqual(sorted(expected), sorted(list(actual)))
+        actual = qs.query_top_x_tokens(data, 5, key='token')
+        self.assertEqual(5, len(list(actual)))
 
-        expected = ['chromium.org', 'was', 'CQ', 'The', 'Done']
-        actual = qs.query_top_x_tokens(data, 5, True)
-        self.assertEqual(sorted(expected), sorted(list(actual)))
+        # Sub-Test 40 - query_sentence_ids()
+        expected = 1693
+        actual = qs.query_sIDs_all()
+        self.assertEqual(expected, len(list(actual)))
+
+        # Sub-Test 41 - query_tokens_group_by_sentence()
+#        data = [1678, 1679]
+#        actual = qs.query_tokens_group_by_sentence(data)
+#        print(list(actual))

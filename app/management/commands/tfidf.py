@@ -82,7 +82,7 @@ def _write_csv(filepath, rows):
         info('  {:,} row(s) written to {}'.format(len(rows), filepath))
 
 
-def get_idf_dict(df, pop_num_docs, use_tokens=False):
+def get_idf_dict(df, pop_num_docs, key='lemma'):
     """
     Calculate the IDF for every token in the population.
 
@@ -90,14 +90,14 @@ def get_idf_dict(df, pop_num_docs, use_tokens=False):
     at the end of the day, it really doesn't.
     """
     idf = dict()
-    text = 'token' if use_tokens else 'lemma'
+    text = 'token' if key == 'token' else 'lemma'
     for item in df:
         (_term, _df) = (item[text], item['df'])
         idf[_term] = math.log(float(pop_num_docs / _df))
     return idf
 
 
-def load_tfidf_dict(review_ids, idf_dict, num_procs=8, use_tokens=False):
+def load_tfidf_dict(review_ids, idf_dict, num_procs=8, key='lemma'):
     """
     Call the multiprocessed commands for computing TF-IDF, and return the
     resulting nested dictionary of the form:
@@ -105,7 +105,7 @@ def load_tfidf_dict(review_ids, idf_dict, num_procs=8, use_tokens=False):
     {review_id:{token:score,...},...}
     """
     info('  Calculating TF-IDF for {:,} reviews'.format(len(review_ids)))
-    tf_idfs = tfidf.compute(review_ids, idf_dict, num_procs, not use_tokens)
+    tf_idfs = tfidf.compute(review_ids, idf_dict, num_procs, key=key)
     return tf_idfs
 
 
@@ -148,9 +148,8 @@ class Command(BaseCommand):
                     )
             )
         parser.add_argument(
-                '--use-tokens', default=False, action='store_true',
-                help='When set, TF-IDF will be calculated on tokens instead'
-                     ' of lemmas.'
+                '--key', default='lemma', type=str, action='store_true',
+                help="TF-IDF will be calculated on 'token' or 'lemma'."
             )
         parser.add_argument(
                 '--population', type=str, default='all',
@@ -182,7 +181,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Grab the command line arguments.
         processes = options['processes']
-        use_tokens = options['use_tokens']
+        key = options['key']
         population = options['population']
         chunksize = options['chunksize']
         max_length = options['maxlength']
@@ -205,19 +204,19 @@ class Command(BaseCommand):
             sample_num_docs = len(sample_review_ids)
 
             info('  Computing the denominator of IDF')
-            df = query_DF(pop_review_ids, use_tokens)
+            df = query_DF(pop_review_ids, key=key)
 
             info('  Computing the IDF in TF-IDF')
-            idf = get_idf_dict(df, pop_num_docs, use_tokens)
+            idf = get_idf_dict(df, pop_num_docs, key=key)
 
             connections.close_all()  # Hack
             tfidfs = load_tfidf_dict(
-                    sample_review_ids, idf, processes, use_tokens
+                    sample_review_ids, idf, processes, key=key
                 )
 
             types = get_types(tfidfs, max_length, top)
             info('  {:,} types chosen'.format(len(types)))
-            filepath = TFIDF_TOKENS_PATH if use_tokens else TFIDF_LEMMAS_PATH
+            filepath = TFIDF_TOKENS_PATH if key == 'token' else TFIDF_LEMMAS_PATH
             write_csvs(tfidfs, filepath, chunksize, types)
 
             assert len(tfidfs) == sample_num_docs
