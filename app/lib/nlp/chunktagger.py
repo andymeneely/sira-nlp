@@ -8,14 +8,13 @@ def tag_chunks(chunk_sents):
     return [[(t, c) for (w, t, c) in chunk_tags] for chunk_tags in tag_sents]
 
 
-class ChunkTagger(ChunkParserI):
-    def __init__(self):
-        self._chunks = tag_chunks(treebank_chunk.chunked_sents())
-        self._chunks += tag_chunks(conll2000.chunked_sents())
-        self._backoff = UnigramTagger(self._chunks)
-        self._chunk_tagger = BigramTagger(self._chunks, backoff=self._backoff)
+CHUNKS = tag_chunks(treebank_chunk.chunked_sents()) + \
+         tag_chunks(conll2000.chunked_sents())
+TAGGER = BigramTagger(CHUNKS, backoff=UnigramTagger(CHUNKS))
 
+
+class ChunkTagger(ChunkParserI):
     def parse(self, tokens):
         (tokens, tags) = zip(*tokens)
-        chunks = self._chunk_tagger.tag(tags)
+        chunks = TAGGER.tag(tags)
         return [(token, chunk[1]) for (token, chunk) in zip(tokens, chunks)]
