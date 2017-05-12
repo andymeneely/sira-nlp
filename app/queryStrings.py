@@ -13,44 +13,31 @@ from itertools import chain
 
 from app.models import *
 
-ALL_RIDS = []
-FIXED_RIDS = []
-MISSED_RIDS = []
-NEUTRAL_RIDS = []
-NM_RIDS = []
-NF_RIDS = []
-FM_RIDS = []
-
-ALL_MIDS = []
-FIXED_MIDS = []
-MISSED_MIDS = []
-NEUTRAL_MIDS = []
-NM_MIDS = []
-NF_MIDS = []
-FM_MIDS = []
+ALL_RIDS, FIXED_RIDS, MISSED_RIDS, NEUTRAL_RIDS, NM_RIDS, NF_RIDS, \
+    FM_RIDS = ([],) * 7
+ALL_MIDS, FIXED_MIDS, MISSED_MIDS, NEUTRAL_MIDS, NM_MIDS, NF_MIDS, \
+    FM_MIDS = ([],) * 7
+ALL_SIDS, FIXED_SIDS, MISSED_SIDS, NEUTRAL_SIDS, NM_SIDS, NF_SIDS, \
+    FM_SIDS = ([],) * 7
 
 #### TF-IDF ####################################################################
-def query_TF_dict(review_id, use_tokens=False):
+def query_TF_dict(review_id, key='lemma'):
     """
     Returns the numerator of TF, the number of occurrences of the token in
     the review.
     """
-    column = 'lemma'
-    if use_tokens:
-        column = 'token'
-
-    queryResults = Token.objects.filter(sentence__review_id=review_id) \
-        .values(column).annotate(tf=Count(column))
+    queryResults = Token.objects.filter(sentence__review__id=review_id) \
+        .values(key).annotate(tf=Count(key))
 
     return queryResults
 
-def query_DF(review_ids, use_tokens=False):
+def query_DF(review_ids, key='lemma'):
     """
     Returns the denominator of DF, the number of documents in the population
     that contain the token at least once.
     """
     queryResults = None
-    if use_tokens:
+    if key == 'token':
         queryResults = ReviewTokenView.objects \
             .filter(review_id__in=review_ids).values('token') \
             .annotate(df=Count('token')).order_by('-df')
@@ -361,43 +348,47 @@ def query_rIDs_nm():
 
     return NM_RIDS
 
+#### Sentences #################################################################
+def query_sIDs_all():
+    """ Returns a list of all sentence IDs in the corpus. """
+    queryResults = Sentence.objects.all().values_list('id', flat=True)
+
+    return queryResults
+
 #### Tokens ####################################################################
-def query_tokens(review_ids, use_tokens=False):
-    if use_tokens:
-        queryResults = ReviewTokenView.objects.distinct('token') \
+def query_tokens(review_ids, key='lemma'):
+    if key == 'lemma':
+        queryResults = ReviewLemmaView.objects.distinct(key) \
             .filter(review_id__in=review_ids) \
-            .values_list('token', flat=True)
+            .values_list(key, flat=True)
     else:
-        queryResults = ReviewLemmaView.objects.distinct('lemma') \
+        queryResults = ReviewTokenView.objects.distinct(key) \
             .filter(review_id__in=review_ids) \
-            .values_list('lemma', flat=True)
+            .values_list(key, flat=True)
 
     return queryResults
 
-def query_tokens_all(use_tokens=False):
-    if use_tokens:
-        queryResults = ReviewTokenView.objects.distinct('token') \
-            .values_list('token', flat=True)
+def query_tokens_all(key='lemma'):
+    if key == 'lemma':
+        queryResults = ReviewLemmaView.objects.distinct(key) \
+            .values_list(key, flat=True)
     else:
-        queryResults = ReviewLemmaView.objects.distinct('lemma') \
-            .values_list('lemma', flat=True)
+        queryResults = ReviewTokenView.objects.distinct(key) \
+            .values_list(key, flat=True)
 
     return queryResults
 
-def query_top_x_tokens(review_ids, x, use_tokens=False):
+def query_top_x_tokens(review_ids, x, key='lemma'):
     message_ids = Message.objects.distinct('id') \
         .filter(review_id__in=review_ids) \
         .values_list('id', flat=True)
 
-    column = 'lemma'
-    if use_tokens:
-        column = 'token'
     queryResults = Token.objects \
-        .filter(sentence__review_id__in=review_ids) \
+        .filter(sentence__review__id__in=review_ids) \
         .filter(token__iregex=r"\w+") \
-        .values(column) \
-        .annotate(freq=Count(column)) \
+        .values(key) \
+        .annotate(freq=Count(key)) \
         .order_by('-freq') \
-        .values_list(column, flat=True)
+        .values_list(key, flat=True)
 
     return queryResults[0:x]

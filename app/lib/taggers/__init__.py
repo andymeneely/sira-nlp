@@ -9,3 +9,5 @@ from app.lib.taggers.complexity import ComplexityTagger
 from app.lib.taggers.politeness import PolitenessTagger
 
 from app.lib.taggers.sentenceparse import SentenceParseTagger
+
+from app.lib.taggers.uncertainty import UncertaintyTagger

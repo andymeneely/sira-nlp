@@ -15,7 +15,7 @@ from app.models import *
 from app.queryStrings import *
 
 IDF = None
-USE_TOKENS = False
+KEY = 'lemma'
 
 
 def aggregate(oqueue, cqueue, num_doers):
@@ -45,7 +45,7 @@ def do(iqueue, cqueue):
         try:
             # Dictionary of { 'token': frequency }.
             # The numerator of TF for every token in the review.
-            tfs = query_TF_dict(review_id, USE_TOKENS)
+            tfs = query_TF_dict(review_id, KEY)
 
             # The total number of tokens in the review.
             num_tokens = tfs.aggregate(nt=Sum('frequency'))['nt']
@@ -54,7 +54,7 @@ def do(iqueue, cqueue):
             # entire corpus of reviews.
             tfidf = dict()
             if num_tokens is not None:
-                if USE_TOKENS:
+                if KEY == 'token':
                     for entry in tfs:
                         (token, tf) = (entry['token'], entry['tf'])
                         tfidf[token] = (
@@ -83,13 +83,13 @@ def stream(review_ids, iqueue, num_doers):
         iqueue.put(parallel.EOI)
 
 
-def compute(review_ids, idf, num_procs, use_tokens=False):
+def compute(review_ids, idf, num_procs, key='lemma'):
     if idf is None or type(idf) is not dict:
         raise ValueError('Argument IDF must be a dictionary!')
 
-    global IDF, USE_TOKENS
+    global IDF, KEY
     IDF = idf
-    USE_TOKENS = use_tokens
+    KEY = key
 
     iqueue = parallel.manager.Queue()
     proc = multiprocessing.Process(
