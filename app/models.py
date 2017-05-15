@@ -131,6 +131,7 @@ class Token(models.Model):
 
     class Meta:
         db_table = 'token'
+        ordering = ['position']
 
 
 class ReviewTokenView(models.Model):
