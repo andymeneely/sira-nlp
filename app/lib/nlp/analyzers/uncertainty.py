@@ -10,9 +10,7 @@ from json import JSONDecodeError
 
 from app.lib.nlp import analyzers
 
-from app.lib.external.uncertainty.model import *
-
-DEFAULT_UNCERTAINTY = {}
+from uncertainty import model
 
 
 class UncertaintyAnalyzer(analyzers.Analyzer):
@@ -22,10 +20,6 @@ class UncertaintyAnalyzer(analyzers.Analyzer):
         self.root = root_type
 
     def analyze(self):
-        uncertainty = DEFAULT_UNCERTAINTY.copy()
-        if len(self.tokens) == 0:
-            return uncertainty
-
         try:
             tok_list = []
             if self.root == "stem":
@@ -35,8 +29,8 @@ class UncertaintyAnalyzer(analyzers.Analyzer):
                 for tok in self.tokens:
                     tok_list.append((tok.token, tok.lemma, tok.pos, tok.chunk))
 
-            uncertainty = classify('sent', tok_list, binary=False)
-        except Exception as error: # pragma: no cover
+            uncertainty = model.classify(tok_list, 'cue', binary=False)
+        except Exception as error:  # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
