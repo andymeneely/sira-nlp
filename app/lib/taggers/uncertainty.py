@@ -11,7 +11,6 @@ from app.lib.nlp import analyzers
 from app.lib.utils import parallel
 from app.models import *
 
-def get_sent_label(tokens):
 
 def aggregate(oqueue, cqueue, num_doers):
     count, done = 0, 0
@@ -21,36 +20,35 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break
-            continue # pragma: no cover
+            continue  # pragma: no cover
 
         count += 1
     oqueue.put(count)
 
 
-def do(iqueue, cqueue): # pragma: no cover
+def do(iqueue, cqueue):  # pragma: no cover
     while True:
         item = iqueue.get()
         if item == parallel.EOI:
             cqueue.put(parallel.DD)
             break
 
-        (sent, tokens, root) = item
+        (sentence, tokens, root) = item
         with transaction.atomic():
             try:
-                results = analyzers.UncertaintyAnalyzer(tokens, root).analyze()
-
-                u_results = {k:v for k, v in results.items() if v != 'C'}
-                if bool(u_results): # if there are entries in u_results
-                    sent_label = get_sent_label(list(u_results.values())
-                    sent.metrics['uncertainty'] = sent_label
-                    sent.save()
-                    for k, v in u_results.items():
-                        # token.uncertainty = v
-                        # token.save()
-
-            except Error as err: # pragma: no cover
+                uncertainty = analyzers.UncertaintyAnalyzer(tokens, root) \
+                                       .analyze()
+                sentence.metrics['uncertain'] = any(
+                        map(lambda x: x != 'C', uncertainty)
+                    )
+                sentence.save()
+                for token, uncertainty_ in zip(tokens, uncertainty):
+                    if uncertainty != 'C':
+                        token.uncertainty = uncertainty_
+                        token.save()
+            except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
-                sys.stderr.write('  Sentence  {}\n'.format(sent.id))
+                sys.stderr.write('  Sentence  {}\n'.format(sentence.id))
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 
@@ -84,7 +82,9 @@ class UncertaintyTagger(taggers.Tagger):
     def _start_streaming(self, iqueue):
         process = multiprocessing.Process(
                 target=stream,
-                args=(self.sentenceObjects, iqueue, self.num_processes, self.root)
+                args=(
+                    self.sentenceObjects, iqueue, self.num_processes, self.root
+                )
             )
         process.start()
 
