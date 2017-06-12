@@ -16,6 +16,8 @@ PARAMS = {'properties': "{'annotators': 'sentiment'}"}
 DEFAULT_SENTIMENT = {'vpos': 0, 'pos': 0, 'neut': 0, 'neg': 0, 'vneg': 0}
 CORENLP_MAP = {'0': 'vneg', '1': 'neg', '2': 'neut', '3': 'pos', '4': 'vpos'}
 
+session = requests.Session()
+
 
 class SentimentAnalyzer(analyzers.Analyzer):
 #    def __init__(self, text, url='http://interlagos-02.main.ad.rit.edu:41194/'):
@@ -31,7 +33,7 @@ class SentimentAnalyzer(analyzers.Analyzer):
             return sentiment
 
         try:
-            response = requests.post(
+            response = session.post(
                     self.url, params=PARAMS, headers=HEADERS,
                     data=self.text.encode('UTF-8')
                 )
