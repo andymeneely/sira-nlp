@@ -1,7 +1,8 @@
 import sys
 import traceback
 
-from json import JSONDecodeError
+from json import decoder
+from simplejson import scanner
 
 import requests
 
@@ -37,7 +38,8 @@ class SentimentAnalyzer(analyzers.Analyzer):
             response.raise_for_status()
             for sentence in response.json()['sentences']:
                 sentiment[CORENLP_MAP[sentence['sentimentValue']]] += 1
-        except (JSONDecodeError, RequestException) as error: # pragma: no cover
+        except (decoder.JSONDecodeError, RequestException,
+                scanner.JSONDecodeError) as error:  # pragma: no cove
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
