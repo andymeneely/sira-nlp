@@ -12,7 +12,7 @@ from requests.exceptions import RequestException
 from app.lib.nlp import analyzers
 
 HEADERS = {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'}
-PARAMS = {'properties': "{'annotators': 'tokenize,ssplit,pos,parse,depparse'}"} #,depparse'}"}
+PARAMS = {'properties': "{'annotators': 'tokenize,ssplit,pos,parse,depparse', 'ssplit.isOneSentence': 'true'}"} #,depparse'}"}
 
 DEFAULT_PARSE = {'deps': [], 'trees': []}
 
