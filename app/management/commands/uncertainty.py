@@ -45,6 +45,11 @@ class Command(BaseCommand):
                 choices=['stem', 'lemma'], help='Specify whether to use the '
                 "token's lemma or stem for classification. Default is 'stem'."
             )
+        parser.add_argument(
+                '--year', type=int, default=None, dest='year',
+                help='Evaluate uncertainty of those code reviews that were '
+                'created in the specified year.'
+            )
 
     def handle(self, *args, **options):
         """
@@ -53,14 +58,19 @@ class Command(BaseCommand):
         processes = options['processes']
         population = options['population']
         root = options['root']
+        year = options['year']
         begin = dt.now()
         try:
-            sents = Sentence.objects.exclude(text='').iterator()
+            sentences = Sentence.objects.all()
+            if year is not None:
+                sentences = sentences.filter(review__created__year=year)
+            sentences = sentences.iterator()
 
             connections.close_all()
-            tagger = taggers.UncertaintyTagger(settings, processes, sents, root)
+            tagger = taggers.UncertaintyTagger(
+                    settings, processes, sentences, root
+                )
             tagger.tag()
-
         except KeyboardInterrupt:
             warning('Attempting to abort.')
         finally:

@@ -23,7 +23,6 @@ from app.queryStrings import *
 from app.lib.nlp.sentenizer import NLTKSentenizer
 from app.lib.nlp.analyzers import SentenceParseAnalyzer
 
-from bulk_update.helper import bulk_update
 
 #### FUNCTIONS FOR PARSING THE STANFORD POLITENESS TRAINING DATA ###############
 def find_last_occurrence(depparse):

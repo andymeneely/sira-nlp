@@ -10,7 +10,9 @@ from json import JSONDecodeError
 
 from app.lib.nlp import analyzers
 
-from uncertainty import model
+from uncertainty.classifier import Classifier
+
+classifier = Classifier(granularity='word', binary=False)
 
 
 class UncertaintyAnalyzer(analyzers.Analyzer):
@@ -29,7 +31,7 @@ class UncertaintyAnalyzer(analyzers.Analyzer):
                 for tok in self.tokens:
                     tok_list.append((tok.token, tok.lemma, tok.pos, tok.chunk))
 
-            uncertainty = model.classify(tok_list, 'cue', binary=False)
+            uncertainty = classifier.predict(tok_list)
         except Exception as error:  # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
