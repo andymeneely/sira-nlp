@@ -11,7 +11,10 @@ from requests.exceptions import RequestException
 from app.lib.nlp import analyzers
 
 HEADERS = {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'}
-PARAMS = {'properties': "{'annotators': 'sentiment'}"}
+PARAMS = {
+        'properties':
+        "{'annotators': 'sentiment', 'ssplit.isOneSentence': 'true'}"
+    }
 
 DEFAULT_SENTIMENT = {'vpos': 0, 'pos': 0, 'neut': 0, 'neg': 0, 'vneg': 0}
 CORENLP_MAP = {'0': 'vneg', '1': 'neg', '2': 'neut', '3': 'pos', '4': 'vpos'}
