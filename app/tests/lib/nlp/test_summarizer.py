@@ -15,13 +15,13 @@ class SummarizerTestCase(TestCase):
                 'closing adjustments, which it did not explain. Reuter'
             )
         expected = [
-                (1, 'Gulf', 'Gulf', 'gulf', 'NNP', 'B-NP'),
-                (2, 'Applied', 'Appli', 'applied', 'NNP', 'I-NP'),
+                (1, 'Gulf', 'gulf', 'gulf', 'NNP', 'B-NP'),
+                (2, 'Applied', 'appli', 'applied', 'NNP', 'I-NP'),
                 (
-                    3, 'Technologies', 'Technolog', 'technologies', 'NNPS',
+                    3, 'Technologies', 'technolog', 'technologies', 'NNPS',
                     'I-NP'
                 ),
-                (4, 'Inc', 'Inc', 'inc', 'NNP', 'I-NP'),
+                (4, 'Inc', 'inc', 'inc', 'NNP', 'I-NP'),
                 (5, 'said', 'said', 'say', 'VBD', 'B-VP'),
                 (6, 'it', 'it', 'it', 'PRP', 'B-NP'),
                 (7, 'sold', 'sold', 'sell', 'VBD', 'B-VP'),
@@ -38,7 +38,7 @@ class SummarizerTestCase(TestCase):
                 (18, 'mln', 'mln', 'mln', 'NN', 'I-NP'),
                 (19, 'dlrs', 'dlr', 'dlrs', 'NN', 'I-NP'),
                 (20, '.', '.', '.',  '.', 'O'),
-                (21, 'The', 'The', 'the', 'DT', 'B-NP'),
+                (21, 'The', 'the', 'the', 'DT', 'B-NP'),
                 (22, 'company', 'compani', 'company', 'NN', 'I-NP'),
                 (23, 'said', 'said', 'say', 'VBD', 'B-VP'),
                 (24, 'the', 'the', 'the', 'DT', 'B-NP'),
@@ -57,8 +57,9 @@ class SummarizerTestCase(TestCase):
                 (37, 'not', 'not', 'not', 'RB', 'I-VP'),
                 (38, 'explain', 'explain', 'explain', 'VB', 'I-VP'),
                 (39, '.', '.', '.',  '.', 'O'),
-                (40, 'Reuter', 'Reuter', 'reuter', 'NN', 'B-NP'),
+                (40, 'Reuter', 'reuter', 'reuter', 'NN', 'B-NP'),
             ]
         actual = summarizer.Summarizer(data).execute()
 
+        self.maxDiff = None
         self.assertCountEqual(expected, actual)
