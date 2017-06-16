@@ -58,6 +58,8 @@ class Files(object):
 
     def get_ids_path(self, switch):
         '''Return path to files containing review or bug identifiers.'''
+        if switch not in ['bugs', 'reviews']:
+            raise ValueError('Argument switch must be \'bugs\' or \'reviews\'')
         return self.ids_path.format(switch=switch)
 
     def get_messages(self, id, year=None, clean=False):
@@ -153,9 +155,9 @@ class Files(object):
 
     def save_reviews(self, year, chunk, reviews, errors=None):
         """
-        Save the specified reviews to a json file in the reviews path associated
-        with the specified year. Format according to the specified chunk. Log
-        errors in a CSV file in the same directory.
+        Save the specified reviews to a json file in the reviews path
+        associated with the specified year. Format according to the specified
+        chunk. Log errors in a CSV file in the same directory.
         """
         directory = self.get_reviews_path(year)
         if not os.path.exists(directory):
