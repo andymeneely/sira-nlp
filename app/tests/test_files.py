@@ -30,6 +30,11 @@ class FilesTestCase(TestCase):
 
         self.assertEqual(expected, self.files.get_bugs_path(year=2016))
 
+    def test_get_ids_path(self):
+        expected = self.files.ids_path.format(switch='reviews')
+
+        self.assertEqual(expected, self.files.get_ids_path(switch='reviews'))
+
     def test_get_ids(self):
         expected = [
                 '2148653002', '2150783003', '2140383005', '2148643002',
@@ -40,7 +45,7 @@ class FilesTestCase(TestCase):
                 '2230993004', '2211423003'
             ]
 
-        actual = self.files.get_ids(year=2016)
+        actual = self.files.get_ids(year=2016, switch='reviews')
 
         self.assertCountEqual(expected, actual)
 
@@ -100,9 +105,8 @@ class FilesTestCase(TestCase):
         self.assertEqual(1999153002, actual['issue'])
 
     def test_get_review_nonexistent(self):
-        self.assertRaises(
-                Exception, self.files.get_review, id=1999153000, year=2016
-            )
+        with self.assertRaises(Exception):
+            self.files.get_review(id=1999153000, year=2016)
 
     def test_get_reviews(self):
         expected = [
@@ -133,12 +137,13 @@ class FilesTestCase(TestCase):
     def test_get_year(self):
         expected = '2016'
 
-        actual = self.files.get_year(id=1999153002)
+        actual = self.files.get_year(id=1999153002, switch='reviews')
 
         self.assertEqual(expected, actual)
 
     def test_get_year_nonexistent(self):
-        self.assertRaises(Exception, self.files.get_year, id=1999153000)
+        with self.assertRaises(Exception):
+            self.files.get_year(id=1999153000, switch='reviews')
 
     def test_save_ids(self):
         data = list(range(100001, 100010))
@@ -147,7 +152,7 @@ class FilesTestCase(TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             with self.settings(IDS_PATH=os.path.join('/tmp', tempdir)):
                 f = files.Files(settings)
-                f.save_ids(year=9999, ids=data)
+                f.save_ids(year=9999, ids=data, switch='reviews')
                 path = os.path.join('/tmp', tempdir, '9999.csv')
 
                 self.assertTrue(os.path.exists(path))

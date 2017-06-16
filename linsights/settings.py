@@ -39,7 +39,7 @@ USE_TZ = False
 
 # Paths
 BUGS_PATH = os.path.join(DATA_DIR, 'bugs/{year}')
-IDS_PATH = os.path.join(DATA_DIR, 'ids')
+IDS_PATH = os.path.join(DATA_DIR, '{switch}/ids')
 REVIEWS_PATH = os.path.join(DATA_DIR, 'reviews/{year}')
 VULNERABILITIES_PATH = os.path.join(DATA_DIR, 'vulnerabilities')
 NLP_CACHE_PATH = os.path.join(DATA_DIR, 'nlp')
