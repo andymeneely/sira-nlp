@@ -19,12 +19,12 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break
-            continue # pragma: no cover
+            continue  # pragma: no cover
         count += item
     oqueue.put(count)
 
 
-def do(iqueue, cqueue): # pragma: no cover
+def do(iqueue, cqueue):  # pragma: no cover
     while True:
         item = iqueue.get()
         if item == parallel.EOI:
@@ -45,7 +45,7 @@ def do(iqueue, cqueue): # pragma: no cover
                             ))
                 if len(objects) > 0:
                     Sentence.objects.bulk_create(objects)
-            except Error as err: # pragma: no cover
+            except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Review  {}\n'.format(review_id))
                 extype, exvalue, extrace = sys.exc_info()
@@ -58,12 +58,9 @@ def stream(review_ids, settings, iqueue, num_doers):
     for review_id in review_ids:
         review = helpers.get_row(Review, id=review_id)
 
-        messages = []
-        for message in Message.objects.filter(review_id__exact=review_id):
-            if message.sender in settings.BOTS:
-                continue # pragma: no cover
-            messages.append((message.posted, message.sender, message.text, message.id))
-        iqueue.put((review_id, messages))
+        messages = Message.objects.filter(review_id=review_id) \
+                          .values_list('posted', 'sender', 'text', 'id')
+        iqueue.put((review_id, list(messages)))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)

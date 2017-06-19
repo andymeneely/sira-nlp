@@ -9,6 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('app', '0006_auto_20170202_2106'),
+        ('app', '0014_token_sentence')
     ]
 
     operations = [
@@ -17,10 +18,10 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(
             'CREATE MATERIALIZED VIEW vw_review_token AS '
-            'SELECT DISTINCT ON (t.token, m.review_id) '
+            'SELECT DISTINCT ON (t.token, s.review_id) '
             '   nextval(\'vw_review_token_id_seq\'::regclass) AS id, '
-            '   t.token, m.review_id '
-            'FROM token t JOIN message m ON m.id = t.message_id;'
+            '   t.token, s.review_id '
+            'FROM token t JOIN sentence s ON s.id = t.sentence_id;'
         ),
         migrations.RunSQL(
             'CREATE UNIQUE INDEX vw_review_token_id ON vw_review_token '
@@ -58,10 +59,10 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(
             'CREATE MATERIALIZED VIEW vw_review_lemma AS '
-            'SELECT DISTINCT ON (t.lemma, m.review_id) '
+            'SELECT DISTINCT ON (t.lemma, s.review_id) '
             '   nextval(\'vw_review_lemma_id_seq\'::regclass) AS id, '
-            '   t.lemma, m.review_id '
-            'FROM token t JOIN message m ON m.id = t.message_id;'
+            '   t.lemma, s.review_id '
+            'FROM token t JOIN sentence s ON s.id = t.sentence_id;'
         ),
         migrations.RunSQL(
             'CREATE UNIQUE INDEX vw_review_lemma_id ON vw_review_lemma '

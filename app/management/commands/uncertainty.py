@@ -10,13 +10,11 @@ from datetime import datetime as dt
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import connection, connections
-from django.db.models import Q
 
 from app.lib import loaders, taggers
 from app.lib.helpers import *
 from app.lib.logger import *
 from app.models import *
-from app.queryStrings import *
 
 
 class Command(BaseCommand):
@@ -42,6 +40,16 @@ class Command(BaseCommand):
                 help='The review IDs to repopulate complexity metrics for. '
                 "Defualt is 'all'."
             )
+        parser.add_argument(
+                '--root', type=str, default='stem', dest='root',
+                choices=['stem', 'lemma'], help='Specify whether to use the '
+                "token's lemma or stem for classification. Default is 'stem'."
+            )
+        parser.add_argument(
+                '--year', type=int, default=None, dest='year',
+                help='Evaluate uncertainty of those code reviews that were '
+                'created in the specified year.'
+            )
 
     def handle(self, *args, **options):
         """
@@ -49,14 +57,20 @@ class Command(BaseCommand):
         """
         processes = options['processes']
         population = options['population']
+        root = options['root']
+        year = options['year']
         begin = dt.now()
         try:
-            sents = Sentence.objects.exclude(text='').iterator()
+            sentences = Sentence.objects.all()
+            if year is not None:
+                sentences = sentences.filter(review__created__year=year)
+            sentences = sentences.iterator()
 
             connections.close_all()
-            tagger = taggers.UncertaintyTagger(settings, processes, sents)
+            tagger = taggers.UncertaintyTagger(
+                    settings, processes, sentences, root
+                )
             tagger.tag()
-
         except KeyboardInterrupt:
             warning('Attempting to abort.')
         finally:

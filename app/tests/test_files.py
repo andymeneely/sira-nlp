@@ -30,7 +30,16 @@ class FilesTestCase(TestCase):
 
         self.assertEqual(expected, self.files.get_bugs_path(year=2016))
 
-    def test_get_ids(self):
+    def test_get_ids_path(self):
+        expected = self.files.ids_path.format(switch='reviews')
+
+        self.assertEqual(expected, self.files.get_ids_path(switch='reviews'))
+
+    def test_get_ids_path_invalid_switch(self):
+        with self.assertRaises(ValueError):
+            _ = self.files.get_ids_path(switch='foo')
+
+    def test_get_review_ids(self):
         expected = [
                 '2148653002', '2150783003', '2140383005', '2148643002',
                 '2149523002', '2151763003', '2148793002', '2151613002',
@@ -40,7 +49,19 @@ class FilesTestCase(TestCase):
                 '2230993004', '2211423003'
             ]
 
-        actual = self.files.get_ids(year=2016)
+        actual = self.files.get_ids(year=2016, switch='reviews')
+
+        self.assertCountEqual(expected, actual)
+
+    def test_get_bug_ids(self):
+        expected = [
+                '606056', '610176', '627655', '602509', '584783', '628496',
+                '624894', '617492', '609260', '613160', '625357', '628110',
+                '576270', '620126', '583485', '607690', '636539', '613918',
+                '619379', '626102', '642598'
+            ]
+
+        actual = self.files.get_ids(year=2016, switch='bugs')
 
         self.assertCountEqual(expected, actual)
 
@@ -100,9 +121,8 @@ class FilesTestCase(TestCase):
         self.assertEqual(1999153002, actual['issue'])
 
     def test_get_review_nonexistent(self):
-        self.assertRaises(
-                Exception, self.files.get_review, id=1999153000, year=2016
-            )
+        with self.assertRaises(Exception):
+            _ = self.files.get_review(id=1999153000, year=2016)
 
     def test_get_reviews(self):
         expected = [
@@ -130,15 +150,27 @@ class FilesTestCase(TestCase):
 
         self.assertCountEqual(expected, actual)
 
-    def test_get_year(self):
+    def test_get_review_year(self):
         expected = '2016'
 
-        actual = self.files.get_year(id=1999153002)
+        actual = self.files.get_year(id=1999153002, switch='reviews')
 
         self.assertEqual(expected, actual)
 
-    def test_get_year_nonexistent(self):
-        self.assertRaises(Exception, self.files.get_year, id=1999153000)
+    def test_get_year_nonexistent_review(self):
+        with self.assertRaises(Exception):
+            _ = self.files.get_year(id=1999153000, switch='reviews')
+
+    def test_get_bug_year(self):
+        expected = '2016'
+
+        actual = self.files.get_year(id=576270, switch='bugs')
+
+        self.assertEqual(expected, actual)
+
+    def test_get_year_nonexistent_bug(self):
+        with self.assertRaises(Exception):
+            _ = self.files.get_year(id=40758, switch='bugs')
 
     def test_save_ids(self):
         data = list(range(100001, 100010))
@@ -147,7 +179,7 @@ class FilesTestCase(TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             with self.settings(IDS_PATH=os.path.join('/tmp', tempdir)):
                 f = files.Files(settings)
-                f.save_ids(year=9999, ids=data)
+                f.save_ids(year=9999, ids=data, switch='reviews')
                 path = os.path.join('/tmp', tempdir, '9999.csv')
 
                 self.assertTrue(os.path.exists(path))

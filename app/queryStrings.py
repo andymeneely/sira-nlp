@@ -26,8 +26,8 @@ def query_TF_dict(review_id, key='lemma'):
     Returns the numerator of TF, the number of occurrences of the token in
     the review.
     """
-    queryResults = Token.objects.filter(message__review__id=review_id) \
-        .values(key).annotate(tf=Sum('frequency'))
+    queryResults = Token.objects.filter(sentence__review__id=review_id) \
+        .values(key).annotate(tf=Count(key))
 
     return queryResults
 
@@ -357,15 +357,24 @@ def query_sIDs_all():
 
 #### Tokens ####################################################################
 def query_tokens(review_ids, key='lemma'):
-    queryResults = ReviewTokenView.objects.distinct(key) \
-        .filter(review_id__in=review_ids) \
-        .values_list(key, flat=True)
+    if key == 'lemma':
+        queryResults = ReviewLemmaView.objects.distinct(key) \
+            .filter(review_id__in=review_ids) \
+            .values_list(key, flat=True)
+    else:
+        queryResults = ReviewTokenView.objects.distinct(key) \
+            .filter(review_id__in=review_ids) \
+            .values_list(key, flat=True)
 
     return queryResults
 
 def query_tokens_all(key='lemma'):
-    queryResults = ReviewTokenView.objects.distinct(key) \
-        .values_list(key, flat=True)
+    if key == 'lemma':
+        queryResults = ReviewLemmaView.objects.distinct(key) \
+            .values_list(key, flat=True)
+    else:
+        queryResults = ReviewTokenView.objects.distinct(key) \
+            .values_list(key, flat=True)
 
     return queryResults
 
@@ -375,10 +384,10 @@ def query_top_x_tokens(review_ids, x, key='lemma'):
         .values_list('id', flat=True)
 
     queryResults = Token.objects \
-        .filter(message__review__id__in=review_ids) \
+        .filter(sentence__review__id__in=review_ids) \
         .filter(token__iregex=r"\w+") \
         .values(key) \
-        .annotate(freq=Sum('frequency')) \
+        .annotate(freq=Count(key)) \
         .order_by('-freq') \
         .values_list(key, flat=True)
 

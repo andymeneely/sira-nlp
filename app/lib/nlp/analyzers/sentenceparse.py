@@ -1,8 +1,8 @@
 import sys
 import traceback
 
-from json import JSONDecodeError
-from json.decoder import JSONDecodeError as JDError
+from json import decoder
+from simplejson import scanner
 
 import collections
 import requests
@@ -12,7 +12,7 @@ from requests.exceptions import RequestException
 from app.lib.nlp import analyzers
 
 HEADERS = {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'}
-PARAMS = {'properties': "{'annotators': 'tokenize,ssplit,pos,parse,depparse'}"} #,depparse'}"}
+PARAMS = {'properties': "{'annotators': 'tokenize,ssplit,pos,parse,depparse', 'ssplit.isOneSentence': 'true'}"} #,depparse'}"}
 
 DEFAULT_PARSE = {'deps': [], 'trees': []}
 
@@ -39,7 +39,8 @@ class SentenceParseAnalyzer(analyzers.Analyzer):
                 parse['trees'] = sentence['parse']
                 parse['deps'] = sentence['enhancedPlusPlusDependencies']
 #            return parse
-        except (JSONDecodeError, RequestException, JDError) as error: # pragma: no cover
+        except (decoder.JSONDecodeError, RequestException,
+                scanner.JSONDecodeError) as error:  # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()

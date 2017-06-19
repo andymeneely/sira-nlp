@@ -29,29 +29,44 @@ class QueryStringsTestCase(testcases.SpecialTestCase):
 
         connections.close_all()
 
-        loader = loaders.MessageLoader(settings, num_processes=2, review_ids=review_ids)
+        loader = loaders.MessageLoader(
+                settings, num_processes=2, review_ids=review_ids
+            )
         _ = loader.load()
-        loader = loaders.TokenLoader(settings, num_processes=2, review_ids=review_ids)
+        loader = loaders.SentenceLoader(
+                settings, num_processes=2, review_ids=review_ids
+            )
+        _ = loader.load()
+        loader = loaders.TokenLoader(
+                settings, num_processes=2, review_ids=review_ids
+            )
         _ = loader.load()
         loader = loaders.SentenceLoader(settings, num_processes=2, review_ids=review_ids)
         _ = loader.load()
 
         with connection.cursor() as cursor:
-            cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_token'))
-            cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_lemma'))
+            cursor.execute(
+                    'REFRESH MATERIALIZED VIEW {};'.format('vw_review_token')
+                )
+            cursor.execute(
+                    'REFRESH MATERIALIZED VIEW {};'.format('vw_review_lemma')
+                )
 
     def test_queryStrings(self):
-        # Sub-Test 1 - query_TF_dict()
-        expected = [{'token': 'starting', 'tf': 1},
-                    {'token': 'Created', 'tf': 1}, {'token': 'Revert', 'tf': 1},
-                    {'token': 'a', 'tf': 1}, {'token': 'Simplify', 'tf': 1},
-                    {'token': 'of', 'tf': 1}, {'token': 'navigation', 'tf': 1}]
+        # Sub-Test 1 - query_TF_dict(key='token')
+        expected = [
+                {'token': 'starting', 'tf': 1}, {'token': 'Created', 'tf': 1},
+                {'token': 'Revert', 'tf': 1}, {'token': 'a', 'tf': 1},
+                {'token': 'Simplify', 'tf': 1}, {'token': 'of', 'tf': 1},
+                {'token': 'navigation', 'tf': 1}
+            ]
         actual = qs.query_TF_dict(1444413002, key='token')
+
         self.assertEqual(len(expected), len(list(actual)))
         for entry in expected:
             self.assertTrue(entry in list(actual))
 
-        # Sub-Test 2 - query_TF_dict()
+        # Sub-Test 2 - query_TF_dict(key='lemma')
         expected = [{'lemma': 'created', 'tf': 1}, {'lemma': 'start', 'tf': 1},
                     {'lemma': 'a', 'tf': 1}, {'lemma': 'revert', 'tf': 1},
                     {'lemma': 'simplify', 'tf': 1},
@@ -61,22 +76,28 @@ class QueryStringsTestCase(testcases.SpecialTestCase):
         for entry in expected:
             self.assertTrue(entry in list(actual))
 
-        # Sub-Test 3 - query_DF()
-        expected = [{'token': 'a', 'df': 1}, {'token': 'starting', 'df': 1},
-                    {'token': 'navigation', 'df': 1}, {'token': 'of', 'df': 1},
-                    {'token': 'Revert', 'df': 1}, {'token': 'Created', 'df': 1},
-                    {'token': 'Simplify', 'df': 1}]
+        # Sub-Test 3 - query_DF(key='token')
+        expected = [
+                {'token': 'a', 'df': 1}, {'token': 'starting', 'df': 1},
+                {'token': 'navigation', 'df': 1}, {'token': 'of', 'df': 1},
+                {'token': 'Revert', 'df': 1}, {'token': 'Created', 'df': 1},
+                {'token': 'Simplify', 'df': 1}
+            ]
         actual = qs.query_DF([1444413002], key='token')
+
         self.assertEqual(len(expected), len(list(actual)))
         for entry in expected:
             self.assertTrue(entry in list(actual))
 
-        # Sub-Test 4 - query_DF()
-        expected = [{'df': 1, 'lemma': 'created'}, {'df': 1, 'lemma': 'a'},
-                    {'df': 1, 'lemma': 'navigation'}, {'df': 1, 'lemma': 'of'},
-                    {'df': 1, 'lemma': 'start'}, {'df': 1, 'lemma': 'simplify'},
-                    {'df': 1, 'lemma': 'revert'}]
+        # Sub-Test 4 - query_DF(key='lemma')
+        expected = [
+                {'df': 1, 'lemma': 'created'}, {'df': 1, 'lemma': 'a'},
+                {'df': 1, 'lemma': 'navigation'}, {'df': 1, 'lemma': 'of'},
+                {'df': 1, 'lemma': 'start'}, {'df': 1, 'lemma': 'simplify'},
+                {'df': 1, 'lemma': 'revert'}
+            ]
         actual = qs.query_DF([1444413002], key='lemma')
+
         self.assertEqual(len(expected), len(list(actual)))
         for entry in expected:
             self.assertTrue(entry in list(actual))
@@ -220,88 +241,6 @@ class QueryStringsTestCase(testcases.SpecialTestCase):
         random2 = qs.query_rIDs_random(list(actual), 2)
         self.assertNotEqual(sorted(list(random1)), sorted(list(random2)))
 
-        # Sub-Test 20 - query_rIDs_empty()
-        expected = [12314009, 12314009, 1293023003, 1293023003, 1293023003,
-                    1293023003, 1304613003, 1304613003, 1304613003, 1304613003,
-                    1304613003, 1304613003, 1304613003, 1304613003, 1304613003,
-                    1304613003, 1304613003, 1295003003, 1295003003, 1295003003,
-                    1295003003, 1295403003, 1295403003, 1295403003, 1295403003,
-                    1295403003, 1295403003, 1286193008, 1286193008, 1286193008,
-                    1286193008, 1286193008, 1286193008, 1286193008, 1286193008,
-                    1286193008, 1286193008, 1286193008, 1286193008, 1286193008,
-                    1286193008, 1286193008, 1286193008, 1286193008, 1286193008,
-                    1286193008, 1286193008, 1321103002, 1321103002, 1321103002,
-                    1321103002, 1318783003, 1318783003, 1318783003, 1318783003,
-                    1318783003, 1308723003, 1308723003, 1308723003, 1308723003,
-                    1308723003, 1308723003, 1308723003, 1308723003, 1308723003,
-                    1308723003, 1308723003, 1308723003, 1308723003, 1308723003,
-                    1308723003, 1308723003, 1292403004, 1292403004, 1292403004,
-                    1292403004, 1299243002, 1299243002, 1299243002, 1299243002,
-                    1299243002, 1299243002, 1299243002, 1299243002, 1299243002,
-                    1299243002, 1299243002, 1188433011, 1188433011, 1188433011,
-                    1188433011, 1188433011, 1188433011, 1188433011, 1188433011,
-                    1188433011, 1188433011, 1188433011, 1188433011, 1454003003,
-                    1454003003, 1454003003, 1454003003, 1454003003, 1454003003,
-                    1454003003, 1454003003, 1454003003, 1454003003, 1454003003,
-                    1259853004, 1259853004, 1259853004, 1259853004, 1259853004,
-                    1259853004, 1259853004, 1259853004, 1259853004, 1259853004,
-                    1259853004, 1259853004, 1259853004, 1128633002, 1128633002,
-                    1128633002, 1128633002, 1128633002, 1128633002, 1247623005,
-                    1247623005, 1247623005, 1247623005, 1247623005, 1247623005,
-                    1247623005, 1444413002, 2027643002, 2027643002, 2027643002,
-                    2148643002, 2148643002, 1292403004, 1292403004, 1292403004,
-                    1544273002, 1144393004, 1144393004, 1144393004, 1144393004,
-                    1144393004, 1144393004, 1144393004, 1144393004, 1144393004,
-                    1457243002, 1457243002, 1457243002, 1457243002, 1457243002,
-                    1999153002, 1999153002, 1999153002, 1999153002, 1999153002,
-                    2148643002, 2148643002, 2148643002, 2148643002, 2148643002,
-                    2148643002, 2148643002, 2027643002, 2027643002, 2140383005,
-                    2140383005, 2140383005, 2140383005, 2140383005, 2140383005,
-                    2140383005, 2140383005, 2140383005, 2140383005, 2140383005,
-                    2148653002, 2148653002, 2148793002, 2149523002, 2230993004,
-                    2148643002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2151613002, 2151613002,
-                    2151613002, 2151613002, 2151613002, 2150783003, 2150783003,
-                    2150783003, 2150783003, 2150783003, 2150783003, 2150783003,
-                    2150783003, 2150783003, 2150783003, 2150783003, 2150783003,
-                    2150783003, 2150783003, 2150783003, 2150783003, 2150783003,
-                    2150783003, 2150783003, 2150783003, 2150783003, 2150783003,
-                    2150783003, 2150783003, 2150783003, 2230993004, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2230993004, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2230993004,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2230993004, 2230993004, 2149523002, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2149523002, 2149523002, 2149523002, 2149523002, 2149523002,
-                    2151763003, 2151763003, 2151763003, 2151763003, 2151763003,
-                    2151763003, 2050053002, 2050053002, 2050053002, 2050053002,
-                    2050053002, 2050053002, 2050053002, 2050053002, 2230993004,
-                    2150783003, 2150783003, 2150783003, 2150783003, 2150783003,
-                    2150783003, 2048483002, 2048483002, 2048483002, 2048483002,
-                    2177983004, 2177983004, 2177983004, 2177983004, 2177983004,
-                    2177983004, 2177983004, 2134723002, 2134723002, 2134723002,
-                    2134723002, 2134723002, 2134723002, 2134723002, 2134723002,
-                    2134723002, 2230993004, 2230993004, 2230993004, 2230993004,
-                    2050053002, 2050053002, 2050053002, 2050053002, 2050053002,
-                    2050053002, 2050053002, 2050053002, 2050053002, 2085023003,
-                    2085023003, 2085023003, 2085023003, 2223093002, 2223093002,
-                    2211423003, 2211423003, 2211423003, 2211423003, 2211423003,
-                    2211423003, 2211423003, 2211423003, 2211423003, 2211423003,
-                    2211423003, 2211423003, 2189523002, 2189523002, 2189523002,
-                    2189523002, 2189523002, 2189523002, 2189523002, 2189523002,
-                    2189523002, 2210603002, 2210603002, 2210603002, 2210603002,
-                    2210603002, 2210603002, 2210603002, 2210603002, 2210603002,
-                    2168223002, 2168223002, 2168223002, 2168223002, 2168223002]
-        actual = qs.query_rIDs_empty()
-        self.assertEqual(sorted(expected), sorted(actual))
-
         # Sub-Test 21 - query_mIDs('missed')
         expected = 99
         actual = qs.query_mIDs('missed')
@@ -412,28 +351,33 @@ class QueryStringsTestCase(testcases.SpecialTestCase):
 
         # Sub-Test 37 - query_tokens()
         data = [2189523002, 2189523002]
-        expected = ['``', '-', ':', '.', "''", "(", ")", "@", "#", "+", 'after',
-                    'autostart', 'be', 'bit', 'by', 'change', 'check',
-                    'chromium.org', '//codereview.chromium.org/2189523002/',
-                    'comment', 'cq', 'dgozman', 'done', 'english', 'for', 'from',
-                    'http', 'lcean', 'lgtm', 'l-g-t-m', 'link', 'miss', 'module',
-                    'not', 'patchset', 'pfeldman', 'proper', 'ps20001',
-                    'ps40001', 'rebaselined', 'reviewer', 'semicolon', 'send',
-                    'style', 'the', 'this', 'title', 'to', 'unused', 'upload',
-                    'used', 'with']
+        expected = [
+                '``', '-', ':', '.', "''", "(", ")", "@", "#", "+", 'after',
+                'autostart', 'be', 'bit', 'by', 'change', 'check',
+                'chromium.org', '//codereview.chromium.org/2189523002/',
+                'comment', 'cq', 'dgozman', 'done', 'english', 'for', 'from',
+                'http', 'lcean', 'lgtm', 'l-g-t-m', 'link', 'miss', 'module',
+                'not', 'patchset', 'pfeldman', 'proper', 'ps20001', 'ps40001',
+                'rebaselined', 'reviewer', 'semicolon', 'send', 'style', 'the',
+                'this', 'title', 'to', 'unused', 'upload', 'used', 'with'
+            ]
         actual = qs.query_tokens(data, key='lemma')
+
         self.assertEqual(sorted(expected), sorted(actual))
 
-        expected = ['``', '-', ':', '.', "''", "(", ")", "@", "#", "+", 'after',
-                    'autostart', 'bit', 'by', 'changed', 'checked',
-                    'chromium.org', '//codereview.chromium.org/2189523002/',
-                    'comments', 'CQ', 'dgozman', 'Done', 'English', 'for',
-                    'from', 'https', 'is', 'lcean', 'lgtm', 'l-g-t-m', 'Link',
-                    'missing', 'modules', 'not', 'patchset', 'pfeldman',
-                    'proper', 'ps20001', 'ps40001', 'rebaselined', 'reviewers',
-                    'semicolon', 'sent', 'style', 'the', 'The', 'This', 'title',
-                    'to', 'Unused', 'uploaded', 'used', 'was', 'with']
+        expected = [
+                '``', '-', ':', '.', "''", "(", ")", "@", "#", "+", 'after',
+                'autostart', 'bit', 'by', 'changed', 'checked', 'chromium.org',
+                '//codereview.chromium.org/2189523002/', 'comments', 'CQ',
+                'dgozman', 'Done', 'English', 'for', 'from', 'https', 'is',
+                'lcean', 'lgtm', 'l-g-t-m', 'Link', 'missing', 'modules',
+                'not', 'patchset', 'pfeldman', 'proper', 'ps20001', 'ps40001',
+                'rebaselined', 'reviewers', 'semicolon', 'sent', 'style',
+                'the', 'The', 'This', 'title', 'to', 'Unused', 'uploaded',
+                'used', 'was', 'with'
+            ]
         actual = qs.query_tokens(data, key='token')
+
         self.assertEqual(sorted(expected), sorted(actual))
 
         # Sub-Test 38 - query_tokens_all()
@@ -453,9 +397,9 @@ class QueryStringsTestCase(testcases.SpecialTestCase):
         self.assertEqual(5, len(list(actual)))
 
         # Sub-Test 40 - query_sentence_ids()
-        expected = 1693
-        actual = qs.query_sIDs_all()
-        self.assertEqual(expected, len(list(actual)))
+#        expected = 1693
+#        actual = qs.query_sIDs_all()
+#        self.assertEqual(expected, len(list(actual)))
 
         # Sub-Test 41 - query_tokens_group_by_sentence()
 #        data = [1678, 1679]

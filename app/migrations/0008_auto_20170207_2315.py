@@ -9,7 +9,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0007_create_materialized_views'),
+        ('app', '0006_auto_20170202_2106'),
     ]
 
     operations = [

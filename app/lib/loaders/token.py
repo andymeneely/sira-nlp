@@ -18,34 +18,35 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break
-            continue # pragma: no cover
+            continue  # pragma: no cover
         count += item
     oqueue.put(count)
 
 
-def do(iqueue, cqueue): # pragma: no cover
+def do(iqueue, cqueue):  # pragma: no cover
     while True:
         item = iqueue.get()
         if item == parallel.EOI:
             cqueue.put(parallel.DD)
             break
 
-        (review_id, messages) = item
+        (review_id, sentences) = item
 
         objects = list()
         with transaction.atomic():
             try:
-                for (message_id, message_text) in messages:
-                    summary = summarizer.Summarizer(message_text).execute()
-                    for (token, lemma, frequency, pos) in set(summary):
+                for (sentence_id, sentence_text) in sentences:
+                    summary = summarizer.Summarizer(sentence_text).execute()
+                    for (position, token, stem, lemma, pos, chunk) in summary:
                         objects.append(Token(
-                                message_id=message_id, token=token,
-                                lemma=lemma, frequency=frequency, pos=pos
+                                sentence_id=sentence_id, position=position,
+                                token=token, stem=stem, lemma=lemma, pos=pos,
+                                chunk=chunk
                             ))
 
                 if len(objects) > 0:
                     Token.objects.bulk_create(objects)
-            except Error as err: # pragma: no cover
+            except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Review  {}\n'.format(review_id))
                 extype, exvalue, extrace = sys.exc_info()
@@ -56,10 +57,10 @@ def do(iqueue, cqueue): # pragma: no cover
 
 def stream(review_ids, settings, iqueue, num_doers):
     for review_id in review_ids:
-        messages = list()
-        for message in Message.objects.filter(review_id=review_id):
-            messages.append((message.id, message.text))
-        iqueue.put((review_id, messages))
+        sentences = list()
+        for sentence in Sentence.objects.filter(review_id=review_id):
+            sentences.append((sentence.id, sentence.text))
+        iqueue.put((review_id, sentences))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)

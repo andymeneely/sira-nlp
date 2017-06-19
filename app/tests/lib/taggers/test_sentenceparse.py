@@ -117,3 +117,26 @@ class SentenceparseTestCase(test.TestCase):
         expected = "RegexFailed"
         actual = clean_treeparse([])
         self.assertEqual(expected, actual)
+
+        # Sub-Test 8
+        data = (
+                "I.e., chromiumos_image.bin, chromiumos_image_base.bin, "
+                "chromium_image_test.bin, etc."
+            )
+        expected = [
+                'ROOT(root-0, bin-5)', 'advmod(bin-5, I.e.-1)',
+                'punct(bin-5, ,-2)', 'dep(bin-5, chromiumos_image-3)',
+                'punct(bin-5, .-4)', 'punct(bin-5, ,-6)',
+                'compound(bin-9, chromiumos_image_base-7)',
+                'punct(bin-9, .-8)', 'appos(bin-5, bin-9)',
+                'punct(bin-9, ,-10)',
+                'compound(bin-13, chromium_image_test-11)',
+                'punct(bin-13, .-12)', 'conj(bin-9, bin-13)',
+                'punct(bin-9, ,-14)', 'conj(bin-9, etc.-15)',
+                'punct(bin-5, .-16)'
+            ]
+        actual = []
+        parses = SentenceParseAnalyzer(data).analyze()
+        for dep in parses['deps']:
+            actual.append(clean_depparse(dep))
+        self.assertListEqual(sorted(expected), sorted(actual))
