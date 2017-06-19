@@ -8,7 +8,8 @@ from json import JSONDecodeError
 
 from app.lib.nlp import analyzers
 
-from app.lib.external.politeness.model import *
+from politeness.classifier import Classifier
+from politeness.helpers import set_corenlp_url
 
 DEFAULT_POLITENESS = {'polite': '0', 'impolite': '0'}
 
@@ -16,6 +17,7 @@ class PolitenessAnalyzer(analyzers.Analyzer):
     def __init__(self, text, depparses):
         super(PolitenessAnalyzer, self).__init__(text)
         self.depparses = depparses
+        self.classifier = Classifier()
 
     def analyze(self):
         politeness = DEFAULT_POLITENESS.copy()
@@ -23,8 +25,10 @@ class PolitenessAnalyzer(analyzers.Analyzer):
             return {'polite': 'EmptyText', 'impolite': 'EmptyText'}
 
         try:
-            data = {'sentences': [self.text], 'parses': [self.depparses]}
-            politeness = score(data)
+            data = {'sentence': self.text, 'parses': [self.depparses]}
+            response = self.classifier.predict(data)[-1]['document']
+            politeness['polite'] = response[0]
+            politeness['impolite'] = response[1]
         except Exception as error: # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
