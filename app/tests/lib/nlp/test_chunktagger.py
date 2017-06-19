@@ -3,7 +3,7 @@ from unittest import TestCase
 from app.lib.nlp import chunktagger
 
 
-class PosTaggerTestCase(TestCase):
+class ChunkTaggerTestCase(TestCase):
     def setUp(self):
         pass
 
