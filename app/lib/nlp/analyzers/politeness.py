@@ -9,7 +9,6 @@ from json import JSONDecodeError
 from app.lib.nlp import analyzers
 
 from politeness.classifier import Classifier
-from politeness.helpers import set_corenlp_url
 
 DEFAULT_POLITENESS = {'polite': '0', 'impolite': '0'}
 
