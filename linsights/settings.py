@@ -39,7 +39,7 @@ USE_TZ = False
 
 # Paths
 BUGS_PATH = os.path.join(DATA_DIR, 'bugs/{year}')
-IDS_PATH = os.path.join(DATA_DIR, 'ids')
+IDS_PATH = os.path.join(DATA_DIR, '{switch}/ids')
 REVIEWS_PATH = os.path.join(DATA_DIR, 'reviews/{year}')
 VULNERABILITIES_PATH = os.path.join(DATA_DIR, 'vulnerabilities')
 NLP_CACHE_PATH = os.path.join(DATA_DIR, 'nlp')
@@ -63,3 +63,10 @@ CPU_COUNT = multiprocessing.cpu_count()
 
 # Maximum number of items in a queue
 QUEUE_SIZE = 5000
+
+# Monorail API
+# ## Discovery URL for Monorail API
+MONORAIL_URL = 'https://monorail-prod.appspot.com/_ah/api/discovery/v1/' \
+               'apis/{api}/{apiVersion}/rest'
+# ## Google Service Account keyfile path
+GOOGLESA_KEYFILE = '/home/artifacts/Chromium History-3e3c2d88d882.json'

@@ -45,23 +45,29 @@ class Files(object):
         """
         return self.bugs_path.format(year=year)
 
-    def get_ids(self, year):
+    def get_ids(self, year, switch):
         """
         Return the IDs associated with the specified year.
         """
         ids = list()
-        path = os.path.join(self.ids_path, '{}.csv'.format(year))
+        path = os.path.join(self.get_ids_path(switch), '{}.csv'.format(year))
         with open(path, 'r') as file:
             reader = csv.reader(file)
             ids = [row[0] for row in reader]
         return ids
+
+    def get_ids_path(self, switch):
+        '''Return path to files containing review or bug identifiers.'''
+        if switch not in ['bugs', 'reviews']:
+            raise ValueError('Argument switch must be \'bugs\' or \'reviews\'')
+        return self.ids_path.format(switch=switch)
 
     def get_messages(self, id, year=None, clean=False):
         """
         Given a review ID, return a list of messages associated with that
         review.
         """
-        year = self.get_year(id) if year is None else year
+        year = self.get_year(id, switch='reviews') if year is None else year
         review = self.get_review(id, year)
         messages = list()
         for message in review['messages']:
@@ -76,7 +82,7 @@ class Files(object):
         """
         Given a review ID, return the description associated with that review.
         """
-        year = self.get_year(id) if year is None else year
+        year = self.get_year(id, switch='reviews') if year is None else year
         review = self.get_review(id, year)
         return review['description']
 
@@ -84,7 +90,7 @@ class Files(object):
         """
 
         """
-        year = self.get_year(id) if year is None else year
+        year = self.get_year(id, switch='reviews') if year is None else year
         directory = self.get_reviews_path(year)
         for path in self._get_files(directory, pattern='reviews.*.json'):
             reviews = helpers.load_json(path)
@@ -122,25 +128,26 @@ class Files(object):
                     vulnerabilities.append((source, row[0], row[1]))
         return vulnerabilities
 
-    def get_year(self, id):
+    def get_year(self, id, switch):
         """
 
         """
-        for path in self._get_files(self.ids_path, '*.csv'):
+        paths = self._get_files(self.get_ids_path(switch), '*.csv')
+        for path in paths:
             ids = None
             with open(path, 'r') as file:
                 reader = csv.reader(file)
                 ids = [int(row[0]) for row in reader]
             if ids is not None and id in ids:
                 return os.path.basename(path).replace('.csv', '')
-        raise Exception('No code review identified by {}'.format(id))
+        raise Exception('No code review or bug identified by {}'.format(id))
 
-    def save_ids(self, year, ids):
+    def save_ids(self, year, ids, switch):
         """
         Save the specified IDs to a file in the path associated with the
         specified year.
         """
-        path = os.path.join(self.ids_path, '{}.csv'.format(year))
+        path = os.path.join(self.get_ids_path(switch), '{}.csv'.format(year))
         with open(path, 'a') as file:
             writer = csv.writer(file)
             writer.writerows([(id,) for id in ids])
@@ -148,9 +155,9 @@ class Files(object):
 
     def save_reviews(self, year, chunk, reviews, errors=None):
         """
-        Save the specified reviews to a json file in the reviews path associated
-        with the specified year. Format according to the specified chunk. Log
-        errors in a CSV file in the same directory.
+        Save the specified reviews to a json file in the reviews path
+        associated with the specified year. Format according to the specified
+        chunk. Log errors in a CSV file in the same directory.
         """
         directory = self.get_reviews_path(year)
         if not os.path.exists(directory):
