@@ -63,3 +63,10 @@ CPU_COUNT = multiprocessing.cpu_count()
 
 # Maximum number of items in a queue
 QUEUE_SIZE = 5000
+
+# Monorail API
+# ## Discovery URL for Monorail API
+MONORAIL_URL = 'https://monorail-prod.appspot.com/_ah/api/discovery/v1/' \
+               'apis/{api}/{apiVersion}/rest'
+# ## Google Service Account keyfile path
+GOOGLESA_KEYFILE = '/home/artifacts/Chromium History-3e3c2d88d882.json'
