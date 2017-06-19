@@ -14,12 +14,10 @@ from politeness.helpers import set_corenlp_url
 DEFAULT_POLITENESS = {'polite': '0', 'impolite': '0'}
 
 class PolitenessAnalyzer(analyzers.Analyzer):
-    def __init__(self, text, depparses, url="http://artifacts.gccis.rit.edu:41194/"):
+    def __init__(self, text, depparses):
         super(PolitenessAnalyzer, self).__init__(text)
         self.depparses = depparses
         self.classifier = Classifier()
-        self.url = url
-        set_corenlp_url(self.url)
 
     def analyze(self):
         politeness = DEFAULT_POLITENESS.copy()
