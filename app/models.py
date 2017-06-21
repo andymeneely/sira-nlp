@@ -104,7 +104,8 @@ class Sentence(models.Model):
 
     parses = fields.JSONField(default=dict)
     metrics = fields.JSONField(
-            default={'sentiment': {}, 'complexity': {}, 'politeness': {}}
+            default={'sentiment': {}, 'complexity': {}, 'politeness': {},
+                     'formality': {}, 'implicature': {}, 'informativeness': {}}
         )
 
     # Navigation Fields
