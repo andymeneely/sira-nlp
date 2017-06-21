@@ -10,6 +10,9 @@ import random
 import re
 import time
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from collections import OrderedDict
 
 import requests

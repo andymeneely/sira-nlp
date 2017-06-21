@@ -4,6 +4,9 @@ import numpy as np
 import re
 import _pickle
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from nltk import word_tokenize, pos_tag, sent_tokenize
 from nltk.chunk import ChunkParserI, tree2conlltags as to_tags
 from nltk.corpus import conll2000, treebank_chunk, wordnet

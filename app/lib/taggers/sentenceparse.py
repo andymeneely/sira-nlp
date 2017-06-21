@@ -9,6 +9,9 @@ import sys
 import time
 import traceback
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from datetime import datetime as dt
 
 from django.db import Error, transaction

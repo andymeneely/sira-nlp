@@ -5,6 +5,9 @@
 import re
 import string
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from nltk.corpus import stopwords
 
 FILTERS = {

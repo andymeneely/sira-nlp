@@ -3,6 +3,9 @@
 """
 import re
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from app.lib import logger
 from nltk.tree import Tree
 

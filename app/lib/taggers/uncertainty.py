@@ -3,6 +3,9 @@ import re
 import sys
 import traceback
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from django.db import Error, transaction
 from django.db.models import Q
 

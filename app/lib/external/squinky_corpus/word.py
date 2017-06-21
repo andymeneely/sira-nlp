@@ -1,6 +1,9 @@
 import itertools
 import re
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from nltk.stem.porter import PorterStemmer

@@ -4,6 +4,9 @@ import sys
 import subprocess
 import traceback
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from json import JSONDecodeError
 
 from app.lib.nlp import analyzers
