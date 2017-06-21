@@ -11,3 +11,9 @@ from app.lib.taggers.politeness import PolitenessTagger
 from app.lib.taggers.sentenceparse import SentenceParseTagger
 
 from app.lib.taggers.uncertainty import UncertaintyTagger
+
+from app.lib.taggers.formality import FormalityTagger
+
+from app.lib.taggers.informativeness import InformativenessTagger
+
+from app.lib.taggers.implicature import ImplicatureTagger

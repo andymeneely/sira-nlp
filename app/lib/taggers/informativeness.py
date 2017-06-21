@@ -4,8 +4,10 @@ import re
 import sys
 import traceback
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from django.db import Error, transaction
-from django.db.models import Q
 
 from app.lib import taggers, logger
 from app.lib.nlp import analyzers
@@ -14,17 +16,28 @@ from app.models import *
 
 from app.lib.external import (INFORMATIVENESS_CLASSIFIER_PATH,
                               INFORMATIVENESS_VECTORIZER_PATH)
+from app.lib.external.squinky_corpus.word import _Word
 
-CLS = _pickle.load(INFORMATIVENESS_CLASSIFIER_PATH)
-VEC = _pickle.load(INFORMATIVENESS_VECTORIZER_PATH)
+with open(INFORMATIVENESS_CLASSIFIER_PATH, 'rb') as f:
+    CLS = _pickle.load(f)
+with open(INFORMATIVENESS_VECTORIZER_PATH, 'rb') as f:
+    VEC = _pickle.load(f)
 
-def _score(sent):
-    # Vectorizer returns {feature-name: value} dict
-    features = VEC.features(request)
-    fv = [features[f] for f in sorted(features.keys())]
-    # Single-row sparse matrix
-    X = csr_matrix(np.asarray([fv]))
-    probs = CLS.predict_proba(X)
+
+def _score(sent, tokens): # pragma: no cover
+    words = list()
+    for i, tok in enumerate(list(tokens)):
+        prev = tokens[i-1]['token'] if i-1 >= 0 else None
+        next = tokens[i+1]['token'] if i+1 < len(tokens) else None
+        w = _Word(tok['token'], tok['pos'], tok['position'], prev, next,
+                  tok['chunk'])
+        words.append(w)
+
+    feats = dict()
+    for word in words:
+        feats.update(word.get_features())
+    fv = VEC.transform(feats)
+    probs = CLS.predict_proba(fv)
 
     return {"informative": probs[0][1], "uninformative": probs[0][0]}
 
@@ -50,10 +63,10 @@ def do(iqueue, cqueue): # pragma: no cover
             cqueue.put(parallel.DD)
             break
 
-        (sent) = item
+        (sent, tokens) = item
         with transaction.atomic():
             try:
-                results = _score(sent.text)
+                results = _score(sent, tokens)
                 sent.metrics['informativeness'] = results
                 sent.save()
             except Error as err: # pragma: no cover
@@ -67,7 +80,8 @@ def do(iqueue, cqueue): # pragma: no cover
 
 def stream(sentenceObjects, iqueue, num_doers):
     for sentence in sentenceObjects:
-        iqueue.put((sentence))
+        tokens = Token.objects.filter(sentence_id__exact=sentence.id).values()
+        iqueue.put((sentence, tokens))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)

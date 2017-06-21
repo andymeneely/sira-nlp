@@ -21,3 +21,4 @@ sqlparse
 termcolor
 timeout-decorator==0.3.3
 uncertainty==0.1.0
+politeness==0.1.2

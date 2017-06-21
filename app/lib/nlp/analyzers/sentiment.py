@@ -44,7 +44,7 @@ class SentimentAnalyzer(analyzers.Analyzer):
             for sentence in response.json()['sentences']:
                 sentiment[CORENLP_MAP[sentence['sentimentValue']]] += 1
         except (decoder.JSONDecodeError, RequestException,
-                scanner.JSONDecodeError) as error:  # pragma: no cove
+                scanner.JSONDecodeError) as error:  # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()

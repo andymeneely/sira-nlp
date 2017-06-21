@@ -9,23 +9,25 @@ PARSED_WIKIPEDIA = os.path.join(
     )
 
 FORMALITY_CLASSIFIER_PATH = os.path.join(
-        os.path.split(__file__)[0], 'squinky-corpus/cls_form.p'
+        os.path.split(__file__)[0], 'squinky_corpus/cls_form.p'
     )
 FORMALITY_VECTORIZER_PATH = os.path.join(
-        os.path.split(__file__)[0], 'squinky-corpus/vec_form.p'
+        os.path.split(__file__)[0], 'squinky_corpus/vec_form.p'
     )
 INFORMATIVENESS_CLASSIFIER_PATH = os.path.join(
-        os.path.split(__file__)[0], 'squinky-corpus/cls_info.p'
+        os.path.split(__file__)[0], 'squinky_corpus/cls_info.p'
     )
 INFORMATIVENESS_VECTORIZER_PATH = os.path.join(
-        os.path.split(__file__)[0], 'squinky-corpus/vec_info.p'
+        os.path.split(__file__)[0], 'squinky_corpus/vec_info.p'
     )
 IMPLICATURE_CLASSIFIER_PATH = os.path.join(
-        os.path.split(__file__)[0], 'squinky-corpus/cls_impl.p'
+        os.path.split(__file__)[0], 'squinky_corpus/cls_impl.p'
     )
 IMPLICATURE_VECTORIZER_PATH = os.path.join(
-        os.path.split(__file__)[0], 'squinky-corpus/vec_impl.p'
+        os.path.split(__file__)[0], 'squinky_corpus/vec_impl.p'
     )
+
+from app.lib.external.squinky_corpus.word import _Word
 
 #os.path.join(os.path.split(__file__)[0], 'politeness-svm.p')
 #os.path.join(os.path.split(__file__)[0], 'politeness-svm.p')
