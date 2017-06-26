@@ -153,26 +153,44 @@ class Files(object):
             writer.writerows([(id,) for id in ids])
         return path
 
-    def save_reviews(self, year, chunk, reviews, errors=None):
+    def save_bugs(self, year, chunk, bugs, errors=None):
+        """Save bugs to a JSON file and errors (if any) to a CSV file.
+
+        Parameters
+        ----------
+        year : int
+            Year in which the bugs contained in the |bugs| argument were
+            published.
+        chunk : int
+            Identifier of the chunk to which the bugs contained in the |bugs|
+            argument belong to.
+        bugs : list(dict)
+            List of bugs to be saved.
+        errors : list(int), optional
+            List of unique identifiers of bugs that could not be retrieved.
         """
-        Save the specified reviews to a json file in the reviews path
-        associated with the specified year. Format according to the specified
-        chunk. Log errors in a CSV file in the same directory.
+        directory = self.get_bugs_path(year)
+        return self._save(directory, chunk, bugs, errors, switch='bugs')
+
+    def save_reviews(self, year, chunk, reviews, errors=None):
+        """Save reviews to a JSON file and errors (if any) to a CSV file.
+
+        Parameters
+        ----------
+        year : int
+            Year in which the code reviews contained in the |reviews| argument
+            were created.
+        chunk : int
+            Identifier of the chunk to which the code reviews contained in the
+            |reviews| argument belong to.
+        reviews : list(dict)
+            List of reviews to be saved.
+        errors : list(int), optional
+            List of unique identifiers of code reviews that could not be
+            retrieved.
         """
         directory = self.get_reviews_path(year)
-        if not os.path.exists(directory):
-            os.mkdir(directory, mode=0o755)
-
-        path = os.path.join(directory, 'reviews.{}.json'.format(chunk))
-        with open(path, 'w') as file:
-            json.dump(reviews, file)
-
-        if errors:
-            path = os.path.join(directory, 'errors.csv'.format(index))
-            with open(path, 'a') as file:
-                writer = csv.writer(file)
-                writer.writerows([(error,) for error in errors])
-        return path
+        return self._save(directory, chunk, reviews, errors, switch='reviews')
 
     def stat_review(self, id):
         """
@@ -273,3 +291,26 @@ class Files(object):
         bug['labels'] = row[11]
 
         return bug
+
+    def _save(self, directory, chunk, items, errors, switch):
+        """
+        Save the specified reviews to a json file in the reviews path
+        associated with the specified year. Format according to the specified
+        chunk. Log errors in a CSV file in the same directory.
+        """
+        if switch not in ['bugs', 'reviews']:
+            raise ValueError('Argument switch must be \'bugs\' or \'reviews\'')
+
+        if not os.path.exists(directory):
+            os.mkdir(directory, mode=0o755)
+
+        path = os.path.join(directory, '{}.{}.json'.format(switch, chunk))
+        with open(path, 'w') as file:
+            json.dump(items, file)
+
+        if errors:
+            path = os.path.join(directory, 'errors.csv')
+            with open(path, 'a') as file:
+                writer = csv.writer(file)
+                writer.writerows([(error,) for error in errors])
+        return path

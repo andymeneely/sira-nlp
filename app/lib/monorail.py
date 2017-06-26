@@ -1,9 +1,9 @@
-import apiclient
 import multiprocessing
 
+from apiclient.discovery import build
 from googleapiclient.errors import HttpError
 from httplib2 import Http
-from oauth2client.service_account import ServiceAccountCredentials
+from oauth2client.service_account import ServiceAccountCredentials as SAC
 
 from app.lib.helpers import *
 from app.lib.logger import *
@@ -31,7 +31,7 @@ class Monorail(object):
     '''
     def __init__(self, url, keyfile):
         self.url = url
-        self.keyfile = keyfile
+        self.credentials = SAC.from_json_keyfile_name(keyfile, SCOPES)
 
     def get_bug(self, id):
         '''Retrieve bug identified by the unique identifier specified.
@@ -71,15 +71,16 @@ class Monorail(object):
         manager = multiprocessing.Manager()
         bugs = manager.Queue(len(ids))
         errors = manager.Queue()
+        lock = manager.Lock()
 
         with multiprocessing.Pool(processes) as pool:
             pool.starmap(
-                    self._put_bug, [(id, bugs, errors) for id in ids]
+                    self._put_bug, [(id, bugs, errors, lock) for id in ids]
                 )
 
         return (to_list(bugs), to_list(errors))
 
-    def _get_bug(self, id):
+    def _get_bug(self, id, lock=None):
         '''Retrieve bug identified by the unique identifier specified.
 
         The process of retrieving a bug involves two steps: retrieval of bug
@@ -88,7 +89,7 @@ class Monorail(object):
         '''
         bug = None
 
-        service = self._get_service()
+        service = self._get_service(lock)
         request = service.issues().get(projectId='chromium', issueId=id)
         response = self._get_response(request)
         if response is not None:
@@ -159,24 +160,26 @@ class Monorail(object):
         error('Failed {}'.format(request.uri))
         return None
 
-    def _get_service(self):
+    def _get_service(self, lock=None):
         '''Create and return an instance of the Monorail API service client.'''
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-                self.keyfile, SCOPES
-            )
-        http = credentials.authorize(Http())
-        return apiclient.discovery.build(
-                'monorail', 'v1', discoveryServiceUrl=self.url, http=http
-            )
+        http = Http()
+        if self.credentials.access_token_expired:
+            if lock is not None:
+                with lock:
+                    self.credentials.refresh(http)
+            else:
+                self.credentials.refresh(http)
+        http = self.credentials.authorize(http)
+        return build('monorail', 'v1', http=http, discoveryServiceUrl=self.url)
 
-    def _put_bug(self, id, bugs, errors):
+    def _put_bug(self, id, bugs, errors, lock):
         '''Retrieve a bug and put it into the bugs queue.
 
         When retrieving bugs in parallel, each process invokes this method to
         retrieve a single bug. If the bug retrieval was successful, it is put
         into bugs else errors, both of which are shared queues.
         '''
-        bug = self._get_bug(id)
+        bug = self._get_bug(id, lock)
         if bug is not None:
             bugs.put(bug, block=True)
         else:

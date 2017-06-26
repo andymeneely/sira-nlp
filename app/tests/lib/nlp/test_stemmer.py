@@ -17,12 +17,12 @@ class StemmerTestCase(TestCase):
                 'it', 'did', 'not', 'explain', '.', 'Reuter'
             ]
         expected = [
-                'Gulf', 'Appli', 'Technolog', 'Inc', 'said', 'it', 'sold',
+                'gulf', 'appli', 'technolog', 'inc', 'said', 'it', 'sold',
                 'it', 'subsidiari', 'engag', 'in', 'pipelin', 'and', 'termin',
-                'oper', 'for', '12.2', 'mln', 'dlr', '.', 'The', 'compani',
+                'oper', 'for', '12.2', 'mln', 'dlr', '.', 'the', 'compani',
                 'said', 'the', 'sale', 'is', 'subject', 'to', 'certain',
                 'post', 'close', 'adjust', ',', 'which', 'it', 'did', 'not',
-                'explain', '.', 'Reuter'
+                'explain', '.', 'reuter'
             ]
 
         actual = stemmer.Stemmer(data).execute()
