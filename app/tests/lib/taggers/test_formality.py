@@ -264,5 +264,5 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
         e = sorted(expected)
         a = sorted(actual)
         for i, _ in enumerate(e):
-            self.assertEqual(e[i][0], a[i][0])
+            self.assertAlmostEqual(e[i][0], a[i][0])
             self.assertDictEqual(e[i][1], a[i][1])

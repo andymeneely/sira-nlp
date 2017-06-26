@@ -265,8 +265,5 @@ class ImplicatureTaggerTestCase(test.TransactionTestCase):
         e = sorted(expected, key=lambda x:x[0])
         a = sorted(actual, key=lambda x:x[0])
         for i, _ in enumerate(e):
-            if e[i] != a[i]: # pragma: no cover
-                print(e[i])
-                print(a[i])
-            self.assertEqual(e[i][0], a[i][0])
+            self.assertAlmostEqual(e[i][0], a[i][0])
             self.assertDictEqual(e[i][1], a[i][1])
