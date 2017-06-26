@@ -1,0 +1,60 @@
+Index: chrome/browser/ui/toolbar/action_box_button_controller.cc
+diff --git a/chrome/browser/ui/toolbar/action_box_button_controller.cc b/chrome/browser/ui/toolbar/action_box_button_controller.cc
+index 9010131a9e9e052b5524194973c3cc08d05af6a7..b922d699c6673f268c8daca9e2b886beecc19d5f 100644
+--- a/chrome/browser/ui/toolbar/action_box_button_controller.cc
++++ b/chrome/browser/ui/toolbar/action_box_button_controller.cc
+@@ -5,6 +5,7 @@
+ #include "chrome/browser/ui/toolbar/action_box_button_controller.h"
+ 
+ #include "base/logging.h"
++#include "base/metrics/histogram.h"
+ #include "base/utf_string_conversions.h"
+ #include "chrome/browser/extensions/extension_service.h"
+ #include "chrome/browser/extensions/extension_system.h"
+@@ -20,6 +21,7 @@
+ #include "chrome/common/extensions/extension_set.h"
+ #include "content/public/browser/notification_service.h"
+ #include "content/public/browser/notification_source.h"
++#include "content/public/browser/user_metrics.h"
+ #include "content/public/browser/web_contents.h"
+ #include "content/public/browser/web_intents_dispatcher.h"
+ #include "grit/generated_resources.h"
+@@ -46,11 +48,14 @@ const char kShareIntentMimeType[] = "text/uri-list";
+ 
+ }  // namespace
+ 
++using content::UserMetricsAction;
++
+ ActionBoxButtonController::ActionBoxButtonController(Browser* browser,
+                                                      Delegate* delegate)
+     : browser_(browser),
+       delegate_(delegate),
+-      next_extension_command_id_(EXTENSION_COMMAND_FIRST) {
++      next_extension_command_id_(EXTENSION_COMMAND_FIRST),
++      should_send_uma_(true) {
+   DCHECK(browser_);
+   DCHECK(delegate_);
+   registrar_.Add(this,
+@@ -100,6 +105,14 @@ void ActionBoxButtonController::OnButtonClicked() {
+     // Add link to the Web Store to find additional share intents.
+     menu_model->AddItemWithStringId(CWS_FIND_SHARE_INTENTS_COMMAND,
+         IDS_FIND_SHARE_INTENTS);
++
++    content::RecordAction(UserMetricsAction("ActionBox.ClickButton"));
++    if (should_send_uma_) {
++      UMA_HISTOGRAM_ENUMERATION("ActionBox.ShareCommandCount",
++          next_share_intent_command_id - SHARE_COMMAND_FIRST,
++          SHARE_COMMAND_LAST);
++      should_send_uma_ = false;
++    }
+   }
+ 
+   // Add Extensions.
+@@ -225,4 +238,7 @@ void ActionBoxButtonController::NavigateToWebStoreShareIntentsList() {
+                                 content::PAGE_TRANSITION_LINK);
+   params.disposition = NEW_FOREGROUND_TAB;
+   chrome::Navigate(&params);
++
++  content::RecordAction(UserMetricsAction("ActionBox.FindShares"));
++  should_send_uma_ = true;
+ }

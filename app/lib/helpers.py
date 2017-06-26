@@ -47,6 +47,16 @@ BUG_ID_PATTERNS = [
     '.'
 ]
 
+from app.lib import patch
+
+
+def enumerate_iter(iterable, offset=0, step=1):
+    index = offset
+    for element in iterable:
+        yield index, element
+        index += step
+
+
 def chunk(lst, size):
     """ Break the specified list up into smaller lists of the given size. """
     for index in range(0, len(lst), size):
@@ -199,3 +209,29 @@ def truncate(string, length=50):
     (...) and return that.
     """
     return string[:length] + '...' if len(string) > length else string
+
+
+def _get_related_chunks(chunk_a, patch_b):
+    for chunk in patch_b.get_chunks():
+        if chunk.get_base_hunk() == chunk_a.get_base_hunk():
+            #print(chunk.get_lines())
+            return chunk
+    return None
+
+def line_changed(line_number, patch_a, patch_b):
+    a = patch.Patch(patch_a)
+    b = patch.Patch(patch_b)
+    c = a.get_chunk_by_line(line_number)
+    d = _get_related_chunks(c, b)
+
+    if d is None:
+        return False
+
+    e = c.get_lines()[line_number]
+    f = d.get_hunk()
+    g = d.get_lines()[f[2]+(f[3]-f[1])]
+
+    if e != g:
+        return True
+    else:
+        return False
