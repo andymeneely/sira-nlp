@@ -39,9 +39,20 @@ class Command(BaseCommand):
                     )
             )
         parser.add_argument(
-                '--metrics', type=list, nargs='+', dest='metrics', default=[None],
-                choices=['formality', 'informativeness', 'implicature'],
+                '--metrics', type=str, nargs='+', dest='metrics', default=[None],
+                #choices=['formality', 'informativeness', 'implicature'],
                 help='Specify which metrics to load into the database.'
+            )
+        parser.add_argument(
+                '--year', type=int, dest='year', default=0, choices=[2008,
+                2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 0],
+                help='If specified, only sentences in the given year will be'
+                'tagged with the given "--metrics".'
+            )
+        parser.add_argument(
+                '--empty', action='store_true', help='If specified, only '
+                'sentences that do not already have the given "--metrics" '
+                'populated will be tagged.'
             )
 
     def handle(self, *args, **options):
@@ -50,12 +61,23 @@ class Command(BaseCommand):
         """
         processes = options['processes']
         metrics = options['metrics']
+        year = options['year']
+        empty = options['empty']
         begin = dt.now()
         try:
-            sents = Sentence.objects.exclude(text='').iterator()
-            connections.close_all()
+            if year != 0:
+                sentences = Sentence.objects.exclude(text='').filter(message__review__created__year=year)
+            else:
+                sentences = Sentence.objects.exclude(text='')
             if 'formality' in metrics:
+                info("Gathering sentences...")
+                if empty:
+                    sents = sentences.filter(metrics__contains="{'formality'}:{}}").iterator()
+                else:
+                    sents = sentences.iterator()
+                connections.close_all()
                 try:
+                    info("Tagging sentences with formality...")
                     tagger = taggers.FormalityTagger(settings, processes, sents)
                     tagger.tag()
                 except Exception as e: # pragma: no cover
@@ -63,7 +85,14 @@ class Command(BaseCommand):
                     extype, exvalue, extrace = sys.exc_info()
                     traceback.print_exception(extype, exvalue, extrace)
             if 'informativeness' in metrics:
+                info("Gathering sentences...")
+                if empty:
+                    sents = sentences.filter(metrics__contains="{'informativeness'}:{}}").iterator()
+                else:
+                    sents = sentences.iterator()
+                connections.close_all()
                 try:
+                    info("Tagging sentences with informativeness...")
                     tagger = taggers.InformativenessTagger(settings, processes, sents)
                     tagger.tag()
                 except Exception as e: # pragma: no cover
@@ -71,7 +100,14 @@ class Command(BaseCommand):
                     extype, exvalue, extrace = sys.exc_info()
                     traceback.print_exception(extype, exvalue, extrace)
             if 'implicature' in metrics:
+                info("Gathering sentences...")
+                if empty:
+                    sents = sentences.filter(metrics__contains="{'implicature'}:{}}").iterator()
+                else:
+                    sents = sentences.iterator()
+                connections.close_all()
                 try:
+                    info("Tagging sentences with implicature...")
                     tagger = taggers.ImplicatureTagger(settings, processes, sents)
                     tagger.tag()
                 except Exception as e: # pragma: no cover

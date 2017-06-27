@@ -10,6 +10,8 @@ from collections import OrderedDict
 from app.lib import helpers
 from app.lib.nlp import VERBS_PATH
 
+from app.tests.testfiles import *
+
 
 class HelpersTestCase(TestCase):
     def setUp(self):
@@ -234,3 +236,17 @@ class HelpersTestCase(TestCase):
         expected = list()
         actual = helpers.to_list(data)
         self.assertListEqual(expected, actual)
+
+    #### INCOMPLETE FUNCTIONALITY ##############################################
+    def test_line_changed(self):
+        # Sub-Test 1
+        line_number = 113
+        with open(DIFF_4001_5001_PATH, 'r') as f:
+            patch_a = f.read()
+        with open(DIFF_10001_11001_PATH, 'r') as f:
+            patch_b = f.read()
+
+        expected = True
+        actual = helpers.line_changed(line_number, patch_a, patch_b)
+        self.assertEqual(expected, actual)
+    ############################################################################

@@ -67,6 +67,7 @@ def do(iqueue, cqueue): # pragma: no cover
         with transaction.atomic():
             try:
                 results = _score(sent, tokens)
+                print(results)
                 sent.metrics['formality'] = results
                 sent.save()
             except Error as err: # pragma: no cover

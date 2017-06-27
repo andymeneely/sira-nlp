@@ -1,0 +1,588 @@
+Index: chrome/browser/ui/views/try_chrome_dialog_view.cc
+diff --git a/chrome/browser/ui/views/try_chrome_dialog_view.cc b/chrome/browser/ui/views/try_chrome_dialog_view.cc
+index c410bb9bd164520861266387b3f44a87f0481501..dccb8a7672dca2c1223feda80946e047438c3037 100644
+--- a/chrome/browser/ui/views/try_chrome_dialog_view.cc
++++ b/chrome/browser/ui/views/try_chrome_dialog_view.cc
+@@ -1,4 +1,4 @@
+-// Copyright (c) 2012 The Chromium Authors. All rights reserved.
++// Copyright (c) 2017 The Chromium Authors. All rights reserved.
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
+ 
+@@ -12,12 +12,15 @@
+ #include "base/run_loop.h"
+ #include "base/strings/string16.h"
+ #include "chrome/browser/process_singleton.h"
+-#include "chrome/browser/ui/views/harmony/chrome_layout_provider.h"
++#include "chrome/browser/ui/startup/startup_browser_creator.h"
++#include "chrome/common/url_constants.h"
+ #include "chrome/grit/chromium_strings.h"
++#include "chrome/grit/generated_resources.h"
+ #include "chrome/grit/theme_resources.h"
+-#include "chrome/install_static/install_util.h"
+-#include "chrome/installer/util/user_experiment.h"
++#include "chrome/installer/util/experiment.h"
++#include "chrome/installer/util/experiment_storage.h"
+ #include "components/strings/grit/components_strings.h"
++#include "third_party/skia/include/core/SkColor.h"
+ #include "ui/aura/window.h"
+ #include "ui/aura/window_tree_host.h"
+ #include "ui/base/l10n/l10n_util.h"
+@@ -26,31 +29,98 @@
+ #include "ui/gfx/image/image.h"
+ #include "ui/resources/grit/ui_resources.h"
+ #include "ui/views/background.h"
+-#include "ui/views/controls/button/checkbox.h"
++#include "ui/views/border.h"
++#include "ui/views/controls/button/button.h"
+ #include "ui/views/controls/button/image_button.h"
+-#include "ui/views/controls/button/md_text_button.h"
+-#include "ui/views/controls/button/radio_button.h"
++#include "ui/views/controls/button/label_button.h"
+ #include "ui/views/controls/image_view.h"
+-#include "ui/views/controls/link.h"
+ #include "ui/views/controls/separator.h"
+ #include "ui/views/layout/grid_layout.h"
+ #include "ui/views/layout/layout_provider.h"
++#include "ui/views/style/platform_style.h"
++#include "ui/views/style/typography.h"
+ #include "ui/views/widget/widget.h"
+ 
+ namespace {
+ 
+-const wchar_t kHelpCenterUrl[] =
+-    L"https://support.google.com/chrome/answer/150752";
++const unsigned int kToastWidth = 360;
++const int kHoverAboveTaskbarHeight = 24;
++const char kFontDefinitionDefaultWeight[] = "Segoe UI, Arial, 15px";
++const char kFontDefinitionSemiBold[] = "Segoe UI, Arial, Semi-Bold 15px";
++
++const SkColor kBackgroundColor = SkColorSetRGB(0x1F, 0x1F, 0x1F);
++const SkColor kHeaderColor = SkColorSetRGB(0xFF, 0xFF, 0xFF);
++const SkColor kBodyColor = SkColorSetARGB(0xAD, 0xFF, 0xFF, 0xFF);
++const SkColor kBorderColor = SkColorSetARGB(0x80, 0x80, 0x80, 0x80);
++const SkColor kButtonTextColor = SkColorSetRGB(0xFF, 0xFF, 0xFF);
++const SkColor kButtonAffirmativeColor = SkColorSetRGB(0x00, 0x78, 0xDA);
++const SkColor kButtonNoThanksColor = SkColorSetARGB(0x33, 0xFF, 0xFF, 0xFF);
++
++enum ButtonTags { BT_NONE, BT_CLOSE_BUTTON, BT_OK_BUTTON, BT_NO_THANKS_BUTTON };
++
++// Experiment specification information needed for layout.
++struct ExperimentVariations {
++  int heading_id;
++  int body_id;
++  bool has_no_thanks_button;
++};
+ 
+-enum ButtonTags {
+-  BT_NONE,
+-  BT_CLOSE_BUTTON,
+-  BT_OK_BUTTON,
+-  BT_TRY_IT_RADIO,
+-  BT_DONT_BUG_RADIO
++static const ExperimentVariations kExperiments[] = {
++    {IDS_WIN10_TOAST_RECOMMENDATION, 0, false},
++    {IDS_WIN10_TOAST_RECOMMENDATION, 0, true},
++    {IDS_WIN10_TOAST_RECOMMENDATION, 0, false},
++    {IDS_WIN10_TOAST_RECOMMENDATION, 0, false},
++    {IDS_WIN10_TOAST_RECOMMENDATION, IDS_WIN10_TOAST_SWITCH_FAST, false},
++    {IDS_WIN10_TOAST_RECOMMENDATION, IDS_WIN10_TOAST_SWITCH_SECURE, false},
++    {IDS_WIN10_TOAST_RECOMMENDATION, IDS_WIN10_TOAST_SWITCH_SMART, false},
++    {IDS_WIN10_TOAST_SWITCH_FAST, IDS_WIN10_TOAST_RECOMMENDATION, false},
++    {IDS_WIN10_TOAST_SWITCH_SECURE, IDS_WIN10_TOAST_RECOMMENDATION, false},
++    {IDS_WIN10_TOAST_SWITCH_SMART, IDS_WIN10_TOAST_RECOMMENDATION, false},
++    {IDS_WIN10_TOAST_BROWSE_FAST, 0, false},
++    {IDS_WIN10_TOAST_BROWSE_SAFELY, 0, false},
++    {IDS_WIN10_TOAST_BROWSE_SMART, 0, false},
++    {IDS_WIN10_TOAST_SWITCH_SMART_AND_SECURE, IDS_WIN10_TOAST_RECOMMENDATION,
++     true},
++    {IDS_WIN10_TOAST_SWITCH_SMART_AND_SECURE, IDS_WIN10_TOAST_RECOMMENDATION,
++     true}};
++
++// A Win10-styled rectangular button, for this toast displayed outside of
++// Chrome.
++class Win10StyleButton : public views::LabelButton {
++ public:
++  Win10StyleButton(views::ButtonListener* listener, const base::string16& text);
++  ~Win10StyleButton() override;
++
++  // Sets whether this is an affirmative button for the form.
++  void SetIsAffirmativeButton(bool is_affirmative);
++
++ private:
++  void UpdateColors();
++
++  // Whether this is an affirmative button for the parent dialog.
++  // In that case it will be colored bright blue versus gray.
++  bool is_affirmative_;
+ };
+ 
+-const int kRadioGroupID = 1;
++Win10StyleButton::Win10StyleButton(views::ButtonListener* listener,
++                                   const base::string16& text)
++    : views::LabelButton(listener, text), is_affirmative_(false) {
++  SetHorizontalAlignment(gfx::ALIGN_CENTER);
++  label()->SetFontList(gfx::FontList(kFontDefinitionSemiBold));
++  UpdateColors();
++}
++
++Win10StyleButton::~Win10StyleButton() {}
++
++void Win10StyleButton::SetIsAffirmativeButton(bool is_affirmative) {
++  is_affirmative_ = is_affirmative;
++  UpdateColors();
++}
++
++void Win10StyleButton::UpdateColors() {
++  SetBackground(views::CreateSolidBackground(
++      is_affirmative_ ? kButtonAffirmativeColor : kButtonNoThanksColor));
++}
+ 
+ }  // namespace
+ 
+@@ -63,20 +133,18 @@ TryChromeDialogView::Result TryChromeDialogView::Show(
+     // returning this early. See TryChromeDialogBrowserTest test.
+     return NOT_NOW;
+   }
++  if (flavor >= arraysize(kExperiments)) {
++    NOTREACHED() << "invalid toast flavor: " << flavor;
++    return DIALOG_ERROR;
++  }
+   TryChromeDialogView dialog(flavor);
+-  TryChromeDialogView::Result result = dialog.ShowDialog(
+-      listener, kDialogType::MODAL, kUsageType::FOR_CHROME);
++  TryChromeDialogView::Result result =
++      dialog.ShowDialog(listener, kDialogType::MODAL, kUsageType::FOR_CHROME);
+   return result;
+ }
+ 
+ TryChromeDialogView::TryChromeDialogView(size_t flavor)
+-    : flavor_(flavor),
+-      popup_(NULL),
+-      try_chrome_(NULL),
+-      kill_chrome_(NULL),
+-      dont_try_chrome_(NULL),
+-      make_default_(NULL),
+-      result_(COUNT) {}
++    : flavor_(flavor), popup_(NULL), result_(COUNT) {}
+ 
+ TryChromeDialogView::~TryChromeDialogView() {}
+ 
+@@ -84,218 +152,154 @@ TryChromeDialogView::Result TryChromeDialogView::ShowDialog(
+     const ActiveModalDialogListener& listener,
+     kDialogType dialog_type,
+     kUsageType usage_type) {
+-  ui::ResourceBundle& rb = ui::ResourceBundle::GetSharedInstance();
++  font_list_ = gfx::FontList(kFontDefinitionSemiBold);
+ 
++  ui::ResourceBundle& rb = ui::ResourceBundle::GetSharedInstance();
+   views::ImageView* icon = new views::ImageView();
+-  icon->SetImage(rb.GetNativeImageNamed(IDR_PRODUCT_LOGO_32).ToImageSkia());
++  icon->SetImage(rb.GetNativeImageNamed(IDR_INACTIVE_TOAST_ICON).ToImageSkia());
+   gfx::Size icon_size = icon->GetPreferredSize();
+ 
+-  // An approximate window size. After Layout() we'll get better bounds.
+   views::Widget::InitParams params(views::Widget::InitParams::TYPE_POPUP);
+   params.activatable = views::Widget::InitParams::ACTIVATABLE_YES;
+-  params.bounds = gfx::Rect(310, 200);
++  // An approximate window size. Layout() can adjust.
++  params.bounds = gfx::Rect(kToastWidth, 120);
+   popup_ = new views::Widget;
+   popup_->Init(params);
+ 
+   views::View* root_view = popup_->GetRootView();
+-  // The window color is a tiny bit off-white.
+-  root_view->SetBackground(
+-      views::CreateSolidBackground(SkColorSetRGB(0xfc, 0xfc, 0xfc)));
+-
++  root_view->SetBackground(views::CreateSolidBackground(kBackgroundColor));
+   views::GridLayout* layout = views::GridLayout::CreatePanel(root_view);
++  layout->set_minimum_size(gfx::Size(kToastWidth, 0));
+   views::ColumnSet* columns;
+ 
+-  ChromeLayoutProvider* provider = ChromeLayoutProvider::Get();
+-  const int label_spacing =
+-      provider->GetDistanceMetric(DISTANCE_RELATED_LABEL_HORIZONTAL);
+-  const int unrelated_space_horiz =
+-      provider->GetDistanceMetric(DISTANCE_UNRELATED_CONTROL_HORIZONTAL);
+-  const int unrelated_space_vert =
+-      provider->GetDistanceMetric(views::DISTANCE_UNRELATED_CONTROL_VERTICAL);
+-  const int button_spacing_horiz =
+-      provider->GetDistanceMetric(views::DISTANCE_RELATED_BUTTON_HORIZONTAL);
+-
+-  // First row: [icon][pad][text][pad][button].
++  // Note the right padding is smaller than other dimensions,
++  // to acommodate the close 'x' button.
++  const int inset_top = 10;
++  const int inset_left = 10;
++  const int inset_bottom = 12;
++  const int inset_right = 3;
++  root_view->SetBorder(views::CreatePaddedBorder(
++      views::CreateSolidBorder(1, kBorderColor),
++      gfx::Insets(inset_top, inset_left, inset_bottom, inset_right)));
++
++  const int label_spacing = 10;
++  const int spacing_between_buttons = 4;
++  const int spacing_between_header_x = 9;
++
++  // First row: [icon][pad][text][pad][close button].
++  // Left padding is accomplished via border.
+   columns = layout->AddColumnSet(0);
+   columns->AddColumn(views::GridLayout::LEADING, views::GridLayout::LEADING, 0,
+                      views::GridLayout::FIXED, icon_size.width(),
+                      icon_size.height());
+   columns->AddPaddingColumn(0, label_spacing);
+-  columns->AddColumn(views::GridLayout::FILL, views::GridLayout::FILL, 1,
+-                     views::GridLayout::USE_PREF, 0, 0);
+-  columns->AddPaddingColumn(0, unrelated_space_horiz);
+-  columns->AddColumn(views::GridLayout::TRAILING, views::GridLayout::FILL, 1,
++  columns->AddColumn(views::GridLayout::FILL, views::GridLayout::LEADING, 1,
+                      views::GridLayout::USE_PREF, 0, 0);
+-
++  columns->AddPaddingColumn(0, spacing_between_header_x);
++  columns->AddColumn(views::GridLayout::TRAILING, views::GridLayout::TRAILING,
++                     0, views::GridLayout::USE_PREF, 0, 0);
+   int icon_padding = icon_size.width() + label_spacing;
+-  // Optional second row: [pad][radio 1].
++
++  // Optional second row: [pad][text].
+   columns = layout->AddColumnSet(1);
+   columns->AddPaddingColumn(0, icon_padding);
+   columns->AddColumn(views::GridLayout::LEADING, views::GridLayout::FILL, 1,
+                      views::GridLayout::USE_PREF, 0, 0);
+ 
+-  // Third row: [pad][radio 2].
++  // Third row: [pad][optional button][pad][button].
+   columns = layout->AddColumnSet(2);
+-  columns->AddPaddingColumn(0, icon_padding);
+-  columns->AddColumn(views::GridLayout::LEADING, views::GridLayout::FILL, 1,
+-                     views::GridLayout::USE_PREF, 0, 0);
+-
+-  // Fourth row: [pad][button][pad][button].
+-  columns = layout->AddColumnSet(3);
+-  columns->AddPaddingColumn(0, icon_padding);
+-  columns->AddColumn(views::GridLayout::LEADING, views::GridLayout::FILL, 0,
+-                     views::GridLayout::USE_PREF, 0, 0);
+-  columns->AddPaddingColumn(0, button_spacing_horiz);
+-  columns->AddColumn(views::GridLayout::LEADING, views::GridLayout::FILL, 0,
+-                     views::GridLayout::USE_PREF, 0, 0);
+-
+-  // Fifth row: [pad][link].
+-  columns = layout->AddColumnSet(4);
+-  columns->AddPaddingColumn(0, icon_padding);
+-  columns->AddColumn(views::GridLayout::LEADING, views::GridLayout::FILL, 1,
+-                     views::GridLayout::USE_PREF, 0, 0);
+-
+-  // Optional fourth row: [button].
+-  columns = layout->AddColumnSet(5);
+-  columns->AddColumn(views::GridLayout::CENTER, views::GridLayout::FILL, 1,
+-                     views::GridLayout::USE_PREF, 0, 0);
+-
+-  // Optional fourth row: [divider]
+-  columns = layout->AddColumnSet(6);
+-  columns->AddColumn(views::GridLayout::CENTER, views::GridLayout::FILL, 1,
+-                     views::GridLayout::USE_PREF, 0, 0);
+-
+-  // Optional fifth row [checkbox][pad][button]
+-  columns = layout->AddColumnSet(7);
+-  columns->AddColumn(views::GridLayout::LEADING, views::GridLayout::FILL, 0,
+-                     views::GridLayout::USE_PREF, 0, 0);
+-  columns->AddPaddingColumn(0, unrelated_space_horiz);
++  columns->AddPaddingColumn(0, 12 - inset_left);
+   columns->AddColumn(views::GridLayout::TRAILING, views::GridLayout::FILL, 1,
+                      views::GridLayout::USE_PREF, 0, 0);
++  columns->AddPaddingColumn(0, spacing_between_buttons);
++  columns->AddColumn(views::GridLayout::TRAILING, views::GridLayout::FILL, 0,
++                     views::GridLayout::USE_PREF, 0, 0);
++  columns->AddPaddingColumn(0, 12 - inset_right);
+ 
++  // Padding between the top of the toast and first row is handled via border.
+   // First row.
+   layout->StartRow(0, 0);
+   layout->AddView(icon);
++  // All variants have a main header.
++  views::Label* header = new views::Label(
++      l10n_util::GetStringUTF16(kExperiments[flavor_].heading_id),
++      views::Label::CustomFont{font_list_});
++  header->SetAutoColorReadabilityEnabled(false);
++  header->SetEnabledColor(kHeaderColor);
++  header->SetFontList(font_list_);
++  header->SetMultiLine(true);
++  header->SetHorizontalAlignment(gfx::ALIGN_LEFT);
++  layout->AddView(header);
+ 
+-  // Find out what experiment we are conducting.
+-  installer::ExperimentDetails experiment;
+-  if ((usage_type != kUsageType::FOR_TESTING &&
+-          !install_static::SupportsRetentionExperiments()) ||
+-      !installer::CreateExperimentDetails(flavor_, &experiment) ||
+-      !experiment.heading) {
+-    NOTREACHED() << "Cannot determine which headline to show.";
+-    return DIALOG_ERROR;
+-  }
+-  views::Label* label =
+-      new views::Label(l10n_util::GetStringUTF16(experiment.heading),
+-                       views::style::CONTEXT_DIALOG_TITLE);
+-  label->SetMultiLine(true);
+-  label->SizeToFit(200);
+-  label->SetHorizontalAlignment(gfx::ALIGN_LEFT);
+-  layout->AddView(label);
+   // The close button is custom.
+   views::ImageButton* close_button = new views::ImageButton(this);
+-  close_button->SetImage(views::CustomButton::STATE_NORMAL,
+-                         rb.GetNativeImageNamed(IDR_CLOSE_2).ToImageSkia());
+-  close_button->SetImage(views::CustomButton::STATE_HOVERED,
+-                         rb.GetNativeImageNamed(IDR_CLOSE_2_H).ToImageSkia());
+-  close_button->SetImage(views::CustomButton::STATE_PRESSED,
+-                         rb.GetNativeImageNamed(IDR_CLOSE_2_P).ToImageSkia());
++  close_button->SetImage(
++      views::CustomButton::STATE_NORMAL,
++      rb.GetNativeImageNamed(IDR_INACTIVE_TOAST_CLOSE_X).ToImageSkia());
+   close_button->set_tag(BT_CLOSE_BUTTON);
+   layout->AddView(close_button);
+ 
+-  // Second row.
+-  layout->StartRowWithPadding(0, 1, 0, 10);
+-  try_chrome_ = new views::RadioButton(
+-      l10n_util::GetStringUTF16(IDS_TRY_TOAST_TRY_OPT), kRadioGroupID);
+-  try_chrome_->SetChecked(true);
+-  try_chrome_->set_tag(BT_TRY_IT_RADIO);
+-  try_chrome_->set_listener(this);
+-  layout->AddView(try_chrome_);
+-
+-  // Decide if the don't bug me is a button or a radio button.
+-  bool dont_bug_me_button =
+-      !!(experiment.flags & installer::kToastUiDontBugMeAsButton);
+-
+-  // Optional third and fourth row.
+-  if (!dont_bug_me_button) {
+-    layout->StartRow(0, 1);
+-    dont_try_chrome_ = new views::RadioButton(
+-        l10n_util::GetStringUTF16(IDS_TRY_TOAST_CANCEL), kRadioGroupID);
+-    dont_try_chrome_->set_tag(BT_DONT_BUG_RADIO);
+-    dont_try_chrome_->set_listener(this);
+-    layout->AddView(dont_try_chrome_);
+-  }
+-  if (experiment.flags & installer::kToastUiUninstall) {
+-    layout->StartRow(0, 2);
+-    kill_chrome_ = new views::RadioButton(
+-        l10n_util::GetStringUTF16(IDS_UNINSTALL_CHROME), kRadioGroupID);
+-    layout->AddView(kill_chrome_);
++  // Second row: May have text or may be blank.
++  layout->StartRow(0, 1);
++  const int body_string_id = kExperiments[flavor_].body_id;
++  if (body_string_id) {
++    views::Label* body_text =
++        new views::Label(l10n_util::GetStringUTF16(body_string_id),
++                         views::Label::CustomFont{font_list_});
++    body_text->SetAutoColorReadabilityEnabled(false);
++    body_text->SetEnabledColor(kBodyColor);
++    body_text->SetFontList(font_list_);
++    layout->AddView(body_text);
+   }
+ 
+-  views::LabelButton* accept_button =
+-      views::MdTextButton::CreateSecondaryUiButton(
+-          this, l10n_util::GetStringUTF16(IDS_OK));
+-  accept_button->set_tag(BT_OK_BUTTON);
+-
+-  views::Separator* separator = NULL;
+-  if (experiment.flags & installer::kToastUiMakeDefault) {
+-    // In this flavor we have some vertical space, then a separator line
+-    // and the 'make default' checkbox and the OK button on the same row.
+-    layout->AddPaddingRow(0, unrelated_space_vert);
+-    layout->StartRow(0, 6);
+-    separator = new views::Separator();
+-    layout->AddView(separator);
+-    layout->AddPaddingRow(0, unrelated_space_vert);
+-
+-    layout->StartRow(0, 7);
+-    make_default_ = new views::Checkbox(
+-        l10n_util::GetStringUTF16(IDS_TRY_TOAST_SET_DEFAULT));
+-    make_default_->SetChecked(true);
+-    layout->AddView(make_default_);
+-    layout->AddView(accept_button);
+-  } else {
+-    // On this other flavor there is no checkbox, the OK button and possibly
+-    // the cancel button are in the same row.
+-    layout->StartRowWithPadding(0, dont_bug_me_button ? 3 : 5, 0, 10);
+-    layout->AddView(accept_button);
+-    if (dont_bug_me_button) {
+-      // The dialog needs a "Don't bug me" as a button or as a radio button,
+-      // this the button case.
+-      views::LabelButton* cancel_button =
+-          views::MdTextButton::CreateSecondaryUiButton(
+-              this, l10n_util::GetStringUTF16(IDS_TRY_TOAST_CANCEL));
+-      cancel_button->set_tag(BT_CLOSE_BUTTON);
+-      layout->AddView(cancel_button);
+-    }
++  // Third row: one or two buttons depending on flavor.
++  if (!kExperiments[flavor_].has_no_thanks_button) {
++    layout->SkipColumns(1);
+   }
+-
+-  if (experiment.flags & installer::kToastUiWhyLink) {
+-    layout->StartRowWithPadding(0, 4, 0, 10);
+-    views::Link* link =
+-        new views::Link(l10n_util::GetStringUTF16(IDS_TRY_TOAST_WHY));
+-    link->set_listener(this);
+-    layout->AddView(link);
++  layout->StartRowWithPadding(0, 2, 0, 12);
++  Win10StyleButton* accept_button = new Win10StyleButton(
++      this, l10n_util::GetStringUTF16(IDS_WIN10_TOAST_OPEN_CHROME));
++  accept_button->set_tag(BT_OK_BUTTON);
++  accept_button->SetIsAffirmativeButton(true);
++  accept_button->SetEnabledTextColors(kButtonTextColor);
++  accept_button->SetMinSize(gfx::Size(160, 32));
++  accept_button->SetMaxSize(gfx::Size(0, 32));
++  layout->AddView(accept_button);
++
++  if (kExperiments[flavor_].has_no_thanks_button) {
++    Win10StyleButton* no_thanks_button = new Win10StyleButton(
++        this, l10n_util::GetStringUTF16(IDS_WIN10_TOAST_NO_THANKS));
++    no_thanks_button->set_tag(BT_NO_THANKS_BUTTON);
++    no_thanks_button->SetIsAffirmativeButton(false);
++    no_thanks_button->SetEnabledTextColors(kButtonTextColor);
++    no_thanks_button->SetMinSize(gfx::Size(160, 32));
++    no_thanks_button->SetMaxSize(gfx::Size(0, 32));
++    layout->AddView(no_thanks_button);
+   }
+ 
+-  // We resize the window according to the layout manager. This takes into
+-  // account the differences between XP and Vista fonts and buttons.
++  // Padding between buttons and the edge of the view is via the border.
+   layout->Layout(root_view);
+   gfx::Size preferred = layout->GetPreferredSize(root_view);
+-  if (separator) {
+-    int separator_height = separator->GetPreferredSize().height();
+-    separator->SetSize(gfx::Size(preferred.width(), separator_height));
+-  }
+-
+   gfx::Rect pos = ComputeWindowPosition(preferred, base::i18n::IsRTL());
+   popup_->SetBounds(pos);
+ 
+-  // Carve the toast shape into the window.
+-  HWND toast_window;
+-  toast_window = popup_->GetNativeView()->GetHost()->GetAcceleratedWidget();
+-  SetToastRegion(toast_window, preferred.width(), preferred.height());
++  // Update pre-show stats.
++  time_shown_ = base::Time::Now();
++  {
++    installer::ExperimentStorage storage;
++    auto lock = storage.AcquireLock();
++    installer::Experiment experiment;
++    if (lock->LoadExperiment(&experiment)) {
++      experiment.AssignGroup(flavor_);
++      experiment.SetDisplayTime(time_shown_);
++      experiment.SetToastCount(experiment.toast_count() + 1);
++      // TODO(skare): SetToastLocation via checking pinned state.
++      // TODO(skare): SetUserSessionUptime
++      lock->StoreExperiment(experiment);
++    }
++  }
+ 
+-  // Time to show the window in a modal loop.
++  // Show the window in a modal loop.
+   popup_->Show();
+ 
+   if (!listener.is_null())
+@@ -318,62 +322,58 @@ gfx::Rect TryChromeDialogView::ComputeWindowPosition(const gfx::Size& size,
+ 
+   gfx::Rect work_area = popup_->GetWorkAreaBoundsInScreen();
+   origin.set_x(is_RTL ? work_area.x() : work_area.right() - size.width());
+-  origin.set_y(work_area.bottom()- size.height());
++  origin.set_y(work_area.bottom() - size.height() - kHoverAboveTaskbarHeight);
+ 
+   return display::Screen::GetScreen()->ScreenToDIPRectInWindow(
+       popup_->GetNativeView(), gfx::Rect(origin, size));
+ }
+ 
+-void TryChromeDialogView::SetToastRegion(HWND window, int w, int h) {
+-  static const POINT polygon[] = {
+-      {0, 4},     {1, 2},     {2, 1},     {4, 0},  // Left side.
+-      {w - 4, 0}, {w - 2, 1}, {w - 1, 2}, {w, 4},  // Right side.
+-      {w, h},     {0, h}};
+-  HRGN region = ::CreatePolygonRgn(polygon, arraysize(polygon), WINDING);
+-  ::SetWindowRgn(window, region, FALSE);
+-}
+-
+ void TryChromeDialogView::ButtonPressed(views::Button* sender,
+                                         const ui::Event& event) {
+-  if (sender->tag() == BT_DONT_BUG_RADIO) {
+-    if (make_default_) {
+-      make_default_->SetChecked(false);
+-      make_default_->SetVisible(false);
+-    }
+-    return;
+-  } else if (sender->tag() == BT_TRY_IT_RADIO) {
+-    if (make_default_) {
+-      make_default_->SetVisible(true);
+-      make_default_->SetChecked(true);
+-    }
+-    return;
+-  } else if (sender->tag() == BT_CLOSE_BUTTON) {
+-    // The user pressed cancel or the [x] button.
++  if (sender->tag() == BT_CLOSE_BUTTON ||
++      sender->tag() == BT_NO_THANKS_BUTTON) {
++    // The user pressed No Thanks or the [x] button.
+     result_ = NOT_NOW;
+-  } else if (!try_chrome_) {
+-    // We don't have radio buttons, the user pressed ok.
+-    result_ = TRY_CHROME;
++  } else if (sender->tag() == BT_OK_BUTTON) {
++    // The user clicked the affirmative button.
++    result_ = OPEN_CHROME;
+   } else {
+-    // The outcome is according to the selected radio button.
+-    if (try_chrome_->checked())
+-      result_ = TRY_CHROME;
+-    else if (dont_try_chrome_ && dont_try_chrome_->checked())
+-      result_ = NOT_NOW;
+-    else if (kill_chrome_ && kill_chrome_->checked())
+-      result_ = UNINSTALL_CHROME;
+-    else
+-      NOTREACHED() << "Unknown radio button selected";
++    NOTREACHED() << "Unknown button selected.";
+   }
+ 
+-  if (make_default_) {
+-    if ((result_ == TRY_CHROME) && make_default_->checked())
+-      result_ = TRY_CHROME_AS_DEFAULT;
++  // Update post-action stats.
++  {
++    installer::ExperimentStorage storage;
++    auto lock = storage.AcquireLock();
++    installer::Experiment experiment;
++    if (lock->LoadExperiment(&experiment)) {
++      base::TimeDelta action_delay = (base::Time::Now() - time_shown_);
++      experiment.SetActionDelay(action_delay);
++      if (sender->tag() == BT_CLOSE_BUTTON) {
++        experiment.SetState(installer::ExperimentMetrics::kSelectedClose);
++      } else if (sender->tag() == BT_NO_THANKS_BUTTON) {
++        experiment.SetState(installer::ExperimentMetrics::kSelectedNoThanks);
++      } else {
++        // TODO(skare): Differentiate crash/no-crash/logoff cases.
++        experiment.SetState(
++            installer::ExperimentMetrics::kSelectedOpenChromeAndNoCrash);
++      }
++      lock->StoreExperiment(experiment);
++    }
+   }
+ 
+   popup_->Close();
+   base::MessageLoop::current()->QuitWhenIdle();
+ }
+ 
+-void TryChromeDialogView::LinkClicked(views::Link* source, int event_flags) {
+-  ::ShellExecuteW(NULL, L"open", kHelpCenterUrl, NULL, NULL, SW_SHOW);
++// static
++StartupBrowserCreator::WelcomeBackPage
++TryChromeDialogView::GetWelcomePageForFlavor(size_t flavor) {
++  if (flavor == 2) {
++    return StartupBrowserCreator::WelcomeBackPage::kWelcomeWin10;
++  }
++  if (flavor == 3) {
++    return StartupBrowserCreator::WelcomeBackPage::kWelcomeStandard;
++  }
++  return StartupBrowserCreator::WelcomeBackPage::kNone;
+ }
