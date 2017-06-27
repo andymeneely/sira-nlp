@@ -23,18 +23,6 @@ class LoaddbTestCase(TransactionTestCase):
     def setUp(self):
         pass
 
-    # If there is a way to test whether or not a KeyboardInterrupt is handled
-    # correctly, no one on the internet knows how to do it.
-    # def test_keyboard_interrupt(self):
-    #     p = subprocess.Popen(
-    #             ['/home/bsm9339/sira-nlp/manage.py', 'loaddb'],
-    #             stderr=subprocess.DEVNULL
-    #         )
-    #     helpers.sleep(5)
-    #     p.send_signal(signal.SIGINT)
-
-    #     self.assertEqual(True, True)
-
     def test_handle(self):
         call_command('loaddb')
 
@@ -313,7 +301,7 @@ class LoaddbTestCase(TransactionTestCase):
 
         actual = dict()
         sentences = Sentence.objects.filter(
-                review_id=1259853004,
+                message__review_id=1259853004,
                 message__posted='2015-07-30 10:32:31.936180'
             )
         for sentence in sentences:
@@ -354,11 +342,6 @@ class LoaddbTestCase(TransactionTestCase):
                 .values_list('review_id', flat=True)
             )
         self.assertCountEqual(expected, actual, msg='Data: vw_review_lemma')
-
-        # Sentences
-#        expected = []
-#        actual = list(Sentence.objects.all())
-#        print(len(actual))
 
     def test_handle_issue_4(self):
         '''Test fix for issue #4

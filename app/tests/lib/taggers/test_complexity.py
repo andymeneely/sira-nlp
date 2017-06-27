@@ -1,10 +1,12 @@
 from django import test
 from django.conf import settings
+from django.db import connections
 
 from app.lib import loaders, taggers
 from app.models import *
 
 from django.core.management import call_command
+
 
 class ComplexityTaggerTestCase(test.TransactionTestCase):
     def setUp(self):
@@ -18,14 +20,20 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
+        sentences = Sentence.objects.filter(message__review_id=1259853004)
+        tagger = taggers.SentenceParseTagger(
+                settings, num_processes=2, sentences=sentences
+            )
+        _ = tagger.tag()
 
-        sentObjects = Sentence.objects.filter(review_id=1259853004).iterator()
+        connections.close_all()  # Hack
+
+        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
         self.tagger = taggers.ComplexityTagger(
                 settings, num_processes=2, sentObjects=sentObjects
             )
 
     def test_load(self):
-        call_command('sentenceParse')
         expected = [
                 (
                     'The CQ bit was checked by pkasting@chromium.org',
@@ -97,7 +105,8 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    'Did you have any place in mind where we can set the policy?',
+                    'Did you have any place in mind where we can set the '
+                    'policy?',
                     {
                         'frazier': 0.9285714285714286,
                         'pdensity': 0.42857142857142855,
@@ -162,8 +171,8 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    'I though that it will fit in chrome/browser/prefs, but all'
-                    ' the policies',
+                    'I though that it will fit in chrome/browser/prefs, but '
+                    'all the policies',
                     {
                         'frazier': 0.7307692307692307,
                         'pdensity': 0.46153846153846156,
@@ -207,7 +216,8 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                 ),
                 (
                     'I have put it there because it is the central place for '
-                    'the Devtools creation and as such cover all possible case.',
+                    'the Devtools creation and as such cover all possible '
+                    'case.',
                     {
                         'frazier': 0.717391304347826,
                         'pdensity': 0.34782608695652173,
@@ -240,12 +250,12 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    "There's no real win from doing so (we save one conditional"
-                    " in one place but have to add code to set the pref "
-                    "elsewhere) and it would make subsequent non-kiosk runs "
-                    "still disable the dev tools unless we added even more code"
-                    " to distinguish why the pref was originally set and then "
-                    "unset it.",
+                    "There's no real win from doing so (we save one "
+                    "conditional in one place but have to add code to set the "
+                    "pref elsewhere) and it would make subsequent non-kiosk "
+                    "runs still disable the dev tools unless we added even "
+                    "more code to distinguish why the pref was originally set "
+                    "and then unset it.",
                     {
                         'frazier': 0.9827586206896551,
                         'pdensity': 0.46551724137931033,
@@ -254,8 +264,8 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    'Is it possible to set the policy |prefs::kDevToolsDisabled'
-                    '| instead in kiosk mode?',
+                    'Is it possible to set the policy '
+                    '|prefs::kDevToolsDisabled| instead in kiosk mode?',
                     {
                         'frazier': 0.6388888888888888,
                         'pdensity': 0.3333333333333333,
@@ -284,16 +294,22 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                     }
                 )
             ]
+        expected = sorted(expected)
 
         _ = self.tagger.tag()
-        actual = Sentence.objects.filter(review_id=1259853004).values_list('text', 'metrics')
-        actual = [(text, metrics['complexity']) for text, metrics in actual]
-        self.maxDiff = None
-        e = sorted(expected)
-        a = sorted(actual)
-        for i, _ in enumerate(e):
-            self.assertEqual(e[i][0], a[i][0])
-            self.assertEqual(e[i][1]['yngve'], a[i][1]['yngve'])
-            self.assertEqual(e[i][1]['frazier'], a[i][1]['frazier'])
-            self.assertEqual(e[i][1]['pdensity'], a[i][1]['pdensity'])
-            self.assertEqual(e[i][1]['cdensity'], a[i][1]['cdensity'])
+
+        actual = [
+                (sentence.text, sentence.metrics['complexity'])
+                for sentence in Sentence.objects
+                                        .filter(message__review_id=1259853004)
+            ]
+        actual = sorted(actual)
+        for index in range(0, len(expected)):
+            etext, emetrics = expected[index]
+            atext, ametrics = actual[index]
+            self.assertEqual(etext, atext)
+            for metric in ['yngve', 'frazier', 'cdensity', 'pdensity']:
+                self.assertAlmostEqual(
+                        emetrics[metric], ametrics[metric],
+                        msg='{}:{}'.format(metric, etext)
+                    )

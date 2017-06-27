@@ -1,11 +1,12 @@
-
 from django import test
 from django.conf import settings
+from django.db import connections
 
 from app.lib import loaders, taggers
 from app.models import *
 
 from django.core.management import call_command
+
 
 class InformativenessTaggerTestCase(test.TransactionTestCase):
     def setUp(self):
@@ -19,18 +20,15 @@ class InformativenessTaggerTestCase(test.TransactionTestCase):
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
-        loader = loaders.TokenLoader(
-                settings, num_processes=2, review_ids=[1259853004]
-            )
-        _ = loader.load()
 
-        sentObjects = Sentence.objects.filter(review_id=1259853004).iterator()
+        connections.close_all()  # Hack
+
+        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
         self.tagger = taggers.InformativenessTagger(
                 settings, num_processes=2, sentenceObjects=sentObjects
             )
 
     def test_load(self):
-        call_command('sentenceParse')
         expected = [
                 (
                     'The CQ bit was checked by pkasting@chromium.org',
@@ -191,15 +189,17 @@ class InformativenessTaggerTestCase(test.TransactionTestCase):
                 ),
                 (
                     'I have put it there because it is the central place for '
-                    'the Devtools creation and as such cover all possible case.',
+                    'the Devtools creation and as such cover all possible '
+                    'case.',
                     {
                         'informative': 0.000113915393563202,
                         'uninformative': 0.9998860846064368
                     }
                 ),
                 (
-                    'It work for all OS (Tested it on Win,Osx,Linux) and there '
-                    'are already code to disable the Devtools at this place.',
+                    'It work for all OS (Tested it on Win,Osx,Linux) and '
+                    'there are already code to disable the Devtools at this '
+                    'place.',
                     {
                         'informative': 0.015033136641976799,
                         'uninformative': 0.9849668633580232
@@ -229,15 +229,16 @@ class InformativenessTaggerTestCase(test.TransactionTestCase):
                 ),
                 (
                     "You can probably nuke the comment on that since it's "
-                    "just restating the code, rather than trying to expand it.",
+                    "just restating the code, rather than trying to expand "
+                    "it.",
                     {
                         'informative': 0.08000111107697262,
                         'uninformative': 0.9199988889230274
                     }
                 ),
                 (
-                    'Is it possible to set the policy |prefs::kDevToolsDisabled'
-                    '| instead in kiosk mode?',
+                    'Is it possible to set the policy '
+                    '|prefs::kDevToolsDisabled| instead in kiosk mode?',
                     {
                         'informative': 0.9663068414179109,
                         'uninformative': 0.0336931585820891
@@ -256,17 +257,19 @@ class InformativenessTaggerTestCase(test.TransactionTestCase):
                     }
                 )
             ]
+        expected = {text: metrics for (text, metrics) in expected}
 
         _ = self.tagger.tag()
-        actual = Sentence.objects.filter(review_id=1259853004).values_list('text', 'metrics')
-        actual = [(text, metrics['informativeness']) for text, metrics in actual]
-        self.maxDiff = None
 
-        e = sorted(expected, key=lambda x:x[0])
-        a = sorted(actual, key=lambda x:x[0])
-        for i, _ in enumerate(e):
-            if e[i] != a[i]: # pragma: no cover
-                print(e[i])
-                print(a[i])
-            self.assertEqual(e[i][0], a[i][0])
-            self.assertDictEqual(e[i][1], a[i][1])
+        actual = {
+                sentence.text: sentence.metrics['informativeness']
+                for sentence in Sentence.objects
+                                        .filter(message__review_id=1259853004)
+            }
+        for text in expected:
+            self.assertTrue(text in actual)
+            for metric in ['informative', 'uninformative']:
+                self.assertAlmostEqual(
+                        expected[text][metric], actual[text][metric],
+                        msg='{}:{}'.format(metric, text)
+                    )

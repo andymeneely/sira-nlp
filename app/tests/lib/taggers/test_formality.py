@@ -1,11 +1,12 @@
-
 from django import test
 from django.conf import settings
+from django.db import connections
 
 from app.lib import loaders, taggers
 from app.models import *
 
 from django.core.management import call_command
+
 
 class FormalityTaggerTestCase(test.TransactionTestCase):
     def setUp(self):
@@ -24,13 +25,14 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
             )
         _ = loader.load()
 
-        sentObjects = Sentence.objects.filter(review_id=1259853004).iterator()
+        connections.close_all()  # Hack
+
+        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
         self.tagger = taggers.FormalityTagger(
                 settings, num_processes=2, sentenceObjects=sentObjects
             )
 
     def test_load(self):
-        call_command('sentenceParse')
         expected = [
                 (
                     'The CQ bit was checked by pkasting@chromium.org',
@@ -191,15 +193,17 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                 ),
                 (
                     'I have put it there because it is the central place for '
-                    'the Devtools creation and as such cover all possible case.',
+                    'the Devtools creation and as such cover all possible '
+                    'case.',
                     {
                         'formal': 0.010657033433948061,
                         'informal': 0.9893429665660519
                     }
                 ),
                 (
-                    'It work for all OS (Tested it on Win,Osx,Linux) and there '
-                    'are already code to disable the Devtools at this place.',
+                    'It work for all OS (Tested it on Win,Osx,Linux) and '
+                    'there are already code to disable the Devtools at this '
+                    'place.',
                     {
                         'formal': 0.9470493238203167,
                         'informal': 0.0529506761796833
@@ -229,15 +233,16 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                 ),
                 (
                     "You can probably nuke the comment on that since it's "
-                    "just restating the code, rather than trying to expand it.",
+                    "just restating the code, rather than trying to expand "
+                    "it.",
                     {
                         'formal': 0.9352595261512059,
                         'informal': 0.06474047384879411
                     }
                 ),
                 (
-                    'Is it possible to set the policy |prefs::kDevToolsDisabled'
-                    '| instead in kiosk mode?',
+                    'Is it possible to set the policy '
+                    '|prefs::kDevToolsDisabled| instead in kiosk mode?',
                     {
                         'formal': 0.9070844366402679,
                         'informal': 0.09291556335973206
@@ -256,13 +261,22 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                     }
                 )
             ]
+        expected = sorted(expected)
 
         _ = self.tagger.tag()
-        actual = Sentence.objects.filter(review_id=1259853004).values_list('text', 'metrics')
-        actual = [(text, metrics['formality']) for text, metrics in actual]
-        self.maxDiff = None
-        e = sorted(expected)
-        a = sorted(actual)
-        for i, _ in enumerate(e):
-            self.assertEqual(e[i][0], a[i][0])
-            self.assertDictEqual(e[i][1], a[i][1])
+
+        actual = [
+                (sentence.text, sentence.metrics['formality'])
+                for sentence in Sentence.objects
+                                        .filter(message__review_id=1259853004)
+            ]
+        actual = sorted(actual)
+        for index in range(0, len(expected)):
+            etext, emetrics = expected[index]
+            atext, ametrics = actual[index]
+            self.assertEqual(etext, atext)
+            for metric in ['formal', 'informal']:
+                self.assertAlmostEqual(
+                        emetrics[metric], ametrics[metric],
+                        msg='{}:{}'.format(metric, etext)
+                    )

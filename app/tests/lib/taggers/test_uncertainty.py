@@ -1,5 +1,6 @@
 from django import test
 from django.conf import settings
+from django.db import connections
 
 from app.lib import loaders, taggers
 from app.models import *
@@ -24,7 +25,9 @@ class UncertaintyTaggerTestCase(test.TransactionTestCase):
             )
         _ = loader.load()
 
-        sentObjects = Sentence.objects.filter(review_id=1259853004).iterator()
+        connections.close_all()  # Hack
+
+        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
         self.tagger = taggers.UncertaintyTagger(
                 settings, num_processes=2, sentenceObjects=sentObjects,
                 root_type='stem'
@@ -40,7 +43,10 @@ class UncertaintyTaggerTestCase(test.TransactionTestCase):
                 ('Done.', False),
                 ('Done.', False),
                 ('policies.', False),
-                ('I would not try to set that pref in kiosk mode.', False),
+                (
+                    'I would not try to set that pref in kiosk mode.',
+                    True  # Uncertain: "would"
+                ),
                 ('are a copy of input flags.', False),
                 ('LGTM', False),
                 ('policy far from the DevTools creation?', False),
@@ -116,7 +122,7 @@ class UncertaintyTaggerTestCase(test.TransactionTestCase):
         _ = self.tagger.tag()
         actual = [
                 (sentence.text, sentence.metrics['uncertain'])
-                for sentence in Sentence.objects.filter(review_id=1259853004)
+                for sentence in Sentence.objects
+                                        .filter(message__review_id=1259853004)
             ]
-        self.maxDiff = None
         self.assertCountEqual(expected, actual)

@@ -58,7 +58,7 @@ def do(iqueue, cqueue):  # pragma: no cover
 def stream(review_ids, settings, iqueue, num_doers):
     for review_id in review_ids:
         sentences = list()
-        for sentence in Sentence.objects.filter(review_id=review_id):
+        for sentence in Sentence.objects.filter(message__review_id=review_id):
             sentences.append((sentence.id, sentence.text))
         iqueue.put((review_id, sentences))
 

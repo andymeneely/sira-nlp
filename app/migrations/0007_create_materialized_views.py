@@ -8,8 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0006_auto_20170202_2106'),
-        ('app', '0014_token_sentence')
+        ('app', '0019_add_comment')
     ]
 
     operations = [
@@ -18,10 +17,13 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(
             'CREATE MATERIALIZED VIEW vw_review_token AS '
-            'SELECT DISTINCT ON (t.token, s.review_id) '
+            'SELECT DISTINCT ON (t.token, m.review_id) '
             '   nextval(\'vw_review_token_id_seq\'::regclass) AS id, '
-            '   t.token, s.review_id '
-            'FROM token t JOIN sentence s ON s.id = t.sentence_id;'
+            '   t.token, m.review_id '
+            'FROM token t '
+            '   JOIN sentence s ON s.id = t.sentence_id '
+            '   JOIN message_sentences ms ON ms.sentence_id = s.id '
+            '   JOIN message m ON ms.message_id = m.id;'
         ),
         migrations.RunSQL(
             'CREATE UNIQUE INDEX vw_review_token_id ON vw_review_token '
@@ -59,10 +61,13 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(
             'CREATE MATERIALIZED VIEW vw_review_lemma AS '
-            'SELECT DISTINCT ON (t.lemma, s.review_id) '
+            'SELECT DISTINCT ON (t.lemma, m.review_id) '
             '   nextval(\'vw_review_lemma_id_seq\'::regclass) AS id, '
-            '   t.lemma, s.review_id '
-            'FROM token t JOIN sentence s ON s.id = t.sentence_id;'
+            '   t.lemma, m.review_id '
+            'FROM token t '
+            '   JOIN sentence s ON s.id = t.sentence_id '
+            '   JOIN message_sentences ms ON ms.sentence_id = s.id '
+            '   JOIN message m ON ms.message_id = m.id;'
         ),
         migrations.RunSQL(
             'CREATE UNIQUE INDEX vw_review_lemma_id ON vw_review_lemma '

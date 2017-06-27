@@ -33,25 +33,22 @@ def do(iqueue, cqueue):  # pragma: no cover
 
         (review_id, messages) = item
 
-        objects = list()
+        count = 0
         with transaction.atomic():
             try:
                 for (posted, sender, text, message_id) in messages:
+                    message = Message.objects.get(id=message_id)
+                    # TODO: Save position of sentence
                     for sent in sentenizer.NLTKSentenizer(text).execute():
-                        objects.append(Sentence(
-                                review_id=review_id,
-                                message_id=message_id,
-                                text=sent
-                            ))
-                if len(objects) > 0:
-                    Sentence.objects.bulk_create(objects)
+                        message.sentences.create(text=sent)
+                        count += 1
             except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Review  {}\n'.format(review_id))
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 
-        cqueue.put(len(objects))
+        cqueue.put(count)
 
 
 def stream(review_ids, settings, iqueue, num_doers):

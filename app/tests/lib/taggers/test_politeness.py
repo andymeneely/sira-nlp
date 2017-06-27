@@ -1,10 +1,12 @@
 from django import test
 from django.conf import settings
+from django.db import connections
 
 from app.lib import loaders, taggers
 from app.models import *
 
 from django.core.management import call_command
+
 
 class PolitenessTaggerTestCase(test.TransactionTestCase):
     def setUp(self):
@@ -18,14 +20,20 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
+        sentences = Sentence.objects.filter(message__review_id=1259853004)
+        tagger = taggers.SentenceParseTagger(
+                settings, num_processes=2, sentences=sentences
+            )
+        _ = tagger.tag()
 
-        sentObjects = Sentence.objects.filter(review_id=1259853004).iterator()
+        connections.close_all()  # Hack
+
+        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
         self.tagger = taggers.PolitenessTagger(
                 settings, num_processes=2, sentenceObjects=sentObjects
             )
 
     def test_load(self):
-        call_command('sentenceParse')
         expected = [
                 (
                     'The CQ bit was checked by pkasting@chromium.org',
@@ -91,7 +99,8 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    'Did you have any place in mind where we can set the policy?',
+                    'Did you have any place in mind where we can set the '
+                    'policy?',
                     {
                         'polite': 0.6248711449928428,
                         'impolite': 0.3751288550071572
@@ -147,8 +156,8 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    'I though that it will fit in chrome/browser/prefs, but all'
-                    ' the policies',
+                    'I though that it will fit in chrome/browser/prefs, but '
+                    'all the policies',
                     {
                         'polite': 0.5258094349678502,
                         'impolite': 0.47419056503214996
@@ -185,7 +194,8 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
                 ),
                 (
                     'I have put it there because it is the central place for '
-                    'the Devtools creation and as such cover all possible case.',
+                    'the Devtools creation and as such cover all possible '
+                    'case.',
                     {
                         'polite': 0.579824881138749,
                         'impolite': 0.42017511886125114
@@ -214,20 +224,20 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    "There's no real win from doing so (we save one conditional"
-                    " in one place but have to add code to set the pref "
-                    "elsewhere) and it would make subsequent non-kiosk runs "
-                    "still disable the dev tools unless we added even more code"
-                    " to distinguish why the pref was originally set and then "
-                    "unset it.",
+                    "There's no real win from doing so (we save one "
+                    "conditional in one place but have to add code to set the "
+                    "pref elsewhere) and it would make subsequent non-kiosk "
+                    "runs still disable the dev tools unless we added even "
+                    "more code to distinguish why the pref was originally set "
+                    "and then unset it.",
                     {
                         'polite': 0.5057137816218953,
                         'impolite': 0.4942862183781046
                     }
                 ),
                 (
-                    'Is it possible to set the policy |prefs::kDevToolsDisabled'
-                    '| instead in kiosk mode?',
+                    'Is it possible to set the policy '
+                    '|prefs::kDevToolsDisabled| instead in kiosk mode?',
                     {
                         'impolite': 0.41342652088375903,
                         'polite': 0.586573479116241
@@ -247,13 +257,22 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
                     {'polite': 0.5, 'impolite': 0.5}
                 )
             ]
+        expected = sorted(expected)
 
         _ = self.tagger.tag()
-        actual = Sentence.objects.filter(review_id=1259853004).values_list('text', 'metrics')
-        actual = [(text, metrics['politeness']) for text, metrics in actual]
-        self.maxDiff = None
-        e = sorted(expected)
-        a = sorted(actual)
-        for i, _ in enumerate(e):
-            self.assertEqual(e[i][0], a[i][0])
-            self.assertDictEqual(e[i][1], a[i][1])
+
+        actual = [
+                (sentence.text, sentence.metrics['politeness'])
+                for sentence in Sentence.objects
+                                        .filter(message__review_id=1259853004)
+            ]
+        actual = sorted(actual)
+        for index in range(0, len(expected)):
+            etext, emetrics = expected[index]
+            atext, ametrics = actual[index]
+            self.assertEqual(etext, atext)
+            for metric in ['polite', 'impolite']:
+                self.assertAlmostEqual(
+                        emetrics[metric], ametrics[metric],
+                        msg='{}:{}'.format(metric, etext)
+                    )

@@ -1,11 +1,12 @@
-
 from django import test
 from django.conf import settings
+from django.db import connections
 
 from app.lib import loaders, taggers
 from app.models import *
 
 from django.core.management import call_command
+
 
 class ImplicatureTaggerTestCase(test.TransactionTestCase):
     def setUp(self):
@@ -19,18 +20,15 @@ class ImplicatureTaggerTestCase(test.TransactionTestCase):
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
-        loader = loaders.TokenLoader(
-                settings, num_processes=2, review_ids=[1259853004]
-            )
-        _ = loader.load()
 
-        sentObjects = Sentence.objects.filter(review_id=1259853004).iterator()
+        connections.close_all()  # Hack
+
+        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
         self.tagger = taggers.ImplicatureTagger(
                 settings, num_processes=2, sentenceObjects=sentObjects
             )
 
     def test_load(self):
-        call_command('sentenceParse')
         expected = [
                 (
                     'The CQ bit was checked by pkasting@chromium.org',
@@ -191,15 +189,17 @@ class ImplicatureTaggerTestCase(test.TransactionTestCase):
                 ),
                 (
                     'I have put it there because it is the central place for '
-                    'the Devtools creation and as such cover all possible case.',
+                    'the Devtools creation and as such cover all possible '
+                    'case.',
                     {
                         'implicative': 0.8205685717773425,
                         'unimplicative': 0.17943142822265745
                     }
                 ),
                 (
-                    'It work for all OS (Tested it on Win,Osx,Linux) and there '
-                    'are already code to disable the Devtools at this place.',
+                    'It work for all OS (Tested it on Win,Osx,Linux) and '
+                    'there are already code to disable the Devtools at this '
+                    'place.',
                     {
                         'implicative': 0.3509005554903233,
                         'unimplicative': 0.6490994445096767
@@ -229,15 +229,16 @@ class ImplicatureTaggerTestCase(test.TransactionTestCase):
                 ),
                 (
                     "You can probably nuke the comment on that since it's "
-                    "just restating the code, rather than trying to expand it.",
+                    "just restating the code, rather than trying to expand "
+                    "it.",
                     {
                         'implicative': 0.07351337522645907,
                         'unimplicative': 0.9264866247735409
                     }
                 ),
                 (
-                    'Is it possible to set the policy |prefs::kDevToolsDisabled'
-                    '| instead in kiosk mode?',
+                    'Is it possible to set the policy '
+                    '|prefs::kDevToolsDisabled| instead in kiosk mode?',
                     {
                         'implicative': 0.3321551800433818,
                         'unimplicative': 0.6678448199566183
@@ -256,17 +257,19 @@ class ImplicatureTaggerTestCase(test.TransactionTestCase):
                     }
                 )
             ]
+        expected = {text: metrics for (text, metrics) in expected}
 
         _ = self.tagger.tag()
-        actual = Sentence.objects.filter(review_id=1259853004).values_list('text', 'metrics')
-        actual = [(text, metrics['implicature']) for text, metrics in actual]
-        self.maxDiff = None
 
-        e = sorted(expected, key=lambda x:x[0])
-        a = sorted(actual, key=lambda x:x[0])
-        for i, _ in enumerate(e):
-            if e[i] != a[i]: # pragma: no cover
-                print(e[i])
-                print(a[i])
-            self.assertEqual(e[i][0], a[i][0])
-            self.assertDictEqual(e[i][1], a[i][1])
+        actual = {
+                sentence.text: sentence.metrics['implicature']
+                for sentence in Sentence.objects
+                                        .filter(message__review_id=1259853004)
+            }
+        for text in expected:
+            self.assertTrue(text in actual)
+            for metric in ['implicative', 'unimplicative']:
+                self.assertAlmostEqual(
+                        expected[text][metric], actual[text][metric],
+                        msg='{}:{}'.format(metric, text)
+                    )

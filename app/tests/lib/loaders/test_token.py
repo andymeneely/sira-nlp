@@ -55,11 +55,10 @@ class TokenLoaderTestCase(test.TestCase):
         _ = self.loader.load()
 
         actual = dict()
-        sentences = Sentence.objects.filter(
-                review_id=1259853004,
-                message__posted='2015-07-30 10:32:31.936180'
+        message = Message.objects.get(
+                review_id=1259853004, posted='2015-07-30 10:32:31.936180'
             )
-        for sentence in sentences:
+        for sentence in message.sentences.all():
             actual[sentence.text] = list(
                     Token.objects.filter(sentence=sentence)
                     .order_by('position')

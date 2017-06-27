@@ -26,8 +26,10 @@ def query_TF_dict(review_id, key='lemma'):
     Returns the numerator of TF, the number of occurrences of the token in
     the review.
     """
-    queryResults = Token.objects.filter(sentence__review__id=review_id) \
-        .values(key).annotate(tf=Count(key))
+    queryResults = Token.objects \
+                        .filter(sentence__message__review__id=review_id) \
+                        .values(key) \
+                        .annotate(tf=Count(key))
 
     return queryResults
 
@@ -384,7 +386,7 @@ def query_top_x_tokens(review_ids, x, key='lemma'):
         .values_list('id', flat=True)
 
     queryResults = Token.objects \
-        .filter(sentence__review__id__in=review_ids) \
+        .filter(sentence__message__review__id__in=review_ids) \
         .filter(token__iregex=r"\w+") \
         .values(key) \
         .annotate(freq=Count(key)) \

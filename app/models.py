@@ -26,6 +26,55 @@ class Review(models.Model):
         db_table = 'review'
 
 
+class PatchSet(models.Model):
+    _id = models.AutoField(primary_key=True)  # Hack
+    id = models.BigIntegerField()
+
+    created = models.DateTimeField()
+    files = fields.ArrayField(models.CharField(max_length=255), default=list)
+
+    # Navigation Fields
+    review = models.ForeignKey('Review')
+
+    class Meta:
+        db_table = 'patchset'
+        unique_together = ('id', 'review')
+
+
+class Patch(models.Model):
+    _id = models.AutoField(primary_key=True)  # Hack
+    id = models.BigIntegerField()
+
+    path = models.CharField(max_length=255)
+    num_added = models.IntegerField(default=0)
+    num_removed = models.IntegerField(default=0)
+
+    # Navigation Fields
+    patchset = models.ForeignKey('PatchSet')
+
+    class Meta:
+        db_table = 'patch'
+        unique_together = ('id', 'patchset')
+
+
+class Comment(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    posted = models.DateTimeField()
+    line = models.PositiveIntegerField()
+    author = models.EmailField()
+    text = models.TextField(default='')
+    is_useful = models.BooleanField(default=False)
+    by_reviewer = models.BooleanField(default=False)
+
+    # Navigation Fields
+    patch = models.ForeignKey('patch')
+    sentences = models.ManyToManyField('Sentence')
+
+    class Meta:
+        db_table = 'comment'
+
+
 class Bug(models.Model):
     """ Defines the schema for the bug table. """
     id = models.BigIntegerField(primary_key=True)
@@ -50,6 +99,8 @@ class ReviewBug(models.Model):
     Defines the schema for the review_bug table, which maps associated reviews
     and bugs to each other.
     """
+    id = models.AutoField(primary_key=True)
+
     review = models.ForeignKey('Review')
     bug = models.ForeignKey('Bug')
 
@@ -61,6 +112,7 @@ class ReviewBug(models.Model):
 class Vulnerability(models.Model):
     """ Defines the schema for the vulnerability table. """
     id = models.CharField(max_length=15, primary_key=True)
+
     source = models.CharField(max_length=8, default='monorail')
 
     # Navigation Fields
@@ -75,6 +127,8 @@ class VulnerabilityBug(models.Model):
     Defines the schema for the vulnerability_bug table, which maps
     vulnerabilities to bugs.
     """
+    id = models.AutoField(primary_key=True)
+
     vulnerability = models.ForeignKey('Vulnerability')
     bug = models.ForeignKey('Bug')
 
@@ -86,12 +140,14 @@ class VulnerabilityBug(models.Model):
 class Message(models.Model):
     """ Defines the schema for the message table. """
     id = models.AutoField(primary_key=True)
+
     posted = models.DateTimeField()
     sender = models.EmailField()
     text = models.TextField(default='')
 
     # Navigation Fields
     review = models.ForeignKey('Review')
+    sentences = models.ManyToManyField('Sentence')
 
     class Meta:
         db_table = 'message'
@@ -107,10 +163,6 @@ class Sentence(models.Model):
             default={'sentiment': {}, 'complexity': {}, 'politeness': {},
                      'formality': {}, 'implicature': {}, 'informativeness': {}}
         )
-
-    # Navigation Fields
-    message = models.ForeignKey('Message')
-    review = models.ForeignKey('Review')
 
     class Meta:
         db_table = 'sentence'

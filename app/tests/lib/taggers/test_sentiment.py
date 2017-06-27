@@ -5,6 +5,7 @@ from django.db import connection, connections
 from app.lib import loaders, taggers
 from app.models import *
 
+
 class SentimentTestCase(test.TransactionTestCase):
     def setUp(self):
         loader = loaders.ReviewLoader(settings, num_processes=2)
@@ -18,7 +19,9 @@ class SentimentTestCase(test.TransactionTestCase):
             )
         _ = loader.load()
 
-        sentObjects = Sentence.objects.filter(review_id=1259853004).iterator()
+        connections.close_all()  # Hack
+
+        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
         self.tagger = taggers.SentimentTagger(
                 settings, num_processes=2, sentObjects=sentObjects
             )
@@ -47,7 +50,7 @@ class SentimentTestCase(test.TransactionTestCase):
                  ),
                  (
                      'I removed the comment and merged the two conditions.',
-                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
+                     {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
                  (
                      'Done.',
@@ -59,15 +62,15 @@ class SentimentTestCase(test.TransactionTestCase):
                  ),
                  (
                      'I would not try to set that pref in kiosk mode.',
-                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
+                     {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
                  (
                      "There's no real win from doing so (we save one "
-                     "conditional in one place but have to add code to set the "
-                     "pref elsewhere) and it would make subsequent non-kiosk "
-                     "runs still disable the dev tools unless we added even "
-                     "more code to distinguish why the pref was originally set "
-                     "and then unset it.",
+                     "conditional in one place but have to add code to set "
+                     "the pref elsewhere) and it would make subsequent "
+                     "non-kiosk runs still disable the dev tools unless we "
+                     "added even more code to distinguish why the pref was "
+                     "originally set and then unset it.",
                      {'neg': 0, 'pos': 0, 'vneg': 1, 'vpos': 0, 'neut': 0}
                  ),
                  (
@@ -119,8 +122,9 @@ class SentimentTestCase(test.TransactionTestCase):
                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
                  (
-                     "You can probably nuke the comment on that since it's just"
-                     " restating the code, rather than trying to expand it.",
+                     "You can probably nuke the comment on that since it's "
+                     "just restating the code, rather than trying to expand "
+                     "it.",
                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
                  (
@@ -133,12 +137,14 @@ class SentimentTestCase(test.TransactionTestCase):
                  ),
                  (
                      'I have put it there because it is the central place for '
-                     'the Devtools creation and as such cover all possible case.',
+                     'the Devtools creation and as such cover all possible '
+                     'case.',
                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
                  (
-                     'It work for all OS (Tested it on Win,Osx,Linux) and there '
-                     'are already code to disable the Devtools at this place.',
+                     'It work for all OS (Tested it on Win,Osx,Linux) and '
+                     'there are already code to disable the Devtools at this '
+                     'place.',
                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
                  (
@@ -150,8 +156,8 @@ class SentimentTestCase(test.TransactionTestCase):
                      {'neg': 0, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 1}
                  ),
                  (
-                     'Is it possible to set the policy |prefs::kDevToolsDisabled'
-                     '| instead in kiosk mode?',
+                     'Is it possible to set the policy '
+                     '|prefs::kDevToolsDisabled| instead in kiosk mode?',
                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
                  (
@@ -161,16 +167,10 @@ class SentimentTestCase(test.TransactionTestCase):
             ]
 
         _ = self.tagger.tag()
-        actual = Sentence.objects.filter(review_id=1259853004).values_list('text', 'metrics')
-        actual = [(text, metrics['sentiment']) for text, metrics in actual]
-        self.maxDiff = None
-        e = sorted(expected)
-        a = sorted(actual)
-        for i, _ in enumerate(e):
-            self.assertEqual(e[i][0], a[i][0])
-            self.assertEqual(e[i][1]['neg'], a[i][1]['neg'])
-            self.assertEqual(e[i][1]['pos'], a[i][1]['pos'])
-            self.assertEqual(e[i][1]['vneg'], a[i][1]['vneg'])
-            self.assertEqual(e[i][1]['vpos'], a[i][1]['vpos'])
-            self.assertEqual(e[i][1]['neut'], a[i][1]['neut'])
 
+        actual = [
+                (sentence.text, sentence.metrics['sentiment'])
+                for sentence in Sentence.objects
+                                        .filter(message__review_id=1259853004)
+            ]
+        self.assertCountEqual(expected, actual)
