@@ -4,12 +4,13 @@ from django.conf import settings
 
 from app.lib.monorail import *
 
+MONORAIL_URL = 'https://monorail-staging.appspot.com/_ah/api/discovery/v1/' \
+               'apis/{api}/{apiVersion}/rest'
+
 
 class MonorailTestCase(TestCase):
     def setUp(self):
-        self.monorail = Monorail(
-                settings.MONORAIL_URL, settings.GOOGLESA_KEYFILE
-            )
+        self.monorail = Monorail(MONORAIL_URL, settings.GOOGLESA_KEYFILE)
 
     def test_get_bug(self):
         data = 5608
