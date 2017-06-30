@@ -15,6 +15,7 @@ from app.lib.helpers import *
 from app.lib.logger import *
 from app.models import *
 
+import app.queryStrings as qs
 
 class Command(BaseCommand):
     """
@@ -58,16 +59,36 @@ class Command(BaseCommand):
             count = tagger.tag()
             info('  {:,} reviews missed a vulnerability'.format(count))
 
-            ids = list(Review.objects.all().values_list('id', flat=True))
+            ids = qs.query_all('review', True)
+            #ids = list(Review.objects.all().values_list('id', flat=True))
+            connections.close_all()  # Hack
+
+            # Comments
+            loader = loaders.CommentLoader(settings, processes, ids)
+            count = loader.load()
+            info('  {:,} comments loaded'.format(count))
+            connections.close_all()  # Hack
+            loader = loaders.SentenceCommentLoader(settings, processes, ids)
+            count = loader.load()
+            info('  {:,} sentences loaded'.format(count))
+            connections.close_all()  # Hack
+
+            tagger = taggers.UsefulCommentTagger(settings, processes, ids)
+            count = tagger.tag()
+            info('  {:,} comments were useful'.format(count))
+
+            # Messages
             connections.close_all()  # Hack
             loader = loaders.MessageLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} messages loaded'.format(count))
             connections.close_all()  # Hack
-            loader = loaders.SentenceLoader(settings, processes, ids)
+            loader = loaders.SentenceMessageLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} sentences loaded'.format(count))
             connections.close_all()  # Hack
+
+            # Tokens
             loader = loaders.TokenLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} tokens loaded'.format(count))
