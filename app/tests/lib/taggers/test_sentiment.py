@@ -1,6 +1,7 @@
 from django import test
 from django.conf import settings
 from django.db import connection, connections
+from django.db.models import Q
 
 from app.lib import loaders, taggers
 from app.models import *
@@ -14,24 +15,30 @@ class SentimentTestCase(test.TransactionTestCase):
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
-        loader = loaders.SentenceLoader(
+        loader = loaders.SentenceMessageLoader(
+                settings, num_processes=2, review_ids=[1259853004]
+            )
+        _ = loader.load()
+        loader = loaders.CommentLoader(
+                settings, num_processes=2, review_ids=[1259853004]
+            )
+        _ = loader.load()
+        loader = loaders.SentenceCommentLoader(
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
 
         connections.close_all()  # Hack
 
-        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
+        q1 = Q(message__review_id=1259853004)
+        q2 = Q(comment__patch__patchset__review_id=1259853004)
+        sentObjects = Sentence.objects.filter(q1 | q2)
         self.tagger = taggers.SentimentTagger(
                 settings, num_processes=2, sentObjects=sentObjects
             )
 
     def test_load(self):
         expected = [
-                 (
-                     'The CQ bit was checked by pkasting@chromium.org',
-                     {'neg': 0, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 1}
-                 ),
                  (
                      'lgtm',
                      {'neg': 0, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 1}
@@ -42,10 +49,6 @@ class SentimentTestCase(test.TransactionTestCase):
                  ),
                  (
                      'lgtm',
-                     {'neg': 0, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 1}
-                 ),
-                 (
-                     'The CQ bit was checked by pkasting@chromium.org',
                      {'neg': 0, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 1}
                  ),
                  (
@@ -128,10 +131,6 @@ class SentimentTestCase(test.TransactionTestCase):
                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
                  (
-                     'pkasting@chromium.org changed reviewers:',
-                     {'neg': 0, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 1}
-                 ),
-                 (
                      'Code to disconnect the DevTools in kiosk mode.',
                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
@@ -148,29 +147,18 @@ class SentimentTestCase(test.TransactionTestCase):
                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
                  (
-                     '+ dgozman@chromium.org, pkasting@google.com',
-                     {'neg': 0, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 1}
-                 ),
-                 (
-                     '+ pkasting@chromium.org',
-                     {'neg': 0, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 1}
-                 ),
-                 (
                      'Is it possible to set the policy '
                      '|prefs::kDevToolsDisabled| instead in kiosk mode?',
                      {'neg': 1, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 0}
                  ),
-                 (
-                     'frederic.jacob.78@gmail.com changed reviewers:',
-                     {'neg': 0, 'pos': 0, 'vneg': 0, 'vpos': 0, 'neut': 1}
-                 )
             ]
 
         _ = self.tagger.tag()
 
+        q1 = Q(message__review_id=1259853004)
+        q2 = Q(comment__patch__patchset__review_id=1259853004)
         actual = [
                 (sentence.text, sentence.metrics['sentiment'])
-                for sentence in Sentence.objects
-                                        .filter(message__review_id=1259853004)
+                for sentence in Sentence.objects.filter(q1 | q2)
             ]
         self.assertCountEqual(expected, actual)

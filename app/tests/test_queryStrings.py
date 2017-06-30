@@ -11,8 +11,146 @@ from app.lib.logger import *
 from app.models import *
 from app import queryStrings as qs
 from app.tests import testcases
+from unittest import skip
 
 
+class NewQueryStringsTestCase(testcases.SpecialTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        loader = loaders.BugLoader(settings, num_processes=2)
+        _ = loader.load()
+        loader = loaders.VulnerabilityLoader(settings, num_processes=2)
+        _ = loader.load()
+        loader = loaders.ReviewLoader(settings, num_processes=2)
+        _ = loader.load()
+        review_ids = list(Review.objects.all().values_list('id', flat=True))
+
+        tagger = taggers.MissedVulnerabilityTagger(settings, num_processes=2)
+        _ = tagger.tag()
+
+        connections.close_all()
+
+        loader = loaders.MessageLoader(
+                settings, num_processes=2, review_ids=review_ids
+            )
+        _ = loader.load()
+        loader = loaders.SentenceMessageLoader(
+                settings, num_processes=2, review_ids=review_ids
+            )
+        _ = loader.load()
+        loader = loaders.CommentLoader(
+                settings, num_processes=2, review_ids=review_ids
+            )
+        _ = loader.load()
+        loader = loaders.SentenceCommentLoader(
+                settings, num_processes=2, review_ids=review_ids
+            )
+        _ = loader.load()
+        loader = loaders.TokenLoader(
+                settings, num_processes=2, review_ids=review_ids
+            )
+        _ = loader.load()
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                    'REFRESH MATERIALIZED VIEW {};'.format('vw_review_token')
+                )
+            cursor.execute(
+                    'REFRESH MATERIALIZED VIEW {};'.format('vw_review_lemma')
+                )
+
+        qs.clear_objects()
+
+    def test_new_querystrings(self):
+        # Sub-Test 1 - query_by_year(year, table, ids=True)
+        expected = {
+                2008: {
+                        'review': 0, 'patchset': 0, 'patch': 0, 'comment': 0,
+                        'message': 0, 'sentence': 0, 'token': 0, 'bug': None,
+                        'vulnerability': None
+                    },
+                2009: {
+                        'review': 0, 'patchset': 0, 'patch': 0, 'comment': 0,
+                        'message': 0, 'sentence': 0, 'token': 0, 'bug': None,
+                        'vulnerability': None
+                    },
+                2010: {
+                        'review': 0, 'patchset': 0, 'patch': 0, 'comment': 0,
+                        'message': 0, 'sentence': 0, 'token': 0, 'bug': None,
+                        'vulnerability': None
+                    },
+                2011: {
+                        'review': 0, 'patchset': 0, 'patch': 0, 'comment': 0,
+                        'message': 0, 'sentence': 0, 'token': 0, 'bug': None,
+                        'vulnerability': None
+                    },
+                2012: {
+                        'review': 0, 'patchset': 0, 'patch': 0, 'comment': 0,
+                        'message': 0, 'sentence': 0, 'token': 0, 'bug': None,
+                        'vulnerability': None
+                    },
+                2013: {
+                        'review': 1, 'patchset': 1, 'patch': 4, 'comment': 0,
+                        'message': 2, 'sentence': 1, 'token': 8, 'bug': None,
+                        'vulnerability': None
+                    },
+                2014: {
+                        'review': 0, 'patchset': 0, 'patch': 0, 'comment': 0,
+                        'message': 0, 'sentence': 0, 'token': 0, 'bug': None,
+                        'vulnerability': None
+                    },
+                2015: {
+                        'review': 19, 'patchset': 63, 'patch': 1198,
+                        'comment': 44, 'message': 88, 'sentence': 250,
+                        'token': 2298, 'bug': None, 'vulnerability': None
+                    },
+                2016: {
+                        'review': 22, 'patchset': 64, 'patch': 1300,
+                        'comment': 89, 'message': 108, 'sentence': 380,
+                        'token': 4934, 'bug': None, 'vulnerability': None
+                    }
+            }
+        for year in expected.keys():
+            for table in expected[year].keys():
+                q = qs.query_by_year(year, table, ids=True)
+                if q is not None:
+                    self.assertEqual(expected[year][table], len(q))
+                else:
+                    self.assertEqual(expected[year][table], q)
+
+        # Sub-Test 2 - query_by_year(year, table, ids=False)
+        for year in expected.keys():
+            for table in expected[year].keys():
+                q = qs.query_by_year(year, table, ids=False)
+                if q is not None:
+                    self.assertEqual(expected[year][table], len(q))
+                else:
+                    self.assertEqual(expected[year][table], q)
+
+        # Sub-Test 3 - query_all(table, ids=True)
+        expected = {
+                'review': 42, 'patchset': 128, 'patch': 2502, 'comment': 133,
+                'message': 198, 'sentence': 631, 'token': 7240, 'bug': 38,
+                'vulnerability': 8, 'invalidtable': None
+            }
+        for table in expected.keys():
+            q = qs.query_all(table, ids=True)
+            if q is not None:
+                self.assertEqual(expected[table], len(q))
+            else:
+                self.assertEqual(expected[table], q)
+
+        # Sub-Test 4 - query_all(table, ids=False)
+        for table in expected.keys():
+            q = qs.query_all(table, ids=False)
+            if q is not None:
+                self.assertEqual(expected[table], len(q))
+            else:
+                self.assertEqual(expected[table], q)
+
+
+
+@skip("Skipping QueryStringsTestCase")
 class QueryStringsTestCase(testcases.SpecialTestCase):
     @classmethod
     def setUpTestData(cls):

@@ -18,11 +18,11 @@ from app.lib.external import *
 from app.lib.helpers import *
 from app.lib.logger import *
 from app.models import *
-from app.queryStrings import *
 
 from app.lib.nlp.sentenizer import NLTKSentenizer
 from app.lib.nlp.analyzers import SentenceParseAnalyzer
 
+import app.queryStrings as qs
 
 #### FUNCTIONS FOR PARSING THE STANFORD POLITENESS TRAINING DATA ###############
 def find_last_occurrence(depparse):
@@ -67,55 +67,6 @@ def get_depparse(text):
         results['parses'].append(depparse[start:])
     return results
 
-def populate_dependencies(out_to_file=True): # pragma: no cover
-    """
-    For the annotated StackExchange and Wikipedia data files, generate the
-    dependency parses and format the data in the expected format for the
-    politeness classifier trainer. Dump the output as a json string to the disk.
-
-    TAGGED_STACK_EXCHANGE and TAGGED_WIKIPEDIA are CSV files with columns 0-13:
-        [   0] Community        - where the entry came from
-        [   1] Id 	        - unique identifier
-        [   2] Request 	        - the actual text for the entry
-        [3- 7] Score1-5         - the raw politeness scores (0-25) assigned
-        [8-12] TurkId1-5        - identifier for machanical turk users
-        [  13] Normalized Score - the normalized, average politeness score
-
-    For our purposes, we only care about columns 2 and 13.
-    """
-    stack_sents = []
-    cnt = 0
-    with open(TAGGED_STACK_EXCHANGE, 'r', newline='') as csvfile:
-        stack_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-        for row in stack_reader:
-            temp = get_depparse(row[2]) # column 2
-            temp['score'] = row[13] # column 13
-            stack_sents.append(temp)
-            print(cnt)
-            cnt+=1
-
-    if out_to_file:
-        with open(PARSED_STACK_EXCHANGE, 'w') as f:
-            f.write(json.dumps(stack_sents[1:]))
-    else:
-        return stack_sents[1:]
-
-    wiki_sents = []
-    cnt = 0
-    with open(TAGGED_WIKIPEDIA, 'r', newline='') as csvfile:
-        wiki_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-        for row in wiki_reader:
-            temp = get_depparse(row[2]) # column 2
-            temp['score'] = row[13] # column 13
-            wiki_sents.append(temp)
-            print(cnt)
-            cnt+=1
-
-    if out_to_file:
-        with open(PARSED_WIKIPEDIA, 'w') as f:
-            f.write(json.dumps(wiki_sents[1:]))
-    else:
-        return wiki_sents[1:]
 
 ################################################################################
 
@@ -157,14 +108,11 @@ class Command(BaseCommand):
             if stanford:
                 populate_dependencies()
             else:
-                sents = []
+                sents = qs.query_all('sentence', ids=False)
                 if condition == 'all':
-                    sents = Sentence.objects.exclude(text='').iterator()
-                elif condition == 'empty':
-                    sents = Sentence.objects.filter(parses={}).exclude(text='').iterator()
-                elif condition == 'failed':
-                    sents = Sentence.objects.exclude(text='').filter(
-                                parses={'depparse': 'X', 'treeparse': 'X'}).iterator()
+                    sents = sents.exclude(text='').iterator()
+                elif condition == 'empty' or condition == 'failed':
+                    sents = sents.filter(parses={}).exclude(text='').iterator()
 
                 connections.close_all()
                 tagger = taggers.SentenceParseTagger(settings, processes, sents)

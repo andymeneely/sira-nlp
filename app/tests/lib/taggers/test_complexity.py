@@ -1,6 +1,7 @@
 from django import test
 from django.conf import settings
 from django.db import connections
+from django.db.models import Q
 
 from app.lib import loaders, taggers
 from app.models import *
@@ -16,34 +17,36 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
-        loader = loaders.SentenceLoader(
+        loader = loaders.SentenceMessageLoader(
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
-        sentences = Sentence.objects.filter(message__review_id=1259853004)
+        loader = loaders.CommentLoader(
+                settings, num_processes=2, review_ids=[1259853004]
+            )
+        _ = loader.load()
+        loader = loaders.SentenceCommentLoader(
+                settings, num_processes=2, review_ids=[1259853004]
+            )
+        _ = loader.load()
+
+        q1 = Q(message__review_id=1259853004)
+        q2 = Q(comment__patch__patchset__review_id=1259853004)
+        sentObjects = Sentence.objects.filter(q1 | q2)
+
         tagger = taggers.SentenceParseTagger(
-                settings, num_processes=2, sentences=sentences
+                settings, num_processes=2, sentences=sentObjects
             )
         _ = tagger.tag()
 
         connections.close_all()  # Hack
 
-        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
         self.tagger = taggers.ComplexityTagger(
                 settings, num_processes=2, sentObjects=sentObjects
             )
 
     def test_load(self):
         expected = [
-                (
-                    'The CQ bit was checked by pkasting@chromium.org',
-                    {
-                        'frazier': 0.9285714285714286,
-                        'pdensity': 0.42857142857142855,
-                        'yngve': 1.2857142857142858,
-                        'cdensity': 2.5
-                    }
-                ),
                 (
                     'lgtm',
                     {
@@ -63,15 +66,6 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                     {
                         'frazier': 0.85, 'pdensity': 0.4,
                         'yngve': 2.0, 'cdensity': 1.25
-                    }
-                ),
-                (
-                    'The CQ bit was checked by pkasting@chromium.org',
-                    {
-                        'frazier': 0.9285714285714286,
-                        'pdensity': 0.42857142857142855,
-                        'yngve': 1.2857142857142858,
-                        'cdensity': 2.5
                     }
                 ),
                 (
@@ -130,29 +124,6 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    'pkasting@chromium.org changed reviewers:',
-                    {
-                        'frazier': 0.75, 'pdensity': 0.5,
-                        'yngve': 1.5, 'cdensity': 0.0
-                    }
-                ),
-                (
-                    '+ pkasting@chromium.org',
-                    {
-                        'frazier': 1.0, 'pdensity': 0.5,
-                        'yngve': 0.5, 'cdensity': 1.0
-                    }
-                ),
-                (
-                    '+ dgozman@chromium.org, pkasting@google.com',
-                    {
-                        'frazier': 0.6666666666666666,
-                        'pdensity': 0.3333333333333333,
-                        'yngve': 0.6666666666666666,
-                        'cdensity': 2.0
-                    }
-                ),
-                (
                     'are a copy of input flags.',
                     {
                         'frazier': 0.9285714285714286,
@@ -196,13 +167,6 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
                         'frazier': 0.9333333333333333,
                         'pdensity': 0.4, 'yngve': 2.0,
                         'cdensity': 0.6666666666666666
-                    }
-                ),
-                (
-                    'frederic.jacob.78@gmail.com changed reviewers:',
-                    {
-                        'frazier': 0.75, 'pdensity': 0.5,
-                        'yngve': 1.5, 'cdensity': 0.0
                     }
                 ),
                 (
@@ -298,10 +262,11 @@ class ComplexityTaggerTestCase(test.TransactionTestCase):
 
         _ = self.tagger.tag()
 
+        q1 = Q(message__review_id=1259853004)
+        q2 = Q(comment__patch__patchset__review_id=1259853004)
         actual = [
                 (sentence.text, sentence.metrics['complexity'])
-                for sentence in Sentence.objects
-                                        .filter(message__review_id=1259853004)
+                for sentence in Sentence.objects.filter(q1 | q2)
             ]
         actual = sorted(actual)
         for index in range(0, len(expected)):

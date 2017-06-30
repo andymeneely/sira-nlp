@@ -1,6 +1,7 @@
 from django import test
 from django.conf import settings
 from django.db import connections
+from django.db.models import Q
 
 from app.lib import loaders, taggers
 from app.models import *
@@ -16,32 +17,35 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
-        loader = loaders.SentenceLoader(
+        loader = loaders.SentenceMessageLoader(
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
-        sentences = Sentence.objects.filter(message__review_id=1259853004)
+        loader = loaders.CommentLoader(
+                settings, num_processes=2, review_ids=[1259853004]
+            )
+        _ = loader.load()
+        loader = loaders.SentenceCommentLoader(
+                settings, num_processes=2, review_ids=[1259853004]
+            )
+        _ = loader.load()
+
+        q1 = Q(message__review_id=1259853004)
+        q2 = Q(comment__patch__patchset__review_id=1259853004)
+        sentObjects = Sentence.objects.filter(q1 | q2)
         tagger = taggers.SentenceParseTagger(
-                settings, num_processes=2, sentences=sentences
+                settings, num_processes=2, sentences=sentObjects
             )
         _ = tagger.tag()
 
         connections.close_all()  # Hack
 
-        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
         self.tagger = taggers.PolitenessTagger(
                 settings, num_processes=2, sentenceObjects=sentObjects
             )
 
     def test_load(self):
         expected = [
-                (
-                    'The CQ bit was checked by pkasting@chromium.org',
-                    {
-                        'polite': 0.439007418522547,
-                        'impolite': 0.5609925814774529
-                    }
-                ),
                 (
                     'lgtm',
                     {
@@ -61,13 +65,6 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
                     {
                         'polite': 0.43071451511946657,
                         'impolite': 0.5692854848805334
-                    }
-                ),
-                (
-                    'The CQ bit was checked by pkasting@chromium.org',
-                    {
-                        'polite': 0.439007418522547,
-                        'impolite': 0.5609925814774529
                     }
                 ),
                 (
@@ -121,27 +118,6 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    'pkasting@chromium.org changed reviewers:',
-                    {
-                        'polite': 0.439007418522547,
-                        'impolite': 0.5609925814774529
-                    }
-                ),
-                (
-                    '+ pkasting@chromium.org',
-                    {
-                        'polite': 0.439007418522547,
-                        'impolite': 0.5609925814774529
-                    }
-                ),
-                (
-                    '+ dgozman@chromium.org, pkasting@google.com',
-                    {
-                        'polite': 0.439007418522547,
-                        'impolite': 0.5609925814774529
-                    }
-                ),
-                (
                     'are a copy of input flags.',
                     {
                         'polite': 0.439007418522547,
@@ -176,13 +152,6 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
                     {
                         'polite': 0.5069363847504353,
                         'impolite': 0.49306361524956466
-                    }
-                ),
-                (
-                    'frederic.jacob.78@gmail.com changed reviewers:',
-                    {
-                        'polite': 0.439007418522547,
-                        'impolite': 0.5609925814774529
                     }
                 ),
                 (
@@ -261,10 +230,11 @@ class PolitenessTaggerTestCase(test.TransactionTestCase):
 
         _ = self.tagger.tag()
 
+        q1 = Q(message__review_id=1259853004)
+        q2 = Q(comment__patch__patchset__review_id=1259853004)
         actual = [
                 (sentence.text, sentence.metrics['politeness'])
-                for sentence in Sentence.objects
-                                        .filter(message__review_id=1259853004)
+                for sentence in Sentence.objects.filter(q1 | q2)
             ]
         actual = sorted(actual)
         for index in range(0, len(expected)):

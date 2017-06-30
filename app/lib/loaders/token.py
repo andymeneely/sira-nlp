@@ -3,7 +3,7 @@ import sys
 import traceback
 
 from django.db import Error, transaction
-
+from django.db.models import Q
 from app.lib import helpers, loaders
 from app.lib.nlp import summarizer
 from app.lib.utils import parallel
@@ -58,7 +58,10 @@ def do(iqueue, cqueue):  # pragma: no cover
 def stream(review_ids, settings, iqueue, num_doers):
     for review_id in review_ids:
         sentences = list()
-        for sentence in Sentence.objects.filter(message__review_id=review_id):
+        q1 = Q(message__review_id=review_id)
+        q2 = Q(comment__patch__patchset__review_id=review_id)
+        #for sentence in Sentence.objects.filter(message__review_id=review_id):
+        for sentence in Sentence.objects.filter(q1 | q2):
             sentences.append((sentence.id, sentence.text))
         iqueue.put((review_id, sentences))
 

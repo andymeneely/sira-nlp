@@ -1,6 +1,7 @@
 from django import test
 from django.conf import settings
 from django.db import connections
+from django.db.models import Q
 
 from app.lib import loaders, taggers
 from app.models import *
@@ -16,7 +17,15 @@ class UncertaintyTaggerTestCase(test.TransactionTestCase):
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
-        loader = loaders.SentenceLoader(
+        loader = loaders.SentenceMessageLoader(
+                settings, num_processes=2, review_ids=[1259853004]
+            )
+        _ = loader.load()
+        loader = loaders.CommentLoader(
+                settings, num_processes=2, review_ids=[1259853004]
+            )
+        _ = loader.load()
+        loader = loaders.SentenceCommentLoader(
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
@@ -27,7 +36,9 @@ class UncertaintyTaggerTestCase(test.TransactionTestCase):
 
         connections.close_all()  # Hack
 
-        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
+        q1 = Q(message__review_id=1259853004)
+        q2 = Q(comment__patch__patchset__review_id=1259853004)
+        sentObjects = Sentence.objects.filter(q1 | q2)
         self.tagger = taggers.UncertaintyTagger(
                 settings, num_processes=2, sentenceObjects=sentObjects,
                 root_type='stem'
@@ -35,11 +46,9 @@ class UncertaintyTaggerTestCase(test.TransactionTestCase):
 
     def test_load(self):
         expected = [
-                ('The CQ bit was checked by pkasting@chromium.org', False),
                 ('lgtm', False),
                 ('lgtm', False),
                 ('Looks like you need LGTM from a devtools owner.', False),
-                ('The CQ bit was checked by pkasting@chromium.org', False),
                 ('Done.', False),
                 ('Done.', False),
                 ('policies.', False),
@@ -55,9 +64,6 @@ class UncertaintyTaggerTestCase(test.TransactionTestCase):
                     'Nit: Just combine this conditional with the one below.',
                     False
                 ),
-                ('pkasting@chromium.org changed reviewers:', False),
-                ('frederic.jacob.78@gmail.com changed reviewers:', False),
-                ('+ dgozman@chromium.org, pkasting@google.com', False),
                 (
                     'I looked all over the code and I did not saw any place '
                     'that looked good to set',
@@ -72,7 +78,6 @@ class UncertaintyTaggerTestCase(test.TransactionTestCase):
                     "Don't you think that it could make it more difficult",
                     True  # Uncertain: "think"
                 ),
-                ('+ pkasting@chromium.org', False),
                 (
                     'Is it possible to set the policy |prefs::kDevToolsDisab'
                     'led| instead in kiosk mode?',
@@ -120,9 +125,11 @@ class UncertaintyTaggerTestCase(test.TransactionTestCase):
                 ),
             ]
         _ = self.tagger.tag()
+
+        q1 = Q(message__review_id=1259853004)
+        q2 = Q(comment__patch__patchset__review_id=1259853004)
         actual = [
                 (sentence.text, sentence.metrics['uncertain'])
-                for sentence in Sentence.objects
-                                        .filter(message__review_id=1259853004)
+                for sentence in Sentence.objects.filter(q1 | q2)
             ]
         self.assertCountEqual(expected, actual)

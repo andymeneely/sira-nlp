@@ -9,3 +9,9 @@ from app.lib.nlp.analyzers.politeness import PolitenessAnalyzer
 from app.lib.nlp.analyzers.sentenceparse import SentenceParseAnalyzer
 
 from app.lib.nlp.analyzers.uncertainty import UncertaintyAnalyzer
+
+from app.lib.nlp.analyzers.formality import FormalityAnalyzer
+
+from app.lib.nlp.analyzers.informativeness import InformativenessAnalyzer
+
+from app.lib.nlp.analyzers.implicature import ImplicatureAnalyzer

@@ -18,8 +18,8 @@ from app.lib import loaders, taggers
 from app.lib.helpers import *
 from app.lib.logger import *
 from app.models import *
-from app.queryStrings import *
 
+import app.queryStrings as qs
 
 class Command(BaseCommand):
     """
@@ -49,11 +49,6 @@ class Command(BaseCommand):
                 help='If specified, only sentences in the given year will be'
                 'tagged with the given "--metrics".'
             )
-        parser.add_argument(
-                '--empty', action='store_true', help='If specified, only '
-                'sentences that do not already have the given "--metrics" '
-                'populated will be tagged.'
-            )
 
     def handle(self, *args, **options):
         """
@@ -62,58 +57,16 @@ class Command(BaseCommand):
         processes = options['processes']
         metrics = options['metrics']
         year = options['year']
-        empty = options['empty']
         begin = dt.now()
         try:
+            sentences = []
             if year != 0:
-                sentences = Sentence.objects.exclude(text='').filter(message__review__created__year=year)
+                sentences = qs.query_by_year(year, 'sentence', ids=False).exclude(text='')
             else:
-                sentences = Sentence.objects.exclude(text='')
-            if 'formality' in metrics:
-                info("Gathering sentences...")
-                if empty:
-                    sents = sentences.filter(metrics__contains="{'formality'}:{}}").iterator()
-                else:
-                    sents = sentences.iterator()
-                connections.close_all()
-                try:
-                    info("Tagging sentences with formality...")
-                    tagger = taggers.FormalityTagger(settings, processes, sents)
-                    tagger.tag()
-                except Exception as e: # pragma: no cover
-                    warning('Error in formality tagging.')
-                    extype, exvalue, extrace = sys.exc_info()
-                    traceback.print_exception(extype, exvalue, extrace)
-            if 'informativeness' in metrics:
-                info("Gathering sentences...")
-                if empty:
-                    sents = sentences.filter(metrics__contains="{'informativeness'}:{}}").iterator()
-                else:
-                    sents = sentences.iterator()
-                connections.close_all()
-                try:
-                    info("Tagging sentences with informativeness...")
-                    tagger = taggers.InformativenessTagger(settings, processes, sents)
-                    tagger.tag()
-                except Exception as e: # pragma: no cover
-                    warning('Error in informativeness tagging.')
-                    extype, exvalue, extrace = sys.exc_info()
-                    traceback.print_exception(extype, exvalue, extrace)
-            if 'implicature' in metrics:
-                info("Gathering sentences...")
-                if empty:
-                    sents = sentences.filter(metrics__contains="{'implicature'}:{}}").iterator()
-                else:
-                    sents = sentences.iterator()
-                connections.close_all()
-                try:
-                    info("Tagging sentences with implicature...")
-                    tagger = taggers.ImplicatureTagger(settings, processes, sents)
-                    tagger.tag()
-                except Exception as e: # pragma: no cover
-                    warning('Error in implicature tagging.')
-                    extype, exvalue, extrace = sys.exc_info()
-                    traceback.print_exception(extype, exvalue, extrace)
+                sentences = qs.query_all('sentence', ids=False).exclude(text='')
+            connections.close_all()
+            tagger = taggers.MetricsTagger(settings, processes, sentences, metrics)
+            tagger.tag()
         except KeyboardInterrupt: # pragma: no cover
             warning('Attempting to abort.')
         finally:

@@ -16,8 +16,8 @@ from app.lib import loaders, taggers
 from app.lib.helpers import *
 from app.lib.logger import *
 from app.models import *
-from app.queryStrings import *
 
+import app.queryStrings as qs
 
 class Command(BaseCommand):
     """
@@ -51,7 +51,8 @@ class Command(BaseCommand):
         population = options['population']
         begin = dt.now()
         try:
-            sents = Sentence.objects.exclude(text='').iterator()
+            sents = qs.query_all('sentence', ids=False).exclude(text='') \
+                      .iterator()
 
             connections.close_all()
             tagger = taggers.PolitenessTagger(settings, processes, sents)

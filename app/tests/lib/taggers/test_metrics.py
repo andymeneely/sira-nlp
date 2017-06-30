@@ -1,6 +1,7 @@
 from django import test
 from django.conf import settings
 from django.db import connections
+from django.db.models import Q
 
 from app.lib import loaders, taggers
 from app.models import *
@@ -8,7 +9,7 @@ from app.models import *
 from django.core.management import call_command
 
 
-class FormalityTaggerTestCase(test.TransactionTestCase):
+class MetricsTaggerTestCase(test.TransactionTestCase):
     def setUp(self):
         loader = loaders.ReviewLoader(settings, num_processes=2)
         _ = loader.load()
@@ -16,7 +17,15 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
-        loader = loaders.SentenceLoader(
+        loader = loaders.SentenceMessageLoader(
+                settings, num_processes=2, review_ids=[1259853004]
+            )
+        _ = loader.load()
+        loader = loaders.CommentLoader(
+                settings, num_processes=2, review_ids=[1259853004]
+            )
+        _ = loader.load()
+        loader = loaders.SentenceCommentLoader(
                 settings, num_processes=2, review_ids=[1259853004]
             )
         _ = loader.load()
@@ -27,20 +36,16 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
 
         connections.close_all()  # Hack
 
-        sentObjects = Sentence.objects.filter(message__review_id=1259853004)
-        self.tagger = taggers.FormalityTagger(
-                settings, num_processes=2, sentenceObjects=sentObjects
+        q1 = Q(message__review_id=1259853004)
+        q2 = Q(comment__patch__patchset__review_id=1259853004)
+        sentObjects = Sentence.objects.filter(q1 | q2)
+        self.tagger = taggers.MetricsTagger(
+                settings, num_processes=2, sentenceObjects=sentObjects,
+                metrics=['formality', 'informativeness', 'implicature']
             )
 
     def test_load(self):
         expected = [
-                (
-                    'The CQ bit was checked by pkasting@chromium.org',
-                    {
-                        'formal': 0.6007579530375531,
-                        'informal': 0.3992420469624469
-                    }
-                ),
                 (
                     'lgtm',
                     {
@@ -51,8 +56,8 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                 (
                     'Looks like you need LGTM from a devtools owner.',
                     {
-                        'formal': 0.7322925478557456,
-                        'informal': 0.2677074521442544
+                        'formal': 0.7236392495196992,
+                        'informal': 0.2763607504803
                     }
                 ),
                 (
@@ -63,24 +68,17 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    'The CQ bit was checked by pkasting@chromium.org',
+                    'Done.',
                     {
-                        'formal': 0.6007579530375531,
-                        'informal': 0.3992420469624469
+                        'formal': 0.9560280075705169,
+                        'informal': 0.04397199242948313
                     }
                 ),
                 (
                     'Done.',
                     {
-                        'formal': 0.9580664517766108,
-                        'informal': 0.04193354822338924
-                    }
-                ),
-                (
-                    'Done.',
-                    {
-                        'formal': 0.9580664517766108,
-                        'informal': 0.04193354822338924
+                        'formal': 0.9560280075705169,
+                        'informal': 0.04397199242948313
                     }
                 ),
                 (
@@ -119,24 +117,10 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    '+ pkasting@chromium.org',
-                    {
-                        'formal': 0.9940912060619657,
-                        'informal': 0.00590879393803434
-                    }
-                ),
-                (
                     'Code to disconnect the DevTools in kiosk mode.',
                     {
-                        'formal': 0.8160727934429036,
-                        'informal': 0.18392720655709638
-                    }
-                ),
-                (
-                    'frederic.jacob.78@gmail.com changed reviewers:',
-                    {
-                        'formal': 0.9796474653272814,
-                        'informal': 0.02035253467271858
+                        'formal': 0.8133996729254985,
+                        'informal': 0.18660032707450147
                     }
                 ),
                 (
@@ -158,15 +142,8 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                     'Did you have any place in mind where we can set the '
                     'policy?',
                     {
-                        'formal': 0.9590009884696147,
-                        'informal': 0.04099901153038532
-                    }
-                ),
-                (
-                    'pkasting@chromium.org changed reviewers:',
-                    {
-                        'formal': 0.9675266586732113,
-                        'informal': 0.032473341326788696
+                        'formal': 0.9578748126664057,
+                        'informal': 0.04212518733359427
                     }
                 ),
                 (
@@ -187,8 +164,8 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                 (
                     'Nit: Just combine this conditional with the one below.',
                     {
-                        'formal': 0.8180145393810242,
-                        'informal': 0.1819854606189758
+                        'formal': 0.8324767352560595,
+                        'informal': 0.16752326474394053
                     }
                 ),
                 (
@@ -205,8 +182,8 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                     'there are already code to disable the Devtools at this '
                     'place.',
                     {
-                        'formal': 0.9470493238203167,
-                        'informal': 0.0529506761796833
+                        'formal': 0.9514776006037199,
+                        'informal': 0.04852239939628
                     }
                 ),
                 (
@@ -225,19 +202,12 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                     }
                 ),
                 (
-                    '+ dgozman@chromium.org, pkasting@google.com',
-                    {
-                        'formal': 0.9283786045529506,
-                        'informal': 0.07162139544704937
-                    }
-                ),
-                (
                     "You can probably nuke the comment on that since it's "
                     "just restating the code, rather than trying to expand "
                     "it.",
                     {
-                        'formal': 0.9352595261512059,
-                        'informal': 0.06474047384879411
+                        'formal': 0.9282941109660318,
+                        'informal': 0.07170588903396824
                     }
                 ),
                 (
@@ -256,8 +226,8 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
                     "more code to distinguish why the pref was originally set "
                     "and then unset it.",
                     {
-                        'formal': 0.07884819999728891,
-                        'informal': 0.9211518000027111
+                        'formal': 0.077391311892486,
+                        'informal': 0.922608688107514
                     }
                 )
             ]
@@ -265,10 +235,11 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
 
         _ = self.tagger.tag()
 
+        q1 = Q(message__review_id=1259853004)
+        q2 = Q(comment__patch__patchset__review_id=1259853004)
         actual = [
                 (sentence.text, sentence.metrics['formality'])
-                for sentence in Sentence.objects
-                                        .filter(message__review_id=1259853004)
+                for sentence in Sentence.objects.filter(q1 | q2)
             ]
         actual = sorted(actual)
         for index in range(0, len(expected)):
@@ -278,5 +249,6 @@ class FormalityTaggerTestCase(test.TransactionTestCase):
             for metric in ['formal', 'informal']:
                 self.assertAlmostEqual(
                         emetrics[metric], ametrics[metric],
-                        msg='{}:{}'.format(metric, etext)
+                        msg='{}:{}'.format(metric, etext),
+                        places=7
                     )

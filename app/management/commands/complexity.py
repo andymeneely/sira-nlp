@@ -24,6 +24,8 @@ from app.models import *
 from splat.complexity.idea_density import *
 from splat.complexity import *
 
+import app.queryStrings as qs
+
 #@timeout_decorator.timeout(30)
 def get_syntactic_complexity(treeparse):
     treeparse = [treeparse]
@@ -99,13 +101,11 @@ class Command(BaseCommand):
         condition = options['condition']
         begin = dt.now()
         try:
-            sents = []
+            sents = qs.query_all('sentence', ids=False)
             if condition == 'all':
-                sents = Sentence.objects.exclude(text='').iterator()
-            elif condition == 'empty': # pragma: no cover
-                sents = Sentence.objects.filter(metrics__complexity={}).exclude(text='').iterator()
-            elif condition == 'failed': # pragma: no cover
-                sents = Sentence.objects.filter(metrics__complexity={}).exclude(text='').iterator()
+                sents = sents.exclude(text='').iterator()
+            elif condition == 'empty' or condition == 'failed': # pragma: no cover
+                sents = sents.filter(metrics__complexity={}).exclude(text='').iterator()
 
             connections.close_all()
             tagger = taggers.ComplexityTagger(settings, processes, sents)

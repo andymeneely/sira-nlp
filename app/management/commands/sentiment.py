@@ -19,6 +19,8 @@ from app.lib import helpers, logger, taggers
 from app.lib.nlp.complexity import *
 from app.models import *
 
+import app.queryStrings as qs
+
 #@Field.register_lookup
 class AnyLookup(lookups.In):
     def get_rhs_op(self, connection, rhs):
@@ -53,13 +55,11 @@ class Command(BaseCommand):
         condition = options['condition']
         begin = dt.now()
         try:
-            sents = []
+            sents = qs.query_all('sentence', ids=False)
             if condition == 'all':
-                sents = Sentence.objects.exclude(text='').iterator()
-            elif condition == 'empty':
-                sents = Sentence.objects.filter(metrics__sentiment={}).exclude(text='').iterator()
-            elif condition == 'failed':
-                sents = Sentence.objects.filter(metrics__sentiment={}).exclude(text='').iterator()
+                sents = sents.exclude(text='').iterator()
+            elif condition == 'empty' or condition == 'failed':
+                sents = sents.filter(metrics__sentiment={}).exclude(text='').iterator()
 
             connections.close_all()
             tagger = taggers.SentimentTagger(settings, processes, sents)

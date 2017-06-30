@@ -14,33 +14,6 @@ from app.lib.nlp import analyzers
 from app.lib.utils import parallel
 from app.models import *
 
-from app.lib.external import (IMPLICATURE_CLASSIFIER_PATH,
-                              IMPLICATURE_VECTORIZER_PATH)
-from app.lib.external.squinky_corpus.word import _Word
-
-with open(IMPLICATURE_CLASSIFIER_PATH, 'rb') as f:
-    CLS = _pickle.load(f)
-with open(IMPLICATURE_VECTORIZER_PATH, 'rb') as f:
-    VEC = _pickle.load(f)
-
-
-def _score(sent, tokens): # pragma: no cover
-    words = list()
-    for i, tok in enumerate(list(tokens)):
-        prev = tokens[i-1]['token'] if i-1 >= 0 else None
-        next = tokens[i+1]['token'] if i+1 < len(tokens) else None
-        w = _Word(tok['token'], tok['pos'], tok['position'], prev, next,
-                  tok['chunk'])
-        words.append(w)
-
-    feats = dict()
-    for word in words:
-        feats.update(word.get_features())
-    fv = VEC.transform(feats)
-    probs = CLS.predict_proba(fv)
-
-    return {"implicative": probs[0][1], "unimplicative": probs[0][0]}
-
 
 def aggregate(oqueue, cqueue, num_doers):
     count, done = 0, 0
@@ -63,12 +36,19 @@ def do(iqueue, cqueue): # pragma: no cover
             cqueue.put(parallel.DD)
             break
 
-        (sent, tokens) = item
+        (sent, tokens, metrics) = item
         with transaction.atomic():
             try:
-                results = _score(sent, tokens)
-                print(results)
-                sent.metrics['implicature'] = results
+                if 'formality' in metrics:
+                    results = analyzers.FormalityAnalyzer(sent.text, tokens).analyze()
+                    sent.metrics['formality'] = results
+                if 'informativeness' in metrics:
+                    results = analyzers.InformativenessAnalyzer(sent.text, tokens).analyze()
+                    sent.metrics['informativeness'] = results
+                if 'implicature' in metrics:
+                    results = analyzers.ImplicatureAnalyzer(sent.text, tokens).analyze()
+                    sent.metrics['implicature'] = results
+
                 sent.save()
             except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
@@ -79,19 +59,21 @@ def do(iqueue, cqueue): # pragma: no cover
         cqueue.put((1, sent.id))
 
 
-def stream(sentenceObjects, iqueue, num_doers):
+def stream(sentenceObjects, iqueue, num_doers, metrics):
     for sentence in sentenceObjects:
+        # TODO: Move query to queryStrings
         tokens = Token.objects.filter(sentence_id__exact=sentence.id).values()
-        iqueue.put((sentence, tokens))
+        iqueue.put((sentence, tokens, metrics))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)
 
 
-class ImplicatureTagger(taggers.Tagger):
-    def __init__(self, settings, num_processes, sentenceObjects):
-        super(ImplicatureTagger, self).__init__(settings, num_processes)
+class MetricsTagger(taggers.Tagger):
+    def __init__(self, settings, num_processes, sentenceObjects, metrics):
+        super(MetricsTagger, self).__init__(settings, num_processes)
         self.sentenceObjects = sentenceObjects
+        self.metrics = metrics
 
     def tag(self):
         iqueue = parallel.manager.Queue(self.settings.QUEUE_SIZE)
@@ -105,7 +87,10 @@ class ImplicatureTagger(taggers.Tagger):
     def _start_streaming(self, iqueue):
         process = multiprocessing.Process(
                 target=stream,
-                args=(self.sentenceObjects, iqueue, self.num_processes)
+                args=(
+                    self.sentenceObjects, iqueue, self.num_processes,
+                    self.metrics
+                )
             )
         process.start()
 

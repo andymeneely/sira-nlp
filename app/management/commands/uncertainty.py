@@ -16,6 +16,7 @@ from app.lib.helpers import *
 from app.lib.logger import *
 from app.models import *
 
+import app.queryStrings as qs
 
 class Command(BaseCommand):
     """
@@ -61,9 +62,11 @@ class Command(BaseCommand):
         year = options['year']
         begin = dt.now()
         try:
-            sentences = Sentence.objects.all()
+            sentences = []
             if year is not None:
-                sentences = sentences.filter(review__created__year=year)
+                sentences = qs.query_by_year(year, 'sentence', ids=False)
+            else:
+                sentences = qs.query_all('sentence', ids=False)
             sentences = sentences.iterator()
 
             connections.close_all()

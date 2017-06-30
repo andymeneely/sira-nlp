@@ -12,6 +12,19 @@ from django.db.models.functions import Cast
 from itertools import chain
 
 from app.models import *
+from app.lib.logger import *
+
+OBJECTS = {
+        'review': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+        'patchset': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+        'patch': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+        'comment': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+        'message': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+        'sentence': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+        'token': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+        'bug': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+        'vulnerability': {'all': [], 'fixed': [], 'missed': [], 'neutral': []}
+    }
 
 ALL_RIDS, FIXED_RIDS, MISSED_RIDS, NEUTRAL_RIDS, NM_RIDS, NF_RIDS, \
     FM_RIDS = ([],) * 7
@@ -19,6 +32,115 @@ ALL_MIDS, FIXED_MIDS, MISSED_MIDS, NEUTRAL_MIDS, NM_MIDS, NF_MIDS, \
     FM_MIDS = ([],) * 7
 ALL_SIDS, FIXED_SIDS, MISSED_SIDS, NEUTRAL_SIDS, NM_SIDS, NF_SIDS, \
     FM_SIDS = ([],) * 7
+
+TABLES = ['review', 'message', 'comment', 'patch', 'patchset', 'sentence',
+          'token', 'bug', 'vulnerability']
+
+def clear_objects():
+    global OBJECTS
+    OBJECTS = {
+            'review': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+            'patchset': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+            'patch': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+            'comment': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+            'message': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+            'sentence': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+            'token': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+            'bug': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
+            'vulnerability': {'all': [], 'fixed': [], 'missed': [], 'neutral': []}
+        }
+
+################################################################################
+def query_by_year(year, table, ids=True):
+    assert year in [2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016]
+
+    results = None
+    if table == 'review':
+        results = Review.objects.filter(created__year=year)
+    elif table == 'message':
+        results = Message.objects.filter(posted__year=year)
+    elif table == 'patch':
+        results = Patch.objects.filter(patchset__created__year=year)
+    elif table == 'patchset':
+        results = PatchSet.objects.filter(created__year=year)
+    elif table == 'comment':
+        results = Comment.objects.filter(patch__patchset__created__year=year)
+    elif table == 'sentence':
+        q1 = Q(comment__patch__patchset__review__created__year=year)
+        q2 = Q(message__review__created__year=year)
+        results = Sentence.objects.filter(q1 | q2)
+    elif table == 'token':
+        q1 = Q(sentence__comment__patch__patchset__review__created__year=year)
+        q2 = Q(sentence__message__review__created__year=year)
+        results = Token.objects.filter(q1 | q2)
+    elif table in ['bug', 'vulnerability']:
+        pass
+    else:
+        error("Table '" + str(table) + "' does not exist.")
+
+    if not ids or results is None:
+        return results
+    else:
+        return results.values_list('id', flat=True)
+
+################################################################################
+def query_all(table, ids=True):
+    global OBJECTS
+    results = None
+    if table == 'review':
+        if len(OBJECTS[table]['all']) != 0:
+            results = OBJECTS[table]['all']
+        else:
+            results = Review.objects.all()
+    elif table == 'patchset':
+        if len(OBJECTS[table]['all']) != 0:
+            results = OBJECTS[table]['all']
+        else:
+            results = PatchSet.objects.all()
+    elif table == 'patch':
+        if len(OBJECTS[table]['all']) != 0:
+            results = OBJECTS[table]['all']
+        else:
+            results = Patch.objects.all()
+    elif table == 'comment':
+        if len(OBJECTS[table]['all']) != 0:
+            results = OBJECTS[table]['all']
+        else:
+            results =  Comment.objects.all()
+    elif table == 'message':
+        if len(OBJECTS[table]['all']) != 0:
+            results = OBJECTS[table]['all']
+        else:
+            results = Message.objects.all()
+    elif table == 'sentence':
+        if len(OBJECTS[table]['all']) != 0:
+            results = OBJECTS[table]['all']
+        else:
+            results = Sentence.objects.all()
+    elif table == 'token':
+        if len(OBJECTS[table]['all']) != 0:
+            results = OBJECTS[table]['all']
+        else:
+            results = Token.objects.all()
+    elif table == 'bug':
+        if len(OBJECTS[table]['all']) != 0:
+            results = OBJECTS[table]['all']
+        else:
+            results = Bug.objects.all()
+    elif table == 'vulnerability':
+        if len(OBJECTS[table]['all']) != 0:
+            results = OBJECTS[table]['all']
+        else:
+            results = Vulnerability.objects.all()
+    else:
+        error("Table '" + str(table) + "' does not exist.")
+        return results
+
+    OBJECTS[table]['all'] = results
+    if not ids or results is None:
+        return results
+    else:
+        return results.values_list('id', flat=True)
 
 #### TF-IDF ####################################################################
 def query_TF_dict(review_id, key='lemma'):

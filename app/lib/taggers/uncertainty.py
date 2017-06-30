@@ -60,6 +60,7 @@ def do(iqueue, cqueue):  # pragma: no cover
 
 def stream(sentenceObjects, iqueue, num_doers, root):
     for sentence in sentenceObjects:
+        # TODO: Move query to queryStrings
         tokens = Token.objects.filter(sentence_id__exact=sentence.id)
         iqueue.put((sentence, tokens, root))
 

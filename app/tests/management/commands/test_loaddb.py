@@ -172,14 +172,64 @@ class LoaddbTestCase(TransactionTestCase):
             )
         self.assertCountEqual(expected, actual)
 
+        # Comments
+        expected = 32
+        actual = list(
+                Comment.objects.filter(is_useful=True)
+                .values_list('text', flat=True)
+            )
+        self.assertEqual(expected, len(actual))
+
+        expected = [
+                'We usually put a link on top of the IDL files for reference.',
+                'why the cast? why not \n\nif (applyingInPlace) {\n    *inv = s'
+                    'torage;\n}\n',
+                "style: we don't use { } when not needed usually.",
+                'style: maybe no { } ?', 'nit: |availabilityUrls|',
+                'comment on the point of this',
+                'Unused.',
+                'style: missing semicolon',
+                'This was used for autostart modules.',
+                'This is not proper English :-)',
+                "Nit: Just combine this conditional with the one below.  You ca"
+                    "n probably nuke the comment on that since it's just restat"
+                    "ing the code, rather than trying to expand it.",
+                'Nit: No blank line here', 'nit: spacing is off.',
+                'compatibility_script',
+                'compatibility_script',
+                'Please change these to is_worker and is_v8_only.',
+                'Revert this one.',
+                'v8_only_frontend',
+                'Please change these to is_worker and is_v8_only.',
+                'Can we keep the fast loop that combines in 32-bit chunks at a '
+                    'time? Then we need to deal with the remaining 1, 2 or 3 by'
+                    'tes at the end. We can then do those one byte at a time?',
+                'Same comments about length computations.',
+                'nit:\n- skia tries to use [] for parameters that are many...\n'
+                    '- document scale as 1/determinant ?\n- 1 dst and lots of s'
+                    'rc params --> (dst, src0, src1, src2)\n\n... ComputeInv(Sk'
+                    'Scaar dst[], const SkScalar src[], SkScalar invDet, bool i'
+                    'sPersp);',
+                'Update the version here.',
+                '\nIt would be better to use:\n\n  if (!isCurrentlyDisplayedInF'
+                    'rame())\n    return nullptr;\n\n',
+                '\nCan you add a comment on this?\n',
+                'I think we can share the implementation of length and just hav'
+                    'e a StringLength native? Lenght is from BaseArray I think,'
+                    ' so it should be fine to just assert that the argument is '
+                    'a OneByteString or a TwoByteString and then return BaseArr'
+                    'ay::cast(object)->length()?',
+                'o -> object',
+                'Is it actually a cancelAutocomplete?',
+                'Can we turn this into a function? Or even a Widget?',
+                'Delegate being an option sounds strange. Pass it explicitly.',
+                'Nit: insert newline above',
+                'We usually call factory methods createSomething.'
+            ]
+        self.assertListEqual(sorted(expected), sorted(actual))
+
         # Messages
         expected = [
-                (
-                    to_datetime('2015-07-30 10:32:31.936180'),
-                    'frederic.jacob.78@gmail.com',
-                    'frederic.jacob.78@gmail.com changed reviewers:\n+ dgozman'
-                    '@chromium.org, pkasting@google.com'
-                ),
                 (
                     to_datetime('2015-07-30 10:40:34.029270'),
                     'frederic.jacob.78@gmail.com',
@@ -196,23 +246,14 @@ class LoaddbTestCase(TransactionTestCase):
                     'd| instead in kiosk mode?'
                 ),
                 (
-                    to_datetime('2015-07-30 18:24:22.024440'),
-                    'pkasting@chromium.org',
-                    'pkasting@chromium.org changed reviewers:\n+ pkasting@chro'
-                    'mium.org'
-                ),
-                (
                     to_datetime('2015-07-30 18:24:22.393890'),
                     'pkasting@chromium.org',
-                    'LGTM\n\nNit: No blank line here\n\nNit: Just combine this'
-                    ' conditional with the one below.  You can probably nuke t'
-                    'he comment on that since it\'s just restating the code, r'
-                    'ather than trying to expand it.'
+                    'LGTM'
                 ),
                 (
                     to_datetime('2015-07-30 23:51:16.478520'),
                     'frederic.jacob.78@gmail.com',
-                    '\nI looked all over the code and I did not saw any place '
+                    '\n\n\nI looked all over the code and I did not saw any place '
                     'that looked good to set\npolicies. I though that it will '
                     'fit in chrome/browser/prefs, but all the policies\nare a '
                     'copy of input flags. Don\'t you think that it could make '
@@ -234,13 +275,7 @@ class LoaddbTestCase(TransactionTestCase):
                 (
                     to_datetime('2015-07-31 01:06:51.093060'),
                     'frederic.jacob.78@gmail.com',
-                    'I removed the comment and merged the two conditions.\n\nD'
-                    'one.\n\nDone.'
-                ),
-                (
-                    to_datetime('2015-07-31 01:42:56.995800'),
-                    'pkasting@chromium.org',
-                    'The CQ bit was checked by pkasting@chromium.org'
+                    'I removed the comment and merged the two conditions.'
                 ),
                 (
                     to_datetime('2015-07-31 01:42:57.534600'),
@@ -257,11 +292,6 @@ class LoaddbTestCase(TransactionTestCase):
                     to_datetime('2015-07-31 13:46:30.478330'),
                     'dgozman@chromium.org',
                     'lgtm'
-                ),
-                (
-                    to_datetime('2015-07-31 16:30:48.099450'),
-                    'pkasting@chromium.org',
-                    'The CQ bit was checked by pkasting@chromium.org'
                 )
             ]
 
@@ -269,40 +299,28 @@ class LoaddbTestCase(TransactionTestCase):
                 Message.objects.filter(review_id=1259853004)
                 .values_list('posted', 'sender', 'text')
             )
-        self.assertCountEqual(expected, actual, msg='Data: Message')
+        self.assertListEqual(sorted(expected), sorted(actual), msg='Data: Message')
 
         # Tokens
         expected = {
-                'frederic.jacob.78@gmail.com changed reviewers:': [
-                    (
-                        1, 'frederic.jacob.78', 'frederic.jacob.78',
-                        'frederic.jacob.78', 'NN', 'B-NP'
-                    ),
-                    (2, '@', '@', '@', 'NNP', 'I-NP'),
-                    (3, 'gmail.com', 'gmail.com', 'gmail.com', 'NN', 'I-NP'),
-                    (4, 'changed', 'chang', 'change', 'VBD', 'B-VP'),
-                    (5, 'reviewers', 'review', 'reviewer', 'NNS', 'B-NP'),
-                    (6, ':', ':', ':', ':', 'O')
-                ],
-                '+ dgozman@chromium.org, pkasting@google.com': [
-                    (1, '+', '+', '+', 'JJ', 'B-NP'),
-                    (2, 'dgozman', 'dgozman', 'dgozman', 'NN', 'I-NP'),
-                    (3, '@', '@', '@', 'NNP', 'I-NP'),
-                    (
-                        4, 'chromium.org', 'chromium.org', 'chromium.org',
-                        'NN', 'I-NP'
-                    ),
-                    (5, ',', ',', ',', ',', 'O'),
-                    (6, 'pkasting', 'pkast', 'pkasting', 'VBG', 'O'),
-                    (7, '@', '@', '@', 'CD', 'B-NP'),
-                    (8, 'google.com', 'google.com', 'google.com', 'NN', 'I-NP')
+                'I removed the comment and merged the two conditions.': [
+                    (1, 'I', 'i', 'i', 'PRP', 'B-NP'),
+                    (2, 'removed', 'remov', 'remove', 'VBD', 'B-VP'),
+                    (3, 'the', 'the', 'the', 'DT', 'B-NP'),
+                    (4, 'comment', 'comment', 'comment', 'NN', 'I-NP'),
+                    (5, 'and', 'and', 'and', 'CC', 'O'),
+                    (6, 'merged', 'merg', 'merge', 'VBD', 'B-VP'),
+                    (7, 'the', 'the', 'the', 'DT', 'B-NP'),
+                    (8, 'two', 'two', 'two', 'CD', 'I-NP'),
+                    (9, 'conditions', 'condit', 'condition', 'NNS', 'I-NP'),
+                    (10, '.', '.', '.', '.', 'O')
                 ]
             }
 
         actual = dict()
         sentences = Sentence.objects.filter(
                 message__review_id=1259853004,
-                message__posted='2015-07-30 10:32:31.936180'
+                message__posted='2015-07-31 01:06:51.093060'
             )
         for sentence in sentences:
             actual[sentence.text] = list(
