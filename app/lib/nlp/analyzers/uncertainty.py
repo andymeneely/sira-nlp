@@ -11,6 +11,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 from json import JSONDecodeError
 
+from app.lib.helpers import JSON_NULL
 from app.lib.nlp import analyzers
 
 from uncertainty.classifier import Classifier

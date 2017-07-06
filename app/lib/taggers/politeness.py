@@ -43,7 +43,7 @@ def do(iqueue, cqueue): # pragma: no cover
                 sent.save()
             except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
-                sys.stderr.write('  Sentence  {}\n'.format(sentence.id))
+                sys.stderr.write('  Sentence  {}\n'.format(sent.id))
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 

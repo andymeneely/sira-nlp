@@ -8,6 +8,7 @@ import requests
 
 from requests.exceptions import RequestException
 
+from app.lib.helpers import JSON_NULL
 from app.lib.nlp import analyzers
 
 HEADERS = {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'}
@@ -16,7 +17,8 @@ PARAMS = {
         "{'annotators': 'sentiment', 'ssplit.isOneSentence': 'true'}"
     }
 
-DEFAULT_SENTIMENT = {'vpos': 0, 'pos': 0, 'neut': 0, 'neg': 0, 'vneg': 0}
+DEFAULT_SENTIMENT = {'vpos': JSON_NULL, 'pos': JSON_NULL, 'neut': JSON_NULL,
+                     'neg': JSON_NULL, 'vneg': JSON_NULL}
 CORENLP_MAP = {'0': 'vneg', '1': 'neg', '2': 'neut', '3': 'pos', '4': 'vpos'}
 
 session = requests.Session()
@@ -42,13 +44,21 @@ class SentimentAnalyzer(analyzers.Analyzer):
                 )
             response.raise_for_status()
             for sentence in response.json()['sentences']:
-                sentiment[CORENLP_MAP[sentence['sentimentValue']]] += 1
+                key = CORENLP_MAP[sentence['sentimentValue']]
+                if sentiment[key] == JSON_NULL:
+                    sentiment[key] = 1
+                else:
+                    sentiment[key] += 1
         except (decoder.JSONDecodeError, RequestException,
                 scanner.JSONDecodeError) as error:  # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
             traceback.print_exception(extype, exvalue, extrace)
-            return sentiment
 
+        types = [str(type(v)) for v in sentiment.values()]
+        if "<class 'int'>" in types:
+            for k, v in sentiment.copy().items():
+                if v == JSON_NULL:
+                    sentiment[k] = 0
         return sentiment

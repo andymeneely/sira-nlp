@@ -13,7 +13,7 @@ class PolitenessAnalyzerTestCase(TestCase):
         data1 = ''
         data2 = ''
 
-        expected = {'polite': 'EmptyText', 'impolite': 'EmptyText'}
+        expected = {'polite': 'null', 'impolite': 'null'}
         actual = analyzers.PolitenessAnalyzer(data1, data2).analyze()
         self.assertDictEqual(expected, actual)
 

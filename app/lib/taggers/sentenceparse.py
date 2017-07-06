@@ -75,8 +75,10 @@ def do(iqueue, cqueue): # pragma: no cover
                 resp = analyzers.SentenceParseAnalyzer(sent_text).analyze()
                 parse, depparse = [], []
                 # If the SentenceParseAnalyzer failed to parse the sentence
-                if resp['deps'] == 'X' or resp['trees'] == 'X':
-                    result['depparse'], result['treeparse'] = 'X', 'X'
+                if resp['deps'] == helpers.JSON_NULL \
+                    or resp['trees'] == helpers.JSON_NULL:
+                    result['depparse'] = helpers.JSON_NULL
+                    result['treeparse'] = helpers.JSON_NULL
                 else:
                     for dep in resp['deps']:
                         depparse.append(clean_depparse(dep))

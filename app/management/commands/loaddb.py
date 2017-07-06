@@ -71,11 +71,11 @@ class Command(BaseCommand):
             loader = loaders.SentenceCommentLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} sentences loaded'.format(count))
-            connections.close_all()  # Hack
+            #connections.close_all()  # Hack
 
-            tagger = taggers.UsefulCommentTagger(settings, processes, ids)
-            count = tagger.tag()
-            info('  {:,} comments were useful'.format(count))
+            #tagger = taggers.UsefulCommentTagger(settings, processes, ids)
+            #count = tagger.tag()
+            #info('  {:,} comments were useful'.format(count))
 
             # Messages
             connections.close_all()  # Hack

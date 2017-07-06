@@ -35,15 +35,21 @@ def do(iqueue, cqueue): # pragma: no cover
         count = 0
         with transaction.atomic():
             try:
-                results = analyzers.ComplexityAnalyzer(sent.text, sent.parses['treeparse']).analyze()
+                if sent.parses['treeparse'] != 'null':
+                    results = analyzers.ComplexityAnalyzer(sent.text, sent.parses['treeparse']).analyze()
 
-                sent.metrics['complexity'] = results
-                sent.save()
+                    sent.metrics['complexity'] = results
+                    sent.save()
+                else:
+                    results = {'yngve': 'null', 'frazier': 'null',
+                               'pdensity': 'null', 'cdensity': 'null'}
+                    sent.metrics['complexity'] = results
+                    sent.save()
 
                 count += 1
             except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
-                sys.stderr.write('  Review  {}\n'.format(review_id))
+                sys.stderr.write('  Sentence:  {}\n'.format(sent.id))
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 

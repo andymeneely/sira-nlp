@@ -8,10 +8,12 @@ import requests
 
 from requests.exceptions import RequestException
 
+from app.lib.helpers import JSON_NULL
 from app.lib.nlp import analyzers
 from app.management.commands import complexity as comp
 
-DEFAULT_COMPLEXITY = {'yngve': 0, 'frazier': 0, 'pdensity': 0, 'cdensity': 0}
+DEFAULT_COMPLEXITY = {'yngve': JSON_NULL, 'frazier': JSON_NULL,
+                      'pdensity': JSON_NULL, 'cdensity': JSON_NULL}
 
 '''
 ################################################################################
@@ -40,10 +42,11 @@ class ComplexityAnalyzer(analyzers.Analyzer):
     def analyze(self):
         complexity = DEFAULT_COMPLEXITY.copy()
         if self.text.strip() == '':
-            return complexity
+            pass
 
         try:
-            complexity = comp.get_syntactic_complexity(self.treeparse)
+            if self.treeparse not in ["", 'null']:
+                complexity = comp.get_syntactic_complexity(self.treeparse)
         except Exception as error: # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))

@@ -10,6 +10,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 from json import JSONDecodeError
 
+from app.lib.helpers import JSON_NULL
 from app.lib.nlp import analyzers
 
 from app.lib.external import (IMPLICATURE_CLASSIFIER_PATH,
@@ -22,7 +23,7 @@ with open(IMPLICATURE_CLASSIFIER_PATH, 'rb') as f:
 with open(IMPLICATURE_VECTORIZER_PATH, 'rb') as f:
     VEC = _pickle.load(f)
 
-DEFAULT_IMPLICATURE = {'implicative': 0, 'unimplicative': 0}
+DEFAULT_IMPLICATURE = {'implicative': JSON_NULL, 'unimplicative': JSON_NULL}
 
 
 class ImplicatureAnalyzer(analyzers.Analyzer):

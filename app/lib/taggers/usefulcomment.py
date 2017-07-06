@@ -45,6 +45,7 @@ def do(iqueue, cqueue): # pragma: no cover
         cnt = 0
         with transaction.atomic():
             try:
+                previous_comments
                 for line in lines:
                     previous = None
                     for comment in lines[line]:

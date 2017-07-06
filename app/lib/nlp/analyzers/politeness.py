@@ -9,11 +9,12 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 from json import JSONDecodeError
 
+from app.lib.helpers import JSON_NULL
 from app.lib.nlp import analyzers
 
 from politeness.classifier import Classifier
 
-DEFAULT_POLITENESS = {'polite': '0', 'impolite': '0'}
+DEFAULT_POLITENESS = {'polite': JSON_NULL, 'impolite': JSON_NULL}
 
 class PolitenessAnalyzer(analyzers.Analyzer):
     def __init__(self, text, depparses):
@@ -24,7 +25,7 @@ class PolitenessAnalyzer(analyzers.Analyzer):
     def analyze(self):
         politeness = DEFAULT_POLITENESS.copy()
         if self.text.strip() == '':
-            return {'polite': 'EmptyText', 'impolite': 'EmptyText'}
+            return politeness
 
         try:
             data = {'sentence': self.text, 'parses': [self.depparses]}
@@ -36,6 +37,5 @@ class PolitenessAnalyzer(analyzers.Analyzer):
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
             traceback.print_exception(extype, exvalue, extrace)
-            politeness = {'polite': str(extype), 'impolite': str(extype)}
 
         return politeness

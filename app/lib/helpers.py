@@ -46,6 +46,7 @@ BUG_ID_PATTERNS = [
     'chromium:',
     '.'
 ]
+JSON_NULL = json.dumps(None)
 
 from app.lib import patch
 

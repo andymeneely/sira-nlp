@@ -33,36 +33,36 @@ def get_syntactic_complexity(treeparse):
     try:
         yngve = get_mean_yngve(treeparse)
     except ZeroDivisionError: # pragma: no cover
-        yngve = 'ZeroDivisionError'
+        yngve = 'null'
     except JSONDecodeError: # pragma: no cover
-        yngve = 'JSONDecodeError'
+        yngve = 'null'
 
     try:
         frazier = get_mean_frazier(treeparse)
     except ZeroDivisionError: # pragma: no cover
-        frazier = 'ZeroDivisionError'
+        frazier = 'null'
     except JSONDecodeError: # pragma: no cover
-        frazier = 'JSONDecodeError'
+        frazier = 'null'
 
     try:
         # calc_idea() returns the tuple, (mean, min, max) pdensity.
         result = calc_idea(treeparse)
         pdensity = result[0]
     except TypeError: # pragma: no cover
-        pdensity = 'InvalidTreeString'
+        pdensity = 'null'
     except Exception: # pragma: no cover
         extype, _, _ = sys.exc_info()
-        pdensity = str(extype)
+        pdensity = 'null'
 
     try:
         # calc_content() returns the tuple, (mean, min, max) cdensity.
         result = calc_content_density(treeparse)
         cdensity = result[0]
     except TypeError: # pragma: no cover
-        cdensity = 'InvalidPOSTag'
+        cdensity = 'null'
     except Exception: # pragma: no cover
         extype, _, _ = sys.exc_info()
-        cdensity = str(extype)
+        cdensity = 'null'
 
     return {'yngve': yngve, 'frazier': frazier, 'pdensity': pdensity,
             'cdensity': cdensity}

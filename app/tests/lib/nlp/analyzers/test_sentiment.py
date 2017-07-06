@@ -10,7 +10,8 @@ class SentimentAnalyzerTestCase(TestCase):
         pass
 
     def test_analyze(self):
-        expected = {'vpos': 0, 'pos': 0, 'neut': 0, 'neg': 0, 'vneg': 0}
+        expected = {'vpos': 'null', 'pos': 'null', 'neut': 'null',
+                    'neg': 'null', 'vneg': 'null'}
         actual = analyzers.SentimentAnalyzer('').analyze()
         self.assertEqual(expected, actual)
 

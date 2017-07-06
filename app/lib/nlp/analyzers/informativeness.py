@@ -10,6 +10,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 from json import JSONDecodeError
 
+from app.lib.helpers import JSON_NULL
 from app.lib.nlp import analyzers
 
 from app.lib.external import (INFORMATIVENESS_CLASSIFIER_PATH,
@@ -22,7 +23,7 @@ with open(INFORMATIVENESS_CLASSIFIER_PATH, 'rb') as f:
 with open(INFORMATIVENESS_VECTORIZER_PATH, 'rb') as f:
     VEC = _pickle.load(f)
 
-DEFAULT_INFORMATIVENESS = {'informative': 0, 'uninformative': 0}
+DEFAULT_INFORMATIVENESS = {'informative': JSON_NULL, 'uninformative': JSON_NULL}
 
 
 class InformativenessAnalyzer(analyzers.Analyzer):

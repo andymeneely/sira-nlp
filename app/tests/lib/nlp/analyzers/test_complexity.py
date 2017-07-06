@@ -14,7 +14,8 @@ class ComplexityAnalyzerTestCase(TestCase):
         data1 = ''
         data2 = ''
 
-        expected = {'yngve': 0, 'frazier': 0, 'pdensity': 0, 'cdensity': 0}
+        expected = {'yngve': 'null', 'frazier': 'null', 'pdensity': 'null',
+                    'cdensity': 'null'}
         actual = analyzers.ComplexityAnalyzer(data1, data2).analyze()
         self.assertDictEqual(expected, actual)
 

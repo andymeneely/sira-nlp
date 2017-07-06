@@ -9,6 +9,7 @@ import requests
 
 from requests.exceptions import RequestException
 
+from app.lib.helpers import JSON_NULL
 from app.lib.nlp import analyzers
 
 HEADERS = {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'}
@@ -45,6 +46,5 @@ class SentenceParseAnalyzer(analyzers.Analyzer):
             sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
             extype, exvalue, extrace = sys.exc_info()
             traceback.print_exception(extype, exvalue, extrace)
-            parse = {'deps': 'X', 'trees': 'X'}
 
         return parse

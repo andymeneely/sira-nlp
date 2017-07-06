@@ -10,6 +10,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 from json import JSONDecodeError
 
+from app.lib.helpers import JSON_NULL
 from app.lib.nlp import analyzers
 
 from app.lib.external import (FORMALITY_CLASSIFIER_PATH,
@@ -22,7 +23,7 @@ with open(FORMALITY_CLASSIFIER_PATH, 'rb') as f:
 with open(FORMALITY_VECTORIZER_PATH, 'rb') as f:
     VEC = _pickle.load(f)
 
-DEFAULT_FORMALITY = {'formal': 0, 'informal': 0}
+DEFAULT_FORMALITY = {'formal': JSON_NULL, 'informal': JSON_NULL}
 
 
 class FormalityAnalyzer(analyzers.Analyzer):
