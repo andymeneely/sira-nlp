@@ -92,6 +92,12 @@ class Command(BaseCommand):
                 choices=['all', 'empty', 'failed'], help="The sentences to "
                 "repopulate parses for. Defualt is 'all'."
             )
+        parser.add_argument(
+                '--year', type=int, default=0, dest='year', choices=[2008,
+                2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
+                help='If specified, complexity metrics will only be calculated'
+                ' for sentences from this year.'
+            )
 
     def handle(self, *args, **options): # pragma: no cover
         """
@@ -99,9 +105,14 @@ class Command(BaseCommand):
         """
         processes = options['processes']
         condition = options['condition']
+        year = options['year']
         begin = dt.now()
         try:
-            sents = qs.query_all('sentence', ids=False)
+            if year == 0:
+                sents = qs.query_all('sentence', ids=False)
+            else:
+                sents = qs.query_by_year(year, 'sentence', ids=False)
+
             if condition == 'all':
                 sents = sents.exclude(text='').iterator()
             elif condition == 'empty' or condition == 'failed': # pragma: no cover

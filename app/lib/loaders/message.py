@@ -58,6 +58,7 @@ def do(iqueue, cqueue): # pragma: no cover
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 
+        #print("MESSAGE: " + str(objects[-1].id))
         cqueue.put(len(objects))
 
 

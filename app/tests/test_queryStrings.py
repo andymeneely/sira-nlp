@@ -106,8 +106,8 @@ class NewQueryStringsTestCase(testcases.SpecialTestCase):
                     },
                 2016: {
                         'review': 22, 'patchset': 64, 'patch': 1300,
-                        'comment': 89, 'message': 108, 'sentence': 380,
-                        'token': 4934, 'bug': None, 'vulnerability': None
+                        'comment': 89, 'message': 109, 'sentence': 381,
+                        'token': 4949, 'bug': None, 'vulnerability': None
                     }
             }
         for year in expected.keys():
@@ -130,7 +130,7 @@ class NewQueryStringsTestCase(testcases.SpecialTestCase):
         # Sub-Test 3 - query_all(table, ids=True)
         expected = {
                 'review': 42, 'patchset': 128, 'patch': 2502, 'comment': 133,
-                'message': 198, 'sentence': 631, 'token': 7240, 'bug': 38,
+                'message': 199, 'sentence': 632, 'token': 7255, 'bug': 38,
                 'vulnerability': 8, 'invalidtable': None
             }
         for table in expected.keys():

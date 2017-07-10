@@ -19,4 +19,11 @@ class Stemmer(object):
         Given a list of tokens, return a list of stems associated with those
         tokens.
         """
-        return [self.stemmer.stem(token).lower() for token in self.tokens]
+        #print(self.tokens)
+        stems = []
+        for token in self.tokens:
+            #print("TOK: " + str(self.tokens))
+            stems.append(self.stemmer.stem(token).lower())
+            #print("STM: " + str(stems))
+#        return [self.stemmer.stem(token).lower() for token in self.tokens]
+        return stems

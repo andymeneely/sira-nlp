@@ -19,11 +19,15 @@ DEFAULT_PARSE = {'deps': [], 'trees': []}
 
 class SentenceParseAnalyzer(analyzers.Analyzer):
 #    def __init__(self, text, url='http://overkill.main.edu.rit.edu:41194'):
-    def __init__(self, text, url='http://localhost:41194/'):
+#    def __init__(self, text, url='http://localhost:41194/'):
 #    def __init__(self, text, url='http://archeology.gccis.rit.edu:9000/'):
-#    def __init__(self, text, url='http://magnycours-02.main.ad.rit.edu:41194/'):
+    def __init__(self, text, url=None):
         super(SentenceParseAnalyzer, self).__init__(text)
-        self.url = url
+        #print(url)
+        if url is None:
+            self.url = 'http://localhost:41194/'
+        else:
+            self.url = url
 
     def analyze(self):
         parse = DEFAULT_PARSE.copy()

@@ -91,9 +91,10 @@ class Command(BaseCommand):
                 "repopulate parses for. Defualt is 'all'."
             )
         parser.add_argument(
-                '--stanford', default=False, action='store_true', help='If '
-                'specified, ignore --pop and append the dependency parses to '
-                'the end of each of the stanford politeness dataset sentences.'
+                '--year', type=int, dest='year', default=0, choices=[2008,
+                2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 0],
+                help='If specified, only sentences in the given year will be'
+                ' parsed.'
             )
 
     def handle(self, *args, **options): # pragma: no cover
@@ -103,20 +104,22 @@ class Command(BaseCommand):
         processes = options['processes']
         condition = options['condition']
         stanford = options['stanford']
+        year = options['year']
         begin = dt.now()
         try:
-            if stanford:
-                populate_dependencies()
-            else:
+            if year == 0:
                 sents = qs.query_all('sentence', ids=False)
-                if condition == 'all':
-                    sents = sents.exclude(text='').iterator()
-                elif condition == 'empty' or condition == 'failed':
-                    sents = sents.filter(parses={}).exclude(text='').iterator()
+            else:
+                sents = qs.query_by_year(year, 'sentence', ids=False)
 
-                connections.close_all()
-                tagger = taggers.SentenceParseTagger(settings, processes, sents)
-                tagger.tag()
+            if condition == 'all':
+                sents = sents.exclude(text='').iterator()
+            elif condition == 'empty' or condition == 'failed':
+                sents = sents.filter(parses={}).exclude(text='').iterator()
+
+            connections.close_all()
+            tagger = taggers.SentenceParseTagger(settings, processes, sents)
+            tagger.tag()
 
         except KeyboardInterrupt:
             warning('Attempting to abort.')

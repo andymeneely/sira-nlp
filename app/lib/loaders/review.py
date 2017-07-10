@@ -59,6 +59,7 @@ def do(iqueue, cqueue): # pragma: no cover
             )
         bug_ids = set(helpers.parse_bugids(item['description']))
 
+        #print("REVIEW: " + str(review.id))
         cqueue.put((review, bug_ids))
 
 

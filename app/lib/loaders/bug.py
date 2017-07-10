@@ -68,6 +68,7 @@ def do(iqueue, cqueue): # pragma: no cover
                     for cve in item['cve'].split(',')
                 ]
 
+        #print("BUG: " + str(bug.id))
         cqueue.put((bug, cves))
 
 

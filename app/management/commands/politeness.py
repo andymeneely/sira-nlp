@@ -42,6 +42,12 @@ class Command(BaseCommand):
                 help='The review IDs to repopulate complexity metrics for. '
                 "Defualt is 'all'."
             )
+        parser.add_argument(
+                '--year', type=int, default=0, dest='year', choices=[2008,
+                2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
+                help='If specified, only sentences from this year will be'
+                ' tagged with politeness.'
+            )
 
     def handle(self, *args, **options):
         """
@@ -49,10 +55,15 @@ class Command(BaseCommand):
         """
         processes = options['processes']
         population = options['population']
+        year = options['year']
         begin = dt.now()
         try:
-            sents = qs.query_all('sentence', ids=False).exclude(text='') \
-                      .iterator()
+            if year == 0:
+                sents = qs.query_all('sentence', ids=False).exclude(text='') \
+                          .iterator()
+            else:
+                sents = qs.query_by_year(year, 'sentence', ids=False).exclude(text='') \
+                          .iterator()
 
             connections.close_all()
             tagger = taggers.PolitenessTagger(settings, processes, sents)

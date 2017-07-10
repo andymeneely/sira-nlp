@@ -35,22 +35,33 @@ class Command(BaseCommand):
                     )
             )
 
+        parser.add_argument(
+                '--year', dest='year', type=int, default=0, choices=[2008,
+                2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
+                help='If specified, only the given year will be loaded.'
+            )
+
     def handle(self, *args, **options):
         """
 
         """
         processes = options['processes']
+        year = options['year']
         begin = dt.now()
         try:
             info('loaddb Command')
             info('  Years: {}'.format(settings.YEARS))
 
+            if year != 0:
+                settings.YEARS = [year]
+            
             loader = loaders.BugLoader(settings, processes)
             count = loader.load()
             info('  {:,} bugs loaded'.format(count))
             loader = loaders.VulnerabilityLoader(settings, processes)
             count = loader.load()
             info('  {:,} vulnerabilities loaded'.format(count))
+
             loader = loaders.ReviewLoader(settings, processes)
             count = loader.load()
             info('  {:,} reviews loaded'.format(count))
@@ -59,10 +70,13 @@ class Command(BaseCommand):
             count = tagger.tag()
             info('  {:,} reviews missed a vulnerability'.format(count))
 
-            ids = qs.query_all('review', True)
-            #ids = list(Review.objects.all().values_list('id', flat=True))
+            '''
+            if year != 0:
+                ids = qs.query_by_year(year, 'review', True)
+            else:
+                ids = qs.query_all('review', True)
             connections.close_all()  # Hack
-
+            
             # Comments
             loader = loaders.CommentLoader(settings, processes, ids)
             count = loader.load()
@@ -87,7 +101,7 @@ class Command(BaseCommand):
             count = loader.load()
             info('  {:,} sentences loaded'.format(count))
             connections.close_all()  # Hack
-
+            
             # Tokens
             loader = loaders.TokenLoader(settings, processes, ids)
             count = loader.load()
@@ -96,6 +110,7 @@ class Command(BaseCommand):
             with connection.cursor() as cursor:
                 cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_token'))
                 cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_lemma'))
+            '''
         except KeyboardInterrupt: # pragma: no cover
             warning('Attempting to abort.')
         finally:

@@ -3,6 +3,7 @@ import sys
 import traceback
 
 from django.db import Error, transaction
+from django.db.models import Q
 
 from app.lib import helpers, loaders
 from app.lib.nlp import summarizer
@@ -40,6 +41,7 @@ def do(iqueue, cqueue): # pragma: no cover
                             review=review, id=psid, created = ps['created']
                         )
                     patchset.save()
+                    #print(psid)
 
                     files = list()
                     for (path, p) in ps['files'].items():
@@ -49,25 +51,37 @@ def do(iqueue, cqueue): # pragma: no cover
                                 num_removed=p['num_removed']
                             )
                         patch.save()
+                        #print(patch.id)
 
                         files.append(path)
                         if 'messages' in p:
-                            for m in p['messages']:
+                            previous = list()
+                            for i, m in enumerate(p['messages']):
                                 comment = Comment(
                                         patch=patch, posted=m['date'],
                                         line=m['lineno'],
                                         author=m['author_email'],
                                         text=helpers.clean(m['text']),
-                                        by_reviewer=m['author_email']==author
+                                        by_reviewer=m['author_email']!=author
                                     )
+                                if comment.by_reviewer == False and \
+                                    "Done." in comment.text:
+                                    for prev in reversed(previous):
+                                        if prev.by_reviewer == True and \
+                                            prev.line == comment.line:
+                                            prev.is_useful = True
+                                            prev.save()
+                                            break
+                                previous.append(comment)
                                 comment.save()
                                 cnt += 1
+                                #print(comment.id)
                     if files:
                         patchset.files = files
                         patchset.save()
             except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
-                sys.stderr.write('  Review  {}\n'.format(review_id))
+                sys.stderr.write('  Review  {}\n'.format(review.id))
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 

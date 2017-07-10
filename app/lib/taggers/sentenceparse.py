@@ -22,6 +22,8 @@ from app.lib.nlp import analyzers, sentenizer
 from app.lib.utils import parallel
 from app.models import *
 
+
+
 def clean_depparse(dep):
     """
     Given a dependency dictionary, return a formatted string representation.
@@ -67,12 +69,12 @@ def do(iqueue, cqueue): # pragma: no cover
             cqueue.put(parallel.DD)
             break
 
-        (sent_id, sent_text) = item
+        (sent_id, sent_text, url) = item
         result = {}
         with transaction.atomic():
             try:
                 # Hand the sentence text off to the analyzer
-                resp = analyzers.SentenceParseAnalyzer(sent_text).analyze()
+                resp = analyzers.SentenceParseAnalyzer(sent_text, url).analyze()
                 parse, depparse = [], []
                 # If the SentenceParseAnalyzer failed to parse the sentence
                 if resp['deps'] == helpers.JSON_NULL \
@@ -94,8 +96,17 @@ def do(iqueue, cqueue): # pragma: no cover
         cqueue.put((1, sent_id, result))
 
 def stream(sentences, iqueue, num_doers):
+    c = 0
+    urls = [#"http://cluster-node-04.main.ad.rit.edu:41194/",
+            #"http://cluster-node-02.main.ad.rit.edu:41194/",
+            #"http://cluster-node-03.main.ad.rit.edu:41194/",
+            "http://localhost:41194/"]
     for sentence in sentences:
-        iqueue.put((sentence.id, sentence.text))
+        iqueue.put((sentence.id, sentence.text, urls[c]))
+        if c < len(urls)-1:
+            c += 1
+        else:
+           c = 0
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)

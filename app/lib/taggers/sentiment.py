@@ -31,10 +31,10 @@ def do(iqueue, cqueue): # pragma: no cover
             cqueue.put(parallel.DD)
             break
 
-        (sent) = item
+        (sent, url) = item
         with transaction.atomic():
             try:
-                results = analyzers.SentimentAnalyzer(sent.text).analyze()
+                results = analyzers.SentimentAnalyzer(sent.text, url).analyze()
 
                 sent.metrics['sentiment'] = results
                 sent.save()
@@ -48,8 +48,17 @@ def do(iqueue, cqueue): # pragma: no cover
 
 
 def stream(sentences, iqueue, num_doers):
+    c = 0
+    urls = [#"http://cluster-node-04.main.ad.rit.edu:41194/",
+            #"http://cluster-node-02.main.ad.rit.edu:41194/",
+            #"http://cluster-node-03.main.ad.rit.edu:41194/",
+            "http://localhost:41194/"]
     for sentence in sentences:
-        iqueue.put((sentence))
+        iqueue.put((sentence, urls[c]))
+        if c < len(urls)-1:
+            c += 1
+        else:
+           c = 0
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)
