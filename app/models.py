@@ -69,6 +69,7 @@ class Comment(models.Model):
 
     # Navigation Fields
     patch = models.ForeignKey('patch')
+    parent = models.ForeignKey('comment', null=True)
     sentences = models.ManyToManyField('Sentence')
 
     class Meta:

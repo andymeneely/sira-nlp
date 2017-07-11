@@ -1,4 +1,5 @@
 import multiprocessing
+import re
 import sys
 import traceback
 
@@ -9,6 +10,8 @@ from app.lib import taggers, logger
 from app.lib.nlp import analyzers
 from app.lib.utils import parallel
 from app.models import *
+
+PATTERN = re.compile(r'>\s([^\n]*)\n\n')
 
 def _get_aggregate(comments):
     aggregate = dict()
@@ -45,18 +48,12 @@ def do(iqueue, cqueue): # pragma: no cover
         cnt = 0
         with transaction.atomic():
             try:
-                previous_comments = list()
                 for line in lines:
-                    previous = None
                     for comment in lines[line]:
-                        if previous is None:
-                            previous = comment
-                            continue
-                        if comment.by_reviewer and 'Done.' in comment.text:
-                            previous.is_useful = True
-                            previous.save()
-                            cnt += 1
-                        previous = comment
+                        #print(comment)
+                        if comment.by_reviewer == False and "Done." in comment.text:
+                            comment.parent.is_useful = True
+                            comment.parent.save()
 
             except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
