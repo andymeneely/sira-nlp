@@ -54,10 +54,11 @@ class Command(BaseCommand):
 
             if year != 0:
                 settings.YEARS = [year]
-            
+
             loader = loaders.BugLoader(settings, processes)
             count = loader.load()
             info('  {:,} bugs loaded'.format(count))
+
             loader = loaders.VulnerabilityLoader(settings, processes)
             count = loader.load()
             info('  {:,} vulnerabilities loaded'.format(count))
@@ -70,13 +71,12 @@ class Command(BaseCommand):
             count = tagger.tag()
             info('  {:,} reviews missed a vulnerability'.format(count))
 
-            '''
             if year != 0:
                 ids = qs.query_by_year(year, 'review', True)
             else:
                 ids = qs.query_all('review', True)
             connections.close_all()  # Hack
-            
+
             # Comments
             loader = loaders.CommentLoader(settings, processes, ids)
             count = loader.load()
@@ -85,11 +85,11 @@ class Command(BaseCommand):
             loader = loaders.SentenceCommentLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} sentences loaded'.format(count))
-            #connections.close_all()  # Hack
+            connections.close_all()  # Hack
 
-            #tagger = taggers.UsefulCommentTagger(settings, processes, ids)
-            #count = tagger.tag()
-            #info('  {:,} comments were useful'.format(count))
+            tagger = taggers.UsefulCommentTagger(settings, processes, ids)
+            count = tagger.tag()
+            info('  {:,} comments were useful'.format(count))
 
             # Messages
             connections.close_all()  # Hack
@@ -101,7 +101,7 @@ class Command(BaseCommand):
             count = loader.load()
             info('  {:,} sentences loaded'.format(count))
             connections.close_all()  # Hack
-            
+
             # Tokens
             loader = loaders.TokenLoader(settings, processes, ids)
             count = loader.load()
@@ -110,7 +110,6 @@ class Command(BaseCommand):
             with connection.cursor() as cursor:
                 cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_token'))
                 cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_lemma'))
-            '''
         except KeyboardInterrupt: # pragma: no cover
             warning('Attempting to abort.')
         finally:

@@ -55,7 +55,7 @@ def stream(sentences, iqueue, num_doers):
             "http://localhost:41194/"]
     for sentence in sentences:
         iqueue.put((sentence, urls[c]))
-        if c < len(urls)-1:
+        if c < len(urls)-1: # pragma: no cover
             c += 1
         else:
            c = 0

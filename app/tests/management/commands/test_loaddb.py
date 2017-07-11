@@ -173,6 +173,311 @@ class LoaddbTestCase(TransactionTestCase):
         self.assertCountEqual(expected, actual)
 
         # Comments
+        expected = {
+                to_datetime('2015-08-31 07:07:02.637270'): [
+                    to_datetime('2015-08-28 07:16:49.330570'),
+                    'Same comments about length computations.'
+                ],
+                to_datetime('2016-08-08 23:53:31.600620'): [
+                    to_datetime('2016-08-08 19:01:37.630140'),
+                    'Is it actually a cancelAutocomplete?'
+                ],
+                to_datetime('2016-08-10 23:31:08.030380'): [
+                    to_datetime('2016-08-10 23:13:43.524610'),
+                    'Please change these to is_worker and is_v8_only.'
+                ],
+                to_datetime('2016-07-19 17:38:47.630800'): [
+                    to_datetime('2016-07-19 12:45:03.109650'),
+                    "style: we don't use { } when not needed usually."
+                ],
+                to_datetime('2016-07-27 22:06:30.261480'): [
+                    to_datetime('2016-07-27 20:44:06.925810'),
+                    'This was used for autostart modules.'
+                ],
+                to_datetime('2016-08-08 23:53:32.936720'): [
+                    to_datetime('2016-08-08 19:01:37.778730'),
+                    'Can we get rid of these?'
+                ],
+                to_datetime('2015-08-27 06:09:53.292350'): [
+                    to_datetime('2015-08-21 19:30:30.486850'),
+                    "Can't GetLevelSize() return true even though width and "
+                    "height are zero?"
+                ],
+                to_datetime('2016-07-19 17:38:47.870840'): [
+                    to_datetime('2016-07-19 12:45:03.312060'),
+                    'nit: |availabilityUrls|'
+                ],
+                to_datetime('2015-08-24 03:27:11.740570'): [
+                    to_datetime('2015-08-24 02:22:15.893870'),
+                   '\nIt would be better to use:\n\n  if (!isCurrentlyDisplayed'
+                   'InFrame())\n    return nullptr;\n\n'
+                ],
+                to_datetime('2016-07-19 17:38:47.676770'): [
+                    to_datetime('2016-07-19 12:45:03.070610'),
+                    'nit: I am probably missing something but could you use '
+                    '`m_urls` instead of `data` above?'
+                ],
+                to_datetime('2016-08-10 23:31:07.938800'): [
+                    to_datetime('2016-08-10 23:13:43.472780'),
+                    'Please change these to is_worker and is_v8_only.'
+                ],
+                to_datetime('2015-06-17 19:44:46.019850'): [
+                    to_datetime('2015-06-17 19:27:56.248780'),
+                    'nit:\n- skia tries to use [] for parameters that are many'
+                    '...\n- document scale as 1/determinant ?\n- 1 dst and lots'
+                    ' of src params --> (dst, src0, src1, src2)\n\n... '
+                    'ComputeInv(SkScaar dst[], const SkScalar src[], SkScalar '
+                    'invDet, bool isPersp);'
+                ],
+                to_datetime('2015-07-31 01:06:50.705140'): [
+                    to_datetime('2015-07-30 18:24:22.286210'),
+                    "Nit: Just combine this conditional with the one below.  "
+                    "You can probably nuke the comment on that since it's just"
+                    " restating the code, rather than trying to expand it."
+                ],
+                to_datetime('2016-07-27 22:06:30.153200'): [
+                    to_datetime('2016-07-27 20:44:06.976080'),
+                    'This is not proper English :-)'
+                ],
+                to_datetime('2016-07-20 13:02:10.358540'): [
+                    to_datetime('2016-07-19 17:38:47.583740'),
+                    "\nWe don't know which URL is valid yet (they all need to "
+                    "get passed to the MR to create a sink -> URL map for the "
+                    "UI).\n\nI could land a patch to modify the PresentationSe"
+                    "rvice and downstream code to support multiple URLs first "
+                    "and land this afterwards, but we'd need to modify the "
+                    "dispatcher to convert the single URL argument to an "
+                    "array.\n\n"
+                ],
+                to_datetime('2016-08-08 23:53:32.218620'): [
+                    to_datetime('2016-08-08 19:01:37.824650'),
+                    'This is meant to be setOnKeyDownHandler.'
+                ],
+                to_datetime('2016-08-08 23:53:30.318460'): [
+                    to_datetime('2016-08-08 19:01:37.916060'),
+                    'Delegate being an option sounds strange. Pass it '
+                    'explicitly.'
+                ],
+                to_datetime('2016-08-10 23:31:07.987820'): [
+                    to_datetime('2016-08-10 23:13:43.599280'),
+                    'v8_only_frontend'
+                ],
+                to_datetime('2016-08-08 23:53:33.174350'): [
+                    to_datetime('2016-08-08 19:01:37.730370'),
+                    'Can we turn this into a function? Or even a Widget?'
+                ],
+                to_datetime('2016-07-27 22:06:30.209990'): [
+                    to_datetime('2016-07-27 20:44:06.878250'),
+                    'style: missing semicolon'
+                ],
+                to_datetime('2016-07-20 17:20:45.896050'): [
+                    to_datetime('2016-07-20 13:02:10.424420'),
+                    "\nI'm speechless :)"
+                ],
+                to_datetime('2016-07-27 22:06:30.310360'): [
+                    to_datetime('2016-07-27 20:44:07.033820'),
+                    'Unused.'
+                ],
+                to_datetime('2016-07-20 19:08:20.565100'): [
+                    to_datetime('2016-07-20 18:54:57.348360'),
+                    'If attachment is GL_DEPTH_STENCIL_ATTACHMENT, framebuffer '
+                    'will attach renderbuffer to GL_DEPTH_STENCIL_ATTACHMENT '
+                    'here. has_depth_stencil_format check in line 5682 will '
+                    'fail though framebuffer has attachment in depth_stencil '
+                    'format.'
+                ],
+                to_datetime('2015-08-31 07:07:02.566860'): [
+                    to_datetime('2015-08-28 07:16:49.217320'),
+                    'Can we keep the fast loop that combines in 32-bit chunks '
+                    'at a time? Then we need to deal with the remaining 1, 2 or'
+                    ' 3 bytes at the end. We can then do those one byte at a '
+                    'time?'
+                ],
+                to_datetime('2016-08-11 22:06:23.211340'): [
+                    to_datetime('2016-08-10 16:32:25.888370'),
+                    'Could you explain git what happened here (for the file in '
+                    'a separate change prior to doing this refactoring)'
+                ],
+                to_datetime('2016-07-22 04:59:44.073440'): [
+                    to_datetime('2016-07-22 04:49:03.797020'),
+                    'Can you explain why this is safe? I only see this getting'
+                    ' used by the tests, so maybe the tests should just bind '
+                    'the callback? Or just friend the test so it can bind the '
+                    'callback itself?'
+                ],
+                to_datetime('2016-06-14 00:30:21.156270'): [
+                    to_datetime('2016-06-13 18:19:46.679400'),
+                    'Since we split this to a separate C++ test fixture, how '
+                    'about specifying browserPreload here and remove it from '
+                    'https://cs.chromium.org/chromium/src/chrome/test/data/'
+                    'webui/settings/dropdown_menu_tests.js?l=11-14.'
+                ],
+                to_datetime('2015-06-02 10:51:56.838570'): [
+                    to_datetime('2015-06-01 15:47:51.045690'),
+                    'compatibility_script'
+                ],
+                to_datetime('2015-08-14 23:57:34.444240'): [
+                    to_datetime('2015-08-14 18:40:40.306130'),
+                    'requestReload? reloadInspectedPage?'
+                ],
+                to_datetime('2016-08-11 22:06:23.046620'): [
+                    to_datetime('2016-08-10 16:20:29.613320'),
+                    'Are there other cases where we might want this?  Maybe '
+                    'introduce a new WebInspector.KeyboardShortcut.eventHasCtrl'
+                    'OnMac() ?'
+                ],
+                to_datetime('2016-07-20 19:23:54.083550'): [
+                    to_datetime('2016-07-20 19:09:51.162750'),
+                    '\nYeah, see GLES2DecoderImpl::DoFramebufferRenderbuffer'
+                ],
+                to_datetime('2015-08-24 06:52:35.008600'): [
+                    to_datetime('2015-08-24 06:28:21.487230'),
+                    '\nCan you add a comment on this?\n'
+                ],
+                to_datetime('2016-07-19 17:38:47.778430'): [
+                    to_datetime('2016-07-19 12:45:03.196690'),
+                    'We usually put a link on top of the IDL files for '
+                    'reference.'
+                ],
+                to_datetime('2015-08-31 07:07:02.707860'): [
+                    to_datetime('2015-08-28 07:16:49.403850'),
+                    'o -> object'
+                ],
+                to_datetime('2016-08-10 23:31:08.082750'): [
+                    to_datetime('2016-08-10 23:13:43.652360'),
+                    'Revert this one.'
+                ],
+                to_datetime('2015-06-17 19:44:46.117540'): [
+                    to_datetime('2015-06-17 19:27:56.288510'),
+                    'why the cast? why not \n\nif (applyingInPlace) {\n    '
+                    '*inv = storage;\n}\n'
+                ],
+                to_datetime('2016-08-08 23:53:30.366890'): [
+                    to_datetime('2016-08-08 19:01:37.579210'),
+                    'We usually call factory methods createSomething.'
+                ],
+                to_datetime('2016-07-19 17:38:47.827700'): [
+                    to_datetime('2016-07-19 12:45:03.266600'),
+                    'I\'m genuinely surprised this is a valid URL :) I would '
+                    'expect something like "cast://google.com/?appid=deadbeef".'
+                    ' I wonder how "appid=deadbeef" is parsed. Out of curiosity'
+                    ', could that be "cast://deadbeef" ? Sounds like the '
+                    '"google.com" part isn\'t really needed, is it?'
+                ],
+                to_datetime('2015-06-02 10:51:56.799960'): [
+                    to_datetime('2015-06-01 15:47:51.006490'),
+                    'compatibility_script'
+                ],
+                to_datetime('2016-08-08 23:53:33.490080'): [
+                    to_datetime('2016-08-08 19:01:37.684220'),
+                    "Let's merge with previous one?"
+                ],
+                to_datetime('2016-07-20 13:02:10.424420'): [
+                    to_datetime('2016-07-19 17:38:47.676770'),
+                    '\nWebVector does not provide any method to resize itself '
+                    'once allocated.  To populate the vector, the sample code '
+                    'suggests using swap().  See:\n\nhttps://cs-staging.'
+                    'chromium.org/chromium/src/third_party/WebKit/public/'
+                    'platform/WebVector.h?q=WebVector.h&sq=package:chromium&dr'
+                    '=CSs'
+                ],
+                to_datetime('2016-07-20 19:09:51.162750'): [
+                    to_datetime('2016-07-20 19:08:20.565100'),
+                    "\nActually I think somewhere before reaching here, we "
+                    "already split DEPTH_STENCIL into DEPTH and STENCIL. We "
+                    "should DCHECK in AttachRenderbuffer or AttachTexture to "
+                    "make sure of that, but that's for another CL.  Let me dig "
+                    "a bit and find the code."
+                ],
+                to_datetime('2015-08-27 06:09:53.327470'): [
+                    to_datetime('2015-08-21 19:30:30.522240'),
+                    "This breaks all cubemap uploads that don't go through one "
+                    "of the workarounds, right?\nBecause of the return in line "
+                    "1984. We should also avoid the alloc (for |zero|) below "
+                    "when not needed."
+                ],
+                to_datetime('2015-08-31 07:07:02.673750'): [
+                    to_datetime('2015-08-28 07:16:49.368620'),
+                    'Lift the length checks on x out?\n\nint xlen = x->lenght()'
+                    ';\nif (xlen == 0) return other;\n\nand then remove it in '
+                    'the two branches?\n\nI think you can do the length '
+                    'computation as well since you know they are both '
+                    'BaseArrays and that is where you get the length from.'
+                ],
+                to_datetime('2016-07-11 08:21:00.643720'): [
+                    to_datetime('2016-07-08 13:16:37.047520'),
+                    'I think you still need to call this against '
+                    '`default_prefs_`.'
+                ],
+                to_datetime('2016-07-19 17:38:47.583740'): [
+                    to_datetime('2016-07-19 12:45:03.022090'),
+                    'Should this be implemented first? or at least, I think we'
+                    ' should have DOMString[] ctor working by taking one URL '
+                    'that would be supported (instead of the first in the list)'
+                    ' in order to ship.\n\nWhat I would recommend to minimise '
+                    'the boilerplate is to pass all the URLs to the service and'
+                    ' as soon as we reach the chrome/ layer, pick one and '
+                    'ignore all the others.'
+                ],
+                to_datetime('2016-07-22 07:10:11.899700'): [
+                    to_datetime('2016-07-22 06:04:34.144250'),
+                    'What does the //base version of this do?\n\nIt seems a '
+                    'little unusual that a class outside of //base has to '
+                    'reinstall the original listener hook. It seems harder to '
+                    'use correctly this way.'
+                ],
+                to_datetime('2015-08-31 08:50:45.445550'): [
+                    to_datetime('2015-08-28 22:41:58.277110'),
+                    'Update the version here.'
+                ],
+                to_datetime('2015-08-14 23:57:34.481470'): [
+                    to_datetime('2015-08-14 20:04:31.153440'),
+                    'nit: spacing is off.'
+                ],
+                to_datetime('2015-08-31 07:07:02.444230'): [
+                    to_datetime('2015-08-28 07:16:49.095710'),
+                    'I think we can share the implementation of length and just'
+                    ' have a StringLength native? Lenght is from BaseArray I '
+                    'think, so it should be fine to just assert that the '
+                    'argument is a OneByteString or a TwoByteString and then '
+                    'return BaseArray::cast(object)->length()?'
+                ],
+                to_datetime('2015-11-20 02:17:07.770870'): [
+                    to_datetime('2015-11-19 09:46:25.224900'),
+                    "Is `followedRedirect` true for any response that's been "
+                    "returned from cache or synthesized via the SW?"
+                ],
+                to_datetime('2015-07-31 01:06:50.969840'): [
+                    to_datetime('2015-07-30 18:24:22.252020'),
+                    'Nit: No blank line here'
+                ],
+                to_datetime('2016-07-15 02:45:29.126760'): [
+                    to_datetime('2016-07-15 02:35:50.685400'),
+                    "\nHmm, I'm not sure if this translation makes sense. Do "
+                    "we really want to actually suspend the tab when receiving"
+                    " a critical signal?\n"
+                ],
+                to_datetime('2016-07-19 17:38:47.733950'): [
+                    to_datetime('2016-07-19 12:45:03.151550'),
+                    'style: maybe no { } ?'
+                ],
+                to_datetime('2016-08-11 22:06:23.088580'): [
+                    to_datetime('2016-08-10 16:20:29.669980'),
+                    'Nit: insert newline above'
+                ],
+                to_datetime('2016-06-15 05:52:34.142650'): [
+                    to_datetime('2016-06-15 02:31:48.914370'),
+                    'comment on the point of this'
+                ]
+            }
+
+        actual = {}
+        for c in Comment.objects.exclude(parent=None):
+            actual[c.posted] = [c.parent.posted, c.parent.text]
+
+        self.maxDiff = None
+        self.assertDictEqual(expected, actual)
+
         expected = 32
         actual = list(
                 Comment.objects.filter(is_useful=True)

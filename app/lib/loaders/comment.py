@@ -1,4 +1,5 @@
 import multiprocessing
+import re
 import sys
 import traceback
 
@@ -10,6 +11,25 @@ from app.lib.nlp import summarizer
 from app.lib.utils import parallel
 from app.models import *
 
+
+PATTERN = re.compile(r'>\s([^\n]*)\n\n')
+
+'''
+def link_comments(patchset, patch):
+    if type(patchset) == int:
+        patchset = helpers.get_row(Patchset, id=patchset)
+    if type(patch) == int:
+        patch = helpers.get_row(Patch, id=patch)
+        comments = Comment.objects.filter(patch_id=patch['id']) \
+                          .order_by('posted').iterator()
+    else:
+        comments = Comment.objects.filter(patch_id=patch.id) \
+                          .order_by('posted').iterator()
+
+    for i, comment in helpers.enumerate_iter(comments):
+         print(i)
+         #print(comment.text)
+'''
 
 def aggregate(oqueue, cqueue, num_doers):
     count, done = 0, 0
@@ -64,18 +84,15 @@ def do(iqueue, cqueue): # pragma: no cover
                                         text=helpers.clean(m['text']),
                                         by_reviewer=m['author_email']!=author
                                     )
-                                if comment.by_reviewer == False and \
-                                    "Done." in comment.text:
-                                    for prev in reversed(previous):
-                                        if prev.by_reviewer == True and \
-                                            prev.line == comment.line:
-                                            prev.is_useful = True
-                                            prev.save()
-                                            break
-                                previous.append(comment)
+                                quoted = PATTERN.findall(m['text'])
+                                for prev in previous:
+                                    for quote in quoted:
+                                        if quote in prev.text:
+                                            comment.parent = prev
+
                                 comment.save()
+                                previous.append(comment)
                                 cnt += 1
-                                #print(comment.id)
                     if files:
                         patchset.files = files
                         patchset.save()

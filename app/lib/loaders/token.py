@@ -36,8 +36,8 @@ def do(iqueue, cqueue):  # pragma: no cover
         with transaction.atomic():
             try:
                 for (sentence_id, sentence_text) in sentences:
-                    print(sentence_id)
-                    print(sentence_text)
+                    #print(sentence_id)
+                    #print(sentence_text)
                     summary = summarizer.Summarizer(sentence_text).execute()
                     for (position, token, stem, lemma, pos, chunk) in summary:
                         objects.append(Token(

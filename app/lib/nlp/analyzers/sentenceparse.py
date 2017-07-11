@@ -21,7 +21,7 @@ class SentenceParseAnalyzer(analyzers.Analyzer):
 #    def __init__(self, text, url='http://overkill.main.edu.rit.edu:41194'):
 #    def __init__(self, text, url='http://localhost:41194/'):
 #    def __init__(self, text, url='http://archeology.gccis.rit.edu:9000/'):
-    def __init__(self, text, url=None):
+    def __init__(self, text, url=None): # pragma: no cover
         super(SentenceParseAnalyzer, self).__init__(text)
         #print(url)
         if url is None:
