@@ -50,10 +50,15 @@ def do(iqueue, cqueue): # pragma: no cover
             try:
                 for line in lines:
                     for comment in lines[line]:
-                        #print(comment)
-                        if comment.by_reviewer == False and "Done." in comment.text:
-                            comment.parent.is_useful = True
-                            comment.parent.save()
+                        #print(comment.to_dict())
+                        if comment.by_reviewer == False and \
+                            comment.text.startswith("\nDone."):
+                            if comment.parent is not None:
+                                comment.parent.is_useful = True
+                                comment.parent.save()
+                                cnt += 1
+                            else:
+                                print(comment.to_dict())
 
             except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')

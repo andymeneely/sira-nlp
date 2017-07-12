@@ -30,6 +30,7 @@ CODEREVIEW_URL_RE = re.compile( # pragma: no cover
         '^https?:\/\/(codereview.chromium.org|chromiumcodereview.appspot.com)'
         '\/\d+\/diff\/.*\n.*\n', flags=re.MULTILINE
     )
+
 # Subsequent new lines
 NEWLINES_RE = re.compile('(^$\n)+', flags=re.MULTILINE)
 # Match unicode NULL character sequence
@@ -70,6 +71,67 @@ def clean(text):
     text = QUOTED_TEXT_RE.sub('', text)
     text = CODEREVIEW_URL_RE.sub('', text)
     text = NEWLINES_RE.sub('\n', text)
+    return text
+
+
+RE_1 = re.compile('(^[^>]*$)', flags=re.MULTILINE)
+RE_2 = re.compile('(\n.*)$', flags=re.MULTILINE)
+#RE_2 = re.compile('(\n[^\n]*)$', flags=re.MULTILINE)
+RE_3 = re.compile('(> ){2,}')
+
+
+def get_quoted_text(text):
+    #print("==== initial\n" + str(repr(text)))
+    # STEP 1: Remove the initital RESPONSE_HEAD
+    temp1 = RESPONSE_HEAD_RE.sub('', text)
+    #print("==== temp1\n" + str(repr(temp1)))
+
+    # STEP 2: Replace XML-like tags with nonstandard characters that are
+    #   unlikely to appear in natural or programming language. Note that in
+    #   r'⦋\1⦌', the brackets are not standard square brackets, but instead
+    #   U+298B and U+298C, respectively.
+    temp1 = re.sub(r'<([^>]*)>', r'⦋\1⦌', temp1)
+    #print("==== temp1\n" + str(repr(temp1)))
+
+    # STEP 3: Find the non-quoted text.
+    temp2 = RE_1.findall(temp1)
+    #print("==== temp2\n" + str(repr(temp2)))
+
+    # STEP 4: Get the quoted text, including multi-level quotes.
+    temp3 = temp1.replace("".join(temp2), '')
+    #print("==== temp3\n" + str(repr(temp3)))
+
+    # STEP 5: Remove empty strings from the quoted text.
+    temp4 = filter(None, RE_2.split(temp3))
+    #print("==== temp4\n" + str(temp4))
+
+    # STEP 6: Remove all lines starting with 2 or more consecutive instances of
+    #   the pattern '> '. In other words, remove the multi-level quotes,
+    #   leaving a list of lines from the most recent (top-level) quote.
+    temp5 = []
+    for line in temp4:
+        #print(repr(line))
+        temp_results = RE_3.search(line)
+        #print(temp_results)
+        if temp_results is None:
+            temp6 = re.sub(r'^> ', '', line, 1, flags=re.MULTILINE)
+            #print("==== temp6\n" + str(repr(temp6)))
+            temp5.append(temp6)
+    #print("==== temp5\n" + str(repr(temp5)))
+
+    # STEP 7: Convert the resultsof STEP 6 to a raw string.
+    text = "".join(temp5)
+    #print("==== text\n" + str(repr(text)))
+
+    # STEP 8: Remove any remaining RESPONSE_HEAD and strip trailing newlines.
+    text = RESPONSE_HEAD_RE.sub('', text).rstrip("\n")
+    #print("==== text\n" + str(repr(text)))
+
+    # STEP 9: Undo the substitution from STEP 2.
+    text.replace('⦋', '<')
+    text.replace('⦌', '>')
+    #print("==== final\n" + str(repr(text)))
+
     return text
 
 

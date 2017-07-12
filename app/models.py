@@ -72,6 +72,19 @@ class Comment(models.Model):
     parent = models.ForeignKey('comment', null=True)
     sentences = models.ManyToManyField('Sentence')
 
+    def to_dict(self):
+        d = {}
+        d['id'] = self.id
+        d['posted'] = self.posted
+        d['line'] = self.line
+        d['author'] = self.author
+        d['text'] = self.text
+        d['is_useful'] = self.is_useful
+        d['by_reviewer'] = self.by_reviewer
+        d['patch'] = self.patch
+        d['parent'] = self.parent
+        return d
+
     class Meta:
         db_table = 'comment'
 
