@@ -14,6 +14,7 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 from collections import OrderedDict
+from splat.complexity import levenshtein_distance
 
 import requests
 
@@ -74,65 +75,42 @@ def clean(text):
     return text
 
 
-RE_1 = re.compile('(^[^>]*$)', flags=re.MULTILINE)
-RE_2 = re.compile('(\n.*)$', flags=re.MULTILINE)
-#RE_2 = re.compile('(\n[^\n]*)$', flags=re.MULTILINE)
-RE_3 = re.compile('(> ){2,}')
+DATE_TIME_RE = re.compile('(?P<date>\d{4}/\d{2}/\d{2})(?:\s|\sat\s)(?P<time>\d{2}:\d{2}:\d{2})')
+AUTHOR_RE = re.compile(', (.*) wrote:')
 
 
-def get_quoted_text(text):
-    #print("==== initial\n" + str(repr(text)))
-    # STEP 1: Remove the initital RESPONSE_HEAD
-    temp1 = RESPONSE_HEAD_RE.sub('', text)
-    #print("==== temp1\n" + str(repr(temp1)))
+def get_parent(raw_text, previous_comments):
+    quote_header = RESPONSE_HEAD_RE.findall(raw_text)
+    if quote_header != []:
+        t = [m.groupdict() for m in DATE_TIME_RE.finditer(quote_header[0])]
+        timestamp = (t[0]['date'] + " " + t[0]['time']).replace('/', '-')
+        author = AUTHOR_RE.findall(quote_header[0])[0]
 
-    # STEP 2: Replace XML-like tags with nonstandard characters that are
-    #   unlikely to appear in natural or programming language. Note that in
-    #   r'⦋\1⦌', the brackets are not standard square brackets, but instead
-    #   U+298B and U+298C, respectively.
-    temp1 = re.sub(r'<([^>]*)>', r'⦋\1⦌', temp1)
-    #print("==== temp1\n" + str(repr(temp1)))
+        matching_comments = []
+        for prev in previous_comments:
+            # Remove milliseconds since they do not appear in the quote.
+            prev_timestamp = prev.posted.split('.')[0]
+            # Find previous comments with the target timestamp.
+            if prev_timestamp == timestamp:
+                matching_comments.append(prev)
 
-    # STEP 3: Find the non-quoted text.
-    temp2 = RE_1.findall(temp1)
-    #print("==== temp2\n" + str(repr(temp2)))
+        # If there is only one matching comment, return its index
+        if len(matching_comments) == 1:
+            return previous_comments.index(matching_comments[0])
+        else:
+            # If there are multiple matching comments, calculate the levenshtein
+            # distance between each previous comment and raw_text
+            distances = {}
+            for i, match in enumerate(matching_comments):
+                d = levenshtein_distance(match.text, raw_text)
+                distances[i] = d
 
-    # STEP 4: Get the quoted text, including multi-level quotes.
-    temp3 = temp1.replace("".join(temp2), '')
-    #print("==== temp3\n" + str(repr(temp3)))
+            # Find the index of the previous comment with the smallest
+            # levenshtein distance.
+            return min(distances, key=distances.get)
+    else:
+        return None
 
-    # STEP 5: Remove empty strings from the quoted text.
-    temp4 = filter(None, RE_2.split(temp3))
-    #print("==== temp4\n" + str(temp4))
-
-    # STEP 6: Remove all lines starting with 2 or more consecutive instances of
-    #   the pattern '> '. In other words, remove the multi-level quotes,
-    #   leaving a list of lines from the most recent (top-level) quote.
-    temp5 = []
-    for line in temp4:
-        #print(repr(line))
-        temp_results = RE_3.search(line)
-        #print(temp_results)
-        if temp_results is None:
-            temp6 = re.sub(r'^> ', '', line, 1, flags=re.MULTILINE)
-            #print("==== temp6\n" + str(repr(temp6)))
-            temp5.append(temp6)
-    #print("==== temp5\n" + str(repr(temp5)))
-
-    # STEP 7: Convert the resultsof STEP 6 to a raw string.
-    text = "".join(temp5)
-    #print("==== text\n" + str(repr(text)))
-
-    # STEP 8: Remove any remaining RESPONSE_HEAD and strip trailing newlines.
-    text = RESPONSE_HEAD_RE.sub('', text).rstrip("\n")
-    #print("==== text\n" + str(repr(text)))
-
-    # STEP 9: Undo the substitution from STEP 2.
-    text.replace('⦋', '<')
-    text.replace('⦌', '>')
-    #print("==== final\n" + str(repr(text)))
-
-    return text
 
 
 def get_elapsed(begin, end):

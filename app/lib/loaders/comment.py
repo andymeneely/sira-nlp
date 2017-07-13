@@ -42,7 +42,6 @@ def do(iqueue, cqueue): # pragma: no cover
                             review=review, id=psid, created = ps['created']
                         )
                     patchset.save()
-                    #print(psid)
 
                     files = list()
                     for (path, p) in ps['files'].items():
@@ -52,7 +51,6 @@ def do(iqueue, cqueue): # pragma: no cover
                                 num_removed=p['num_removed']
                             )
                         patch.save()
-                        #print(patch.id)
 
                         files.append(path)
                         if 'messages' in p:
@@ -66,16 +64,13 @@ def do(iqueue, cqueue): # pragma: no cover
                                         by_reviewer=m['author_email']!=author
                                     )
                                 comment.save()
-                                quoted = helpers.get_quoted_text(m['text'])
-                                #print("QUOTE: " + str(repr(quoted)))
-                                if quoted != '':
-                                    for prev in previous:
-                                        #print(" TEXT: " + str(repr(prev.text)))
-                                        if quoted in prev.text:
-                                            #print("MATCH: " + str(repr(prev.text)))
-                                            comment.parent = prev
-
-                                comment.save()
+                                # Find the parent of this comment.
+                                parent_index = helpers.get_parent(
+                                        m['text'], previous
+                                    )
+                                if parent_index is not None:
+                                    comment.parent = previous[parent_index]
+                                    comment.save()
                                 previous.append(comment)
                                 cnt += 1
                     if files:
@@ -93,12 +88,13 @@ def do(iqueue, cqueue): # pragma: no cover
 def stream(review_ids, settings, iqueue, num_doers):
     for review_id in review_ids:
         review = helpers.get_row(Review, id=review_id)
-        author = review.document['owner_email']
+        if review is not None:
+            author = review.document['owner_email']
 
-        patchsets = list()
-        for (psid, ps) in review.document['patchsets'].items():
-            patchsets.append((author, psid, ps))
-        iqueue.put((review, patchsets))
+            patchsets = list()
+            for (psid, ps) in review.document['patchsets'].items():
+                patchsets.append((author, psid, ps))
+            iqueue.put((review, patchsets))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)
