@@ -258,6 +258,47 @@ class Files(object):
         stats['patchsets'] = helpers.sort(patchsets, desc=True)
         return stats
 
+    def transform_bug(self, bug):
+        """Transform bug JSON to add a list of participants.
+
+        Parameters
+        ----------
+        bug: dict
+            A JSON representation of a Chromium bug downloaded from Monorail.
+            The JSON has a key---comments---that contains conversation between
+            developers triaging the bug.
+
+        Returns
+        -------
+        bug: dict
+            A transformed bug JSON which has two additional keys added, they
+            are:
+
+           (1) participants: The corresponding value is a list of email
+               address of developers who participated in the bug by being on
+               cc.
+           (2) contributors: The corresponding value is a list of email
+               address of developers who have contributed, through non-empty
+               comments, to the process of triaging of bug.
+        """
+        participants = set()
+        if 'cc' in bug:
+            for developer in bug['cc']:
+                participants.add(developer['name'])
+
+        contributors = set()
+        for comment in bug['comments']:
+            author = comment['author']['name']
+            if author in contributors or author in self.bots:
+                continue
+            if comment['content']:
+                contributors.add(comment['author']['name'])
+
+        bug['participants'] = list(participants)
+        bug['contributors'] = list(contributors)
+
+        return bug
+
     def transform_review(self, review):
         """
 
