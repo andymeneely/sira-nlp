@@ -10,13 +10,12 @@ import random
 import re
 import time
 
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
-
 from collections import OrderedDict
 from splat.complexity import levenshtein_distance
 
 import requests
+
+from app.lib import patch
 
 # Match the line of header that marks the beginning of quoted text.
 # E.g., On 2008/01/01 00:00:01, Raymond Reddington wrote:
@@ -27,7 +26,7 @@ QUOTED_TEXT_RE = re.compile('^>+ ?.*$', flags=re.MULTILINE)
 # Match code review diff location along with a line of contextual content.
 # E.g., http://codereview.chromium.org/15076/diff/1/6
 #       File chrome/browser/net/dns_master.cc (right):
-CODEREVIEW_URL_RE = re.compile( # pragma: no cover
+CODEREVIEW_URL_RE = re.compile(  # pragma: no cover
         '^https?:\/\/(codereview.chromium.org|chromiumcodereview.appspot.com)'
         '\/\d+\/diff\/.*\n.*\n', flags=re.MULTILINE
     )
@@ -49,8 +48,6 @@ BUG_ID_PATTERNS = [
     '.'
 ]
 JSON_NULL = json.dumps(None)
-
-from app.lib import patch
 
 
 def enumerate_iter(iterable, offset=0, step=1):
@@ -126,7 +123,7 @@ def get_json(url, parameters):
     (status, json) = (None, None)
     response = requests.get(url, parameters, allow_redirects=False)
     status = response.status_code
-    if status == requests.codes.ok: # pragma: no cover
+    if status == requests.codes.ok:  # pragma: no cover
         json = response.json()
 
     return (status, json)
@@ -170,9 +167,11 @@ def get_verbs(filepath):
 def load_json(filepath, sanitize=True):
     """ Load the specified json file after sanitizing it. """
     with open(filepath, 'r') as file:
-        contents = file.read()
-        contents = NULL_RE.sub('', contents)
-        return json.loads(contents)
+        if sanitize:
+            contents = file.read()
+            contents = NULL_RE.sub('', contents)
+            return json.loads(contents)
+        return json.load(file)
 
 
 def parse_bugids(text):
@@ -255,9 +254,9 @@ def truncate(string, length=50):
 def _get_related_chunks(chunk_a, patch_b):
     for chunk in patch_b.get_chunks():
         if chunk.get_base_hunk() == chunk_a.get_base_hunk():
-            #print(chunk.get_lines())
             return chunk
     return None
+
 
 def line_changed(line_number, patch_a, patch_b):
     a = patch.Patch(patch_a)

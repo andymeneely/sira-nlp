@@ -146,7 +146,6 @@ class LoaddbTestCase(TransactionTestCase):
                     ('CVE-2016-1702', 609260),
                     ('CVE-2016-5167', 613918),
                     ('CVE-2016-5167', 619379),
-                    ('CVE-2016-5167', 626102),
                     ('CVE-2016-5167', 642598)
                 ] +
                 [   # Manually Added

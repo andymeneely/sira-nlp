@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import tempfile
 
@@ -14,12 +15,28 @@ class FilesTestCase(TestCase):
     def setUp(self):
         self.files = files.Files(settings)
 
+    def test_get_bug_w_year(self):
+        actual = self.files.get_bug(id=576270, year=2016)
+
+        self.assertTrue(type(actual) is dict)
+        self.assertEqual(576270, actual['id'])
+
+    def test_get_bug_wo_year(self):
+        actual = self.files.get_bug(id=576270)
+
+        self.assertTrue(type(actual) is dict)
+        self.assertEqual(576270, actual['id'])
+
+    def test_get_bug_nonexistent(self):
+        with self.assertRaises(Exception):
+            _ = self.files.get_bug(id=40758, year=2016)
+
     def test_get_bugs(self):
         expected = [
-                '606056', '610176', '627655', '602509', '584783', '628496',
-                '624894', '617492', '609260', '613160', '625357', '628110',
-                '576270', '620126', '607690', '583485', '636539', '613918',
-                '619379', '626102', '642598'
+                606056, 610176, 627655, 602509, 584783, 628496,
+                624894, 617492, 609260, 613160, 625357, 628110,
+                576270, 620126, 607690, 583485, 636539, 613918,
+                619379, 626102, 642598
             ]
         actual = self.files.get_bugs(year=2016)
 
@@ -114,8 +131,14 @@ class FilesTestCase(TestCase):
 
         self.assertEqual(expected, actual)
 
-    def test_get_review(self):
+    def test_get_review_w_year(self):
         actual = self.files.get_review(id=1999153002, year=2016)
+
+        self.assertTrue(type(actual) is dict)
+        self.assertEqual(1999153002, actual['issue'])
+
+    def test_get_review_wo_year(self):
+        actual = self.files.get_review(id=1999153002)
 
         self.assertTrue(type(actual) is dict)
         self.assertEqual(1999153002, actual['issue'])
@@ -172,15 +195,44 @@ class FilesTestCase(TestCase):
         with self.assertRaises(Exception):
             _ = self.files.get_year(id=40758, switch='bugs')
 
+    def test_save(self):
+        data = {
+                'data': [{'id': id} for id in range(1, 10)],
+                'errors': list(range(1, 10))
+            }
+        expected = data
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            directory = os.path.join(tempdir, 'foo')
+            self.files._save(directory, 7, data['data'], data['errors'], 'bar')
+
+            self.assertTrue(os.path.exists(directory))
+
+            actual = dict()
+
+            path = os.path.join(directory, 'bar.7.json')
+            self.assertTrue(os.path.exists(path))
+            with open(path) as file:
+                actual['data'] = json.load(file)
+
+            path = os.path.join(directory, 'errors.csv')
+            self.assertTrue(os.path.exists(path))
+            with open(path) as file:
+                actual['errors'] = list()
+                reader = csv.reader(file)
+                for row in reader:
+                    actual['errors'].append(int(row[0]))
+            self.assertCountEqual(expected, actual)
+
     def test_save_ids(self):
         data = list(range(100001, 100010))
         expected = [str(item) for item in data]
 
         with tempfile.TemporaryDirectory() as tempdir:
-            with self.settings(IDS_PATH=os.path.join('/tmp', tempdir)):
+            with self.settings(IDS_PATH=tempdir):
                 f = files.Files(settings)
                 f.save_ids(year=9999, ids=data, switch='reviews')
-                path = os.path.join('/tmp', tempdir, '9999.csv')
+                path = os.path.join(tempdir, '9999.csv')
 
                 self.assertTrue(os.path.exists(path))
                 actual = None
@@ -189,19 +241,33 @@ class FilesTestCase(TestCase):
                     actual = [row[0] for row in reader]
                 self.assertCountEqual(expected, actual)
 
+    def test_save_bugs(self):
+        data = [{'id': id} for id in range(100001, 100010)]
+        expected = data
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            with self.settings(BUGS_PATH=os.path.join(tempdir, '{year}')):
+                f = files.Files(settings)
+                f.save_bugs(year=9999, chunk=1, bugs=data, errors=None)
+                path = os.path.join(tempdir, '9999')
+                self.assertTrue(os.path.exists(path))
+                path = os.path.join(tempdir, '9999', 'bugs.1.json')
+                self.assertTrue(os.path.exists(path))
+
+                actual = f.get_bugs(year=9999)
+                self.assertCountEqual(expected, actual)
+
     def test_save_reviews(self):
         data = [{'issue': id} for id in range(100001, 100010)]
         expected = data
 
         with tempfile.TemporaryDirectory() as tempdir:
-            with self.settings(
-                    REVIEWS_PATH=os.path.join('/tmp', tempdir, '{year}')
-                 ):
+            with self.settings(REVIEWS_PATH=os.path.join(tempdir, '{year}')):
                 f = files.Files(settings)
                 f.save_reviews(year=9999, chunk=1, reviews=data, errors=None)
-                path = os.path.join('/tmp', tempdir, '9999')
+                path = os.path.join(tempdir, '9999')
                 self.assertTrue(os.path.exists(path))
-                path = os.path.join('/tmp', tempdir, '9999', 'reviews.1.json')
+                path = os.path.join(tempdir, '9999', 'reviews.1.json')
                 self.assertTrue(os.path.exists(path))
 
                 actual = f.get_reviews(year=9999)
@@ -261,6 +327,45 @@ class FilesTestCase(TestCase):
         self.assertEqual(expected['patchsets'], actual['patchsets'])
         self.assertEqual(expected['comments'], actual['comments'])
 
+    def test_transform_bug(self):
+        expected = {
+                'participants': [
+                    'pdr@chromium.org',
+                    'xiaochengh@chromium.org',
+                    'wangxianzhu@chromium.org',
+                    'qyearsley@chromium.org',
+                    'dmazzoni@chromium.org',
+                    'fmalita@chromium.org',
+                    'mfomitchev@chromium.org',
+                    'schenney@chromium.org',
+                    'dpranke@chromium.org',
+                    'dalecurtis@chromium.org',
+                    'carlosk@chromium.org',
+                    'wkorman@chromium.org'
+                ],
+                'contributors': [
+                    'dmazzoni@chromium.org',
+                    'pdr@chromium.org',
+                    'wangxianzhu@chromium.org',
+                    'carlosk@chromium.org'
+                ]
+            }
+
+        actual = self.files.transform_bug(
+                self.files.get_bug(id=620126, year=2016)
+            )
+
+        self.assertCountEqual(expected['participants'], actual['participants'])
+        self.assertCountEqual(expected['contributors'], actual['contributors'])
+
+    def test_transform_bugs_keys_added(self):
+        bug = self.files.get_bug(id=620126, year=2016)
+        expected = list(bug.keys()) + ['participants', 'contributors']
+
+        actual = list(self.files.transform_bug(bug).keys())
+
+        self.assertCountEqual(expected, actual)
+
     def test_transform_review(self):
         expected = [
                 'cc/test/layer_tree_test.h',
@@ -272,14 +377,14 @@ class FilesTestCase(TestCase):
             ]
 
         actual = self.files.transform_review(
-                self.files.get_review(id=2140383005)
+                self.files.get_review(id=2140383005, year=2016)
             )
 
         self.assertCountEqual(expected, actual['reviewed_files'])
         self.assertCountEqual(expected, actual['committed_files'])
 
     def test_transform_review_keys_added(self):
-        review = self.files.get_review(id=1999153002)
+        review = self.files.get_review(id=1999153002, year=2016)
         expected = list(review.keys()) + ['reviewed_files', 'committed_files']
 
         actual = list(self.files.transform_review(review).keys())

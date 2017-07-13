@@ -49,8 +49,8 @@ NLP_CACHE_PATH = os.path.join(DATA_DIR, 'nlp')
 # Years for which data is available
 YEARS = list(range(2008, 2017))
 
-# Addresses of bots that post messages during a code review
-BOTS = ['commit-bot@chromium.org']
+# Addresses of bots that post messages during a code review or bug triaging
+BOTS = ['commit-bot@chromium.org', 'bugdroid1@chromium.org']
 
 # Types of files that are considered from vulnerability-fixing code reviews
 FILETYPES_WHITELIST = [

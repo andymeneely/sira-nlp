@@ -25,19 +25,47 @@ class Files(object):
         self.vulnerabilities_path = settings.VULNERABILITIES_PATH
         self.bots = settings.BOTS
 
-    def get_bugs(self, year):
+    def get_bug(self, id, year=None):
+        """Retrieve a bug identified by the unique identifier specified.
+
+        Parameters
+        ----------
+        id : int
+            Unique identifier of the bug to retrieve.
+
+        Returns
+        -------
+        bug : dict
+            Bug identified by the identifier specified. An exception is raised
+            when no bug was found.
         """
-        Return a list of bugs that were associated with the specified year.
-        """
-        bugs = list()
+        year = self.get_year(id, switch='bugs') if year is None else year
         directory = self.get_bugs_path(year)
-        for path in self._get_files(directory, pattern='bugs.csv'):
-            with open(path, 'r') as file:
-                file.readline()  # Skip header
-                reader = csv.reader(file)
-                for row in reader:
-                    bugs.append(self._to_dict(row))
-        return bugs
+        for path in self._get_files(directory, pattern='bugs.*.json'):
+            bugs = helpers.load_json(path, sanitize=False)
+            for bug in bugs:
+                if id == bug['id']:
+                    return bug
+        raise Exception('No bug identified by {}'.format(id))
+
+    def get_bugs(self, year):
+        """Yield bugs that were published in a specified year.
+
+        Parameters
+        ----------
+        year : int
+            Bugs published in the specified year must be returned.
+
+        Return
+        ------
+        bugs : generator
+            Iterator-like object that allows iteration over the bugs being
+            returned without blocking the caller.
+        """
+        directory = self.get_bugs_path(year)
+        for path in self._get_files(directory, pattern='bugs.*.json'):
+            for bug in helpers.load_json(path):
+                yield bug
 
     def get_bugs_path(self, year):
         """
@@ -230,6 +258,47 @@ class Files(object):
         stats['patchsets'] = helpers.sort(patchsets, desc=True)
         return stats
 
+    def transform_bug(self, bug):
+        """Transform bug JSON to add a list of participants.
+
+        Parameters
+        ----------
+        bug: dict
+            A JSON representation of a Chromium bug downloaded from Monorail.
+            The JSON has a key---comments---that contains conversation between
+            developers triaging the bug.
+
+        Returns
+        -------
+        bug: dict
+            A transformed bug JSON which has two additional keys added, they
+            are:
+
+           (1) participants: The corresponding value is a list of email
+               address of developers who participated in the bug by being on
+               cc.
+           (2) contributors: The corresponding value is a list of email
+               address of developers who have contributed, through non-empty
+               comments, to the process of triaging of bug.
+        """
+        participants = set()
+        if 'cc' in bug:
+            for developer in bug['cc']:
+                participants.add(developer['name'])
+
+        contributors = set()
+        for comment in bug['comments']:
+            author = comment['author']['name']
+            if author in contributors or author in self.bots:
+                continue
+            if comment['content']:
+                contributors.add(comment['author']['name'])
+
+        bug['participants'] = list(participants)
+        bug['contributors'] = list(contributors)
+
+        return bug
+
     def transform_review(self, review):
         """
 
@@ -271,36 +340,12 @@ class Files(object):
         """
         pass
 
-    # TODO: Remove function once bug information is available in JSON format
-    def _to_dict(self, row):
-        """
-        The monorail API is awful, and our credentials don't work. So this
-        function grabs the CSV file, adds a few keys, and converts everything
-        into json.
-        """
-        bug = dict()
-
-        bug['id'] = row[0]
-        bug['type'] = row[1]
-        bug['cve'] = row[2]
-        bug['status'] = row[3]
-        bug['opened'] = row[4]
-        bug['closed'] = row[6]
-        bug['modified'] = row[8]
-        bug['summary'] = row[10]
-        bug['labels'] = row[11]
-
-        return bug
-
     def _save(self, directory, chunk, items, errors, switch):
         """
         Save the specified reviews to a json file in the reviews path
         associated with the specified year. Format according to the specified
         chunk. Log errors in a CSV file in the same directory.
         """
-        if switch not in ['bugs', 'reviews']:
-            raise ValueError('Argument switch must be \'bugs\' or \'reviews\'')
-
         if not os.path.exists(directory):
             os.mkdir(directory, mode=0o755)
 

@@ -1,5 +1,8 @@
 import re
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from app.lib import helpers
 
 HUNK_REGEX = re.compile(r'@@ -([\d]*),([\d]*) \+([\d]*),([\d]*) @@')

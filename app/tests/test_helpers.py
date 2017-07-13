@@ -2,9 +2,12 @@
 @AUTHOR: nuthanmunaiah
 """
 import csv
+import datetime
+import json
 import queue
+import tempfile
 
-from unittest import TestCase
+from unittest import TestCase, skip
 from collections import OrderedDict
 
 from app.lib import helpers
@@ -17,6 +20,53 @@ class HelpersTestCase(TestCase):
     def setUp(self):
         pass
 
+    def test_chunk(self):
+        data = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
+        expected = [
+                ['a', 'b'], ['c', 'd'], ['e', 'f'], ['g', 'h'], ['i', 'j'],
+                ['k']
+            ]
+        actual = list(helpers.chunk(data, 2))
+        self.assertListEqual(expected, actual)
+
+    def test_clean(self):
+        data = 'It would be great if we could land this if things look ok. I' \
+               ' will address michael\'s comments in a followup when he gets' \
+               ' back on the 5th.\n\nhttps://codereview.chromium.org/2956373' \
+               '002/diff/100001/content/browser/appcache/appcache_subresourc' \
+               'e_url_factory.h\nFile content/browser/appcache/appcache_subr' \
+               'esource_url_factory.h (right):\n\nhttps://codereview.chromiu' \
+               'm.org/2956373002/diff/100001/content/browser/appcache/appcac' \
+               'he_subresource_url_factory.h#newcode24\ncontent/browser/appc' \
+               'ache/appcache_subresource_url_factory.h:24: struct Subresour' \
+               'ceLoadInfo {\nOn 2017/06/30 01:31:15, jam wrote:\n> nit: why' \
+               ' is this in this header if it\'s not referenced in this file' \
+               '? seems like\n> it should be in appcache_request_handler.h?' \
+               '\n\nIt is populated in the factory cc file. I thought it is ' \
+               'better to have it there.'
+        expected = 'It would be great if we could land this if things look o' \
+                   'k. I will address michael\'s comments in a followup when' \
+                   ' he gets back on the 5th.\n\nIt is populated in the fact' \
+                   'ory cc file. I thought it is better to have it there.'
+        actual = helpers.clean(data)
+        self.assertEqual(expected, actual)
+
+    def test_get_elapsed(self):
+        data = (
+                datetime.datetime(2017, 1, 1, 0, 0, 0, 0),
+                datetime.datetime(2017, 1, 1, 0, 1, 0, 0)
+            )
+        expected = 1
+        actual = helpers.get_elapsed(*data)
+        self.assertEqual(expected, actual)
+
+    def test_get_json(self):
+        actual = helpers.get_json(
+                'https://codereview.chromium.org/api/201', None
+            )
+        self.assertTrue(type(actual) is tuple)
+        self.assertEqual(200, actual[0])
+        self.assertTrue(type(actual[1]) is dict)
 
     def test_get_verbs(self):
         keys, values = set(), set()
@@ -42,6 +92,37 @@ class HelpersTestCase(TestCase):
         expected = 'overshoot'
         for key in ['overshot', 'overshoots', 'overshooting']:
             self.assertEqual(expected, actual[key], msg='Key: {}'.format(key))
+
+    @skip('Skipping test as the functionality being tested is not complete.')
+    def test_line_changed(self):
+        # Sub-Test 1
+        line_number = 113
+        with open(DIFF_4001_5001_PATH, 'r') as f:
+            patch_a = f.read()
+        with open(DIFF_10001_11001_PATH, 'r') as f:
+            patch_b = f.read()
+
+        expected = True
+        actual = helpers.line_changed(line_number, patch_a, patch_b)
+        self.assertEqual(expected, actual)
+
+    def test_load_json_w_sanitization(self):
+        data = expected = {'message': 'hello world!!!'}
+        with tempfile.TemporaryDirectory() as tempdir:
+            filepath = os.path.join(tempdir, 'foo.json')
+            with open(filepath, 'w') as file:
+                json.dump(data, file)
+            actual = helpers.load_json(filepath, sanitize=True)
+            self.assertEqual(expected, actual)
+
+    def test_load_json_wo_sanitization(self):
+        data = expected = {'message': 'hello world!!!'}
+        with tempfile.TemporaryDirectory() as tempdir:
+            filepath = os.path.join(tempdir, 'foo.json')
+            with open(filepath, 'w') as file:
+                json.dump(data, file)
+            actual = helpers.load_json(filepath, sanitize=False)
+            self.assertEqual(expected, actual)
 
     def test_parse_bugids(self):
         data = [
@@ -154,6 +235,9 @@ class HelpersTestCase(TestCase):
 
         self.assertEqual(expected, actual)
 
+    def test_sleep(self):
+        helpers.sleep(1)
+
     def test_sort_exceptions(self):
         self.assertRaises(ValueError, helpers.sort, {}, by='foo')
         self.assertRaises(ValueError, helpers.sort, {}, cast='foo')
@@ -226,28 +310,16 @@ class HelpersTestCase(TestCase):
 
         self.assertListEqual(expected, actual)
 
-    def test_chunk(self):
-        data = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
-        expected = [['a', 'b'], ['c', 'd'], ['e', 'f'], ['g', 'h'], ['i', 'j'], ['k']]
-        actual = list(helpers.chunk(data, 2))
-        self.assertListEqual(expected, actual)
-
     def test_to_list(self):
         data = queue.Queue()
-        expected = list()
+        for i in range(0, 10):
+            data.put(i)
+        expected = list(range(0, 10))
         actual = helpers.to_list(data)
         self.assertListEqual(expected, actual)
 
-    #### INCOMPLETE FUNCTIONALITY ##############################################
-    def test_line_changed(self):
-        # Sub-Test 1
-        line_number = 113
-        with open(DIFF_4001_5001_PATH, 'r') as f:
-            patch_a = f.read()
-        with open(DIFF_10001_11001_PATH, 'r') as f:
-            patch_b = f.read()
-
-        expected = True
-        actual = helpers.line_changed(line_number, patch_a, patch_b)
+    def test_to_querystring(self):
+        data = {'messages': True}
+        expected = 'messages=True'
+        actual = helpers.to_querystring(data)
         self.assertEqual(expected, actual)
-    ############################################################################
