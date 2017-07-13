@@ -73,7 +73,7 @@ def stream(iqueue, settings, num_doers):
     f = files.Files(settings)
     for year in settings.YEARS:
         for bug in f.get_bugs(year):
-            iqueue.put(bug)
+            iqueue.put(f.transform_bug(bug))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)
