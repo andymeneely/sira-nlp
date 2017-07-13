@@ -32,6 +32,34 @@ class BugLoaderTestCase(test.TestCase):
         actual = list(Bug.objects.all().values_list('id', flat=True))
         self.assertCountEqual(expected, actual, msg='Data: Bug')
 
+        # Bug Type
+        expected = (
+                [   # 2012
+                    (138542, 'Bug')
+                ] +
+                [   # 2015
+                    (492263, 'Bug-Security'), (460986, 'Bug'), (517548, 'Bug'),
+                    (514551, 'Bug-Regression'), (514246, 'Bug-Regression'),
+                    (545318, 'Launch-OWP'), (542060, 'Bug-Security'),
+                    (528486, 'Bug'), (534718, 'Bug'), (522049, 'Bug'),
+                    (521057, 'Bug'), (521826, 'Bug'), (522587, 'Bug'),
+                    (522791, 'Bug-Security')
+                ] +
+                [   # 2016
+                    (620126, 'Bug'), (613918, 'Bug-Security'),
+                    (619379, 'Bug-Security'), (617492, 'Bug'),
+                    (624894, 'Feature'), (626102, 'Bug'), (627655, 'Bug'),
+                    (628110, 'Bug'), (625357, 'Bug'), (636539, 'Bug'),
+                    (576270, 'Bug'), (610176, 'Bug'), (609260, 'Bug-Security'),
+                    (613160, 'Bug-Security'), (602509, 'Bug'), (606056, 'Bug'),
+                    (607690, 'Bug'), (583485, 'Bug'), (584783, 'Bug'),
+                    (642598, 'Bug'), (628496, 'Bug')
+                ]
+            )
+
+        actual = list(Bug.objects.all().values_list('id', 'type'))
+        self.assertCountEqual(expected, actual, msg='Data: Bug Type')
+
         # Vulnerabilities
         expected = (
                 [   # 2015
@@ -59,7 +87,6 @@ class BugLoaderTestCase(test.TestCase):
                     ('CVE-2016-1702', 609260),
                     ('CVE-2016-5167', 613918),
                     ('CVE-2016-5167', 619379),
-                    ('CVE-2016-5167', 626102),
                     ('CVE-2016-5167', 642598)
                 ]
             )
