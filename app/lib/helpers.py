@@ -49,6 +49,20 @@ BUG_ID_PATTERNS = [
 ]
 JSON_NULL = json.dumps(None)
 
+# The two regular expressions that follow match components of the header text
+# that is automatically inserted when a developer responds to a comment on
+# Rietveld.
+# E.g. On 2008/01/01 at 00:00:01, Raymond Reddington wrote:
+
+# Match the date and time in header that is inserted to comment responses
+# E.g. 2008/01/01 at 00:00:01
+DATE_TIME_RE = re.compile(
+        '(?P<date>\d{4}/\d{2}/\d{2})(?:\s|\sat\s)(?P<time>\d{2}:\d{2}:\d{2})'
+    )
+# Match the name of the author in header that is inserted to comment response
+# E.g. Raymond Reddington
+AUTHOR_RE = re.compile(', (.*) wrote:')
+
 
 def enumerate_iter(iterable, offset=0, step=1):
     index = offset
@@ -72,42 +86,56 @@ def clean(text):
     return text
 
 
-DATE_TIME_RE = re.compile('(?P<date>\d{4}/\d{2}/\d{2})(?:\s|\sat\s)(?P<time>\d{2}:\d{2}:\d{2})')
-AUTHOR_RE = re.compile(', (.*) wrote:')
+def get_parent(raw, comments):
+    """Return parent of a comment.
 
+    Parameters
+    ----------
+    raw: str
+        The raw text of the comment message for which the parent is to be
+        identified.
+    comments: list
+        A list of instances of app.models.Comment representing the comments
+        that have already been processed. The list is used to look for the
+        parent of the comment represented by the raw text argument.
 
-def get_parent(raw_text, previous_comments):
-    quote_header = RESPONSE_HEAD_RE.findall(raw_text)
-    if quote_header != []:
-        t = [m.groupdict() for m in DATE_TIME_RE.finditer(quote_header[0])]
-        timestamp = (t[0]['date'] + " " + t[0]['time']).replace('/', '-')
-        author = AUTHOR_RE.findall(quote_header[0])[0]
+    Returns
+    -------
+    comment: object
+        An instance of app.models.Comment that represents the parent of the
+        comment specified using |raw|. None is returned if no parent was found.
+    """
+    match = RESPONSE_HEAD_RE.match(raw)
+    if match is not None:
+        # Extract date and time and author from comment reponse header
+        header = match.group(0)
 
-        matching_comments = []
-        for prev in previous_comments:
-            # Remove milliseconds since they do not appear in the quote.
-            prev_timestamp = prev.posted.split('.')[0]
-            # Find previous comments with the target timestamp.
-            if prev_timestamp == timestamp:
-                matching_comments.append(prev)
+        match = DATE_TIME_RE.search(header)
+        components = match.groupdict()
+        timestamp = '{date} {time}'.format(
+                date=components['date'].replace('/', '-'),
+                time=components['time']
+            )
 
-        # If there is only one matching comment, return its index
-        if len(matching_comments) == 1:
-            return previous_comments.index(matching_comments[0])
+        match = AUTHOR_RE.search(header)
+        author = match.group(1)
+
+        parents = list()
+        for comment in comments:
+            # Compare timestamps without milliseconds
+            if comment.posted[:comment.posted.index('.')] == timestamp:
+                parents.append(comment)
+
+        if len(parents) == 1:
+            # Only one parent found by timestamp matching. Return it.
+            return parents[0]
         else:
-            # If there are multiple matching comments, calculate the levenshtein
-            # distance between each previous comment and raw_text
-            distances = {}
-            for i, match in enumerate(matching_comments):
-                d = levenshtein_distance(match.text, raw_text)
-                distances[i] = d
-
-            # Find the index of the previous comment with the smallest
-            # levenshtein distance.
-            return min(distances, key=distances.get)
-    else:
-        return None
-
+            # Multiple parents found by timestamp matching. Use full text.
+            for comment in comments:
+                text = '> {}'.format(comment.text.replace(r'\n', r'\n> '))
+                if text in raw:
+                    return comment
+    return None
 
 
 def get_elapsed(begin, end):

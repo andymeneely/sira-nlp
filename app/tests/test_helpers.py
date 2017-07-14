@@ -13,6 +13,7 @@ from collections import OrderedDict
 from app.lib import helpers
 from app.lib.nlp import VERBS_PATH
 
+from app.tests import mocks
 from app.tests.testfiles import *
 
 
@@ -67,6 +68,117 @@ class HelpersTestCase(TestCase):
         self.assertTrue(type(actual) is tuple)
         self.assertEqual(200, actual[0])
         self.assertTrue(type(actual[1]) is dict)
+
+    def test_get_parent(self):
+        # Mocking Data
+        # Reference URI: /2886483002/diff/160001/net/http/http_cache_writers.cc
+        comments = list()
+
+        comment = mocks.Comment()
+        comment.id = 1
+        comment.posted = '2017-05-18 01:02:54.688440'
+        comment.line = 28
+        comment.author = 'rdsmith@chromium.org'
+        text = 'What drove adding the network transaction here rather than o' \
+               'n construction?  It\'s only the first HC::T that\'ll add a n' \
+               'etwork transaction, so having it as part of the AddTransacti' \
+               'on method feels a bit funny.  '
+        comment.text = text
+        comments.append(comment)
+
+        comment = mocks.Comment()
+        comment.id = 2
+        comment.posted = '2017-05-18 20:59:44.694320'
+        comment.line = 28
+        comment.author = 'shivanisha@chromium.org'
+        text = 'I am hoping writers can be a member variable of ActiveEntry ' \
+               'instead of a unique_ptr and in that case writers will be cre' \
+               'ated even before a transaction is added to it.'
+        comment.text = text
+        comments.append(comment)
+
+        comment = mocks.Comment()
+        comment.id = 3
+        comment.posted = '2017-05-24 23:09:18.829590'
+        comment.line = 28
+        comment.author = 'rdsmith@chromium.org'
+        text = 'Hmmm.  Ok.  There\'s a range of design choices here, and I d' \
+               'on\'t have a strong feeling that one is better than the othe' \
+               'r, but keep the other ones (unique_ptr, separate methods for' \
+               ' adding network transaction & HC::Ts, separate methods for a' \
+               'dding the first transaction and adding subsequent ones, this' \
+               ' method but destroying other network transactions when they ' \
+               'come in) in mind as possibilities and make a conscious decis' \
+               'ion among them.  '
+        comment.text = text
+        comments.append(comment)
+
+        comment = mocks.Comment()
+        comment.id = 4
+        comment.posted = '2017-05-24 23:09:18.990390'
+        comment.line = 28
+        comment.author = 'rdsmith@chromium.org'
+        text = 'Worthwhile adding a DCHECK that network_transaction_ wasn\'t' \
+               ' already set?'
+        comment.text = text
+        comments.append(comment)
+
+        comment = mocks.Comment()
+        comment.id = 5
+        comment.posted = '2017-05-31 19:21:26.490670'
+        comment.line = 28
+        comment.author = 'shivanisha@chromium.org'
+        text = 'Done'
+        comment.text = text
+        comments.append(comment)
+
+        comment = mocks.Comment()
+        comment.id = 6
+        comment.posted = '2017-05-31 19:21:26.567530'
+        comment.line = 28
+        comment.author = 'shivanisha@chromium.org'
+        text = 'Added the dcheck'
+        comment.text = text
+        comments.append(comment)
+
+        # Case: No parent
+        data = 'Worthwhile adding a DCHECK that network_transaction_ wasn\'t' \
+               ' already set?'
+        actual = helpers.get_parent(data, comments)
+        self.assertIsNone(actual, msg='None')
+
+        # Case: Single
+        data = 'On 2017/05/18 at 01:02:54, Randy Smith (Not in Mondays) wrot' \
+               'e:\n> What drove adding the network transaction here rather ' \
+               'than on construction?  It\'s only the first HC::T that\'ll a' \
+               'dd a network transaction, so having it as part of the AddTra' \
+               'nsaction method feels a bit funny.\n\nI am hoping writers ca' \
+               'n be a member variable of ActiveEntry instead of a unique_pt' \
+               'r and in that case writers will be created even before a tra' \
+               'nsaction is added to it.'
+        expected = None
+        for comment in comments:
+            if comment.id == 1:
+                expected = comment
+                break
+        actual = helpers.get_parent(data, comments)
+
+        self.assertEqual(expected.id, actual.id, msg='ID: Single')
+        self.assertEqual(expected.text, actual.text, msg='Text: Single')
+
+        # Case: Multiple
+        data = 'On 2017/05/24 at 23:09:18, Randy Smith (Not in Mondays) wrot' \
+               'e:\n> Worthwhile adding a DCHECK that network_transaction_ w' \
+               'asn\'t already set?\n\nDone'
+        expected = None
+        for comment in comments:
+            if comment.id == 4:
+                expected = comment
+                break
+        actual = helpers.get_parent(data, comments)
+
+        self.assertEqual(expected.id, actual.id, msg='ID: Multiple')
+        self.assertEqual(expected.text, actual.text, msg='Text: Multiple')
 
     def test_get_verbs(self):
         keys, values = set(), set()

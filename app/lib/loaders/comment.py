@@ -20,12 +20,12 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break
-            continue # pragma: no cover
+            continue  # pragma: no cover
         count += item
     oqueue.put(count)
 
 
-def do(iqueue, cqueue): # pragma: no cover
+def do(iqueue, cqueue):  # pragma: no cover
     while True:
         item = iqueue.get()
         if item == parallel.EOI:
@@ -39,7 +39,7 @@ def do(iqueue, cqueue): # pragma: no cover
             try:
                 for (author, psid, ps) in patchsets:
                     patchset = PatchSet(
-                            review=review, id=psid, created = ps['created']
+                            review=review, id=psid, created=ps['created']
                         )
                     patchset.save()
 
@@ -54,29 +54,27 @@ def do(iqueue, cqueue): # pragma: no cover
 
                         files.append(path)
                         if 'messages' in p:
-                            previous = []
+                            previous = dict()
                             for i, m in enumerate(p['messages']):
+                                line = m['lineno']
+                                if line not in previous:
+                                    previous[line] = list()
                                 comment = Comment(
                                         patch=patch, posted=m['date'],
-                                        line=m['lineno'],
-                                        author=m['author_email'],
+                                        line=line, author=m['author_email'],
                                         text=helpers.clean(m['text']),
-                                        by_reviewer=m['author_email']!=author
+                                        by_reviewer=m['author_email'] != author
+                                    )
+                                comment.parent = helpers.get_parent(
+                                        m['text'], previous[line]
                                     )
                                 comment.save()
-                                # Find the parent of this comment.
-                                parent_index = helpers.get_parent(
-                                        m['text'], previous
-                                    )
-                                if parent_index is not None:
-                                    comment.parent = previous[parent_index]
-                                    comment.save()
-                                previous.append(comment)
+                                previous[line].append(comment)
                                 cnt += 1
                     if files:
                         patchset.files = files
                         patchset.save()
-            except Error as err: # pragma: no cover
+            except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Review  {}\n'.format(review.id))
                 extype, exvalue, extrace = sys.exc_info()
