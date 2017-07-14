@@ -42,7 +42,7 @@ class Files(object):
         year = self.get_year(id, switch='bugs') if year is None else year
         directory = self.get_bugs_path(year)
         for path in self._get_files(directory, pattern='bugs.*.json'):
-            bugs = helpers.load_json(path, sanitize=False)
+            bugs = helpers.load_json(path)
             for bug in bugs:
                 if id == bug['id']:
                     return bug
