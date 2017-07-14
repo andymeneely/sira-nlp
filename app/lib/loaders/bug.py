@@ -58,11 +58,13 @@ def do(iqueue, cqueue):  # pragma: no cover
             break
 
         type, cves = '', list()
-        for label in item['labels']:
-            if label.startswith('Type-'):
-                type = label.replace('Type-', '')
-            if label.startswith('CVE-'):
-                cves.append(label)
+        if 'labels' in item:
+            for label in item['labels']:
+                if label.startswith('Type-'):
+                    type = label.replace('Type-', '')
+                if label.startswith('CVE-'):
+                    cves.append(label)
+
         bug = Bug(
                 id=item['id'], type=type, status=item['status'], document=item
             )
