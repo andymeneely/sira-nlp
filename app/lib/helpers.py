@@ -34,7 +34,7 @@ CODEREVIEW_URL_RE = re.compile(  # pragma: no cover
 # Subsequent new lines
 NEWLINES_RE = re.compile('(^$\n)+', flags=re.MULTILINE)
 # Match unicode NULL character sequence
-NULL_RE = re.compile(r'(\\|\\\\)u0000')
+NULL_RE = re.compile(r'\\+u0000')
 # Match the bug ID(s) in the code review description
 BUG_ID_RE = re.compile('BUG=(.*)')
 # Bug identifiers can have one of the following patterns prefixed or suffixed
