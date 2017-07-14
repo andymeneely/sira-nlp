@@ -53,7 +53,7 @@ class Command(BaseCommand):
         rietveld = Rietveld()
         files = Files(settings)
         try:
-            ids = files.get_ids(year)
+            ids = files.get_ids(year, switch='reviews')
             chunks = list(chunk(ids, chunksize))
             for (i, chnk) in enumerate(chunks):
                 (reviews, errors) = rietveld.get_reviews(chnk, processes)
