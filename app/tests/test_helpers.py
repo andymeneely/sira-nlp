@@ -157,7 +157,7 @@ class HelpersTestCase(TestCase):
                'r and in that case writers will be created even before a tra' \
                'nsaction is added to it.'
         expected = None
-        for comment in comments:
+        for comment in comments:  # pragma: no cover
             if comment.id == 1:
                 expected = comment
                 break
@@ -171,7 +171,7 @@ class HelpersTestCase(TestCase):
                'e:\n> Worthwhile adding a DCHECK that network_transaction_ w' \
                'asn\'t already set?\n\nDone'
         expected = None
-        for comment in comments:
+        for comment in comments:  # pragma: no cover
             if comment.id == 4:
                 expected = comment
                 break

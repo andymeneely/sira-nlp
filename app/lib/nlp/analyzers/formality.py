@@ -50,7 +50,7 @@ class FormalityAnalyzer(analyzers.Analyzer):
 
         return {"formal": probs[0][1], "informal": probs[0][0]}
 
-    def analyze(self):
+    def analyze(self):  # pragma: no cover
         formality = DEFAULT_FORMALITY.copy()
         if self.text.strip() == '':
             return formality

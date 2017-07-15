@@ -72,7 +72,7 @@ class Comment(models.Model):
     parent = models.ForeignKey('comment', null=True)
     sentences = models.ManyToManyField('Sentence')
 
-    def to_dict(self):
+    def to_dict(self):  # pragma: no cover
         d = {}
         d['id'] = self.id
         d['posted'] = self.posted

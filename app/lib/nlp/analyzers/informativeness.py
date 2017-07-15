@@ -50,7 +50,7 @@ class InformativenessAnalyzer(analyzers.Analyzer):
 
         return {"informative": probs[0][1], "uninformative": probs[0][0]}
 
-    def analyze(self):
+    def analyze(self):  # pragma: no cover
         informativeness = DEFAULT_INFORMATIVENESS.copy()
         if self.text.strip() == '':
             return informativeness

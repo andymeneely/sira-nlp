@@ -50,7 +50,7 @@ class ImplicatureAnalyzer(analyzers.Analyzer):
 
         return {"implicative": probs[0][1], "unimplicative": probs[0][0]}
 
-    def analyze(self):
+    def analyze(self):  # pragma: no cover
         implicature = DEFAULT_IMPLICATURE.copy()
         if self.text.strip() == '':
             return implicature

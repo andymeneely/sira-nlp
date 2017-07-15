@@ -15,7 +15,7 @@ from splat.complexity import levenshtein_distance
 
 import requests
 
-from app.lib import patch
+from app.lib import patch, logger
 
 # Match the line of header that marks the beginning of quoted text.
 # E.g., On 2008/01/01 00:00:01, Raymond Reddington wrote:
@@ -111,6 +111,9 @@ def get_parent(raw, comments):
         header = match.group(0)
 
         match = DATE_TIME_RE.search(header)
+        if match is None:
+            logger.error("NONE: " + str(raw))
+            return None
         components = match.groupdict()
         timestamp = '{date} {time}'.format(
                 date=components['date'].replace('/', '-'),
@@ -123,7 +126,10 @@ def get_parent(raw, comments):
         parents = list()
         for comment in comments:
             # Compare timestamps without milliseconds
-            if comment.posted[:comment.posted.index('.')] == timestamp:
+            ind = len(comment.posted)
+            if '.' in comment.posted:
+                ind = comment.posted.index('.')
+            if comment.posted[:ind] == timestamp:
                 parents.append(comment)
 
         if len(parents) == 1:
