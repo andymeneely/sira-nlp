@@ -133,3 +133,12 @@ class SentenceParseAnalyzerTestCase(TestCase):
         actual = analyzers.SentenceParseAnalyzer(data).analyze()
         self.assertEqual(expected['trees'], actual['trees'])
         self.assertListEqual(expected['deps'], actual['deps'])
+
+    def test_failing(self):
+        data = {
+                "This roll was created by the Blink AutoRollBot.": ""
+            }
+
+        for k, v in data.items():
+            actual = analyzers.SentenceParseAnalyzer(k).analyze()
+            print(actual)

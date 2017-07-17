@@ -140,3 +140,40 @@ class SentenceparseTestCase(test.TestCase):
         for dep in parses['deps']:
             actual.append(clean_depparse(dep))
         self.assertListEqual(sorted(expected), sorted(actual))
+
+
+    def test_failing(self):
+        data = {
+                "This roll was created by the Blink AutoRollBot.":
+                    "( (S (NP (DT This) (NN roll)) (VP (VBD was) (VP (VBN creat"
+                    "ed) (PP (IN by) (NP (DT the) (NNP Blink) (NNP AutoRollBot)"
+                    ")))) (. .)))",
+                "This is the code that works on content-shell.":
+                    "( (S (NP (DT This)) (VP (VBZ is) (NP (NP (DT the) (NN code"
+                    ")) (SBAR (WHNP (WDT that)) (S (VP (VBZ works) (PP (IN on) "
+                    "(NP (NN content-shell)))))))) (. .)))",
+                "AFAIK no bug is filed.":
+                    "( (FRAG (NP (NP (NNP AFAIK)) (SBAR (S (NP (DT no) (NN bug)"
+                    ") (VP (VBZ is) (VP (VBN filed)))))) (. .)))",
+                "Is there any crbug.com issue for it?":
+                    "( (SQ (VBZ Is) (NP (EX there)) (NP (DT any) (NN crbug.com)"
+                    " (NN issue)) (PP (IN for) (NP (PRP it))) (. ?)))",
+                "Someone is trying to get this fixed in C++ standard, see https"
+                "://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/"
+                "I8N_75J9ZB8, but it's only going to be supported in the next C"
+                "++ version :)":
+                    "( (SINV (S (NP (NN Someone)) (VP (VBZ is) (VP (VBG trying)"
+                    " (S (VP (TO to) (VP (VB get) (S (NP (DT this)) (VP (VBN fi"
+                    "xed) (PP (IN in) (NP (NNP C++) (NN standard))))))))))) (, "
+                    ",) (VP (VB see) (NP (NP (NP (NN https://groups.google.com/"
+                    "a/isocpp.org/forum/#!topic/std-proposals/I8N_75J9ZB8)) (, "
+                    ",) (CC but) (SBAR (S (NP (PRP it)) (VP (VBZ 's) (ADVP (RB "
+                    "only)) (VP (VBG going) (S (VP (TO to) (VP (VB be) (VP (VBN"
+                    " supported) (PP (IN in) (NP (DT the) (JJ next) (NNP C++) ("
+                    "NN version)))))))))))) (: :) (-RRB- -RRB-)))))"
+            }
+
+        for k, v in data.items():
+            parses = SentenceParseAnalyzer(k).analyze()
+            tree = clean_treeparse(parses['trees'])
+            self.assertEqual(v, tree)
