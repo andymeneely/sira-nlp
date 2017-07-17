@@ -115,6 +115,50 @@ class HelpersTestCase(TestCase):
         self.assertEqual(200, actual[0])
         self.assertTrue(type(actual[1]) is dict)
 
+    def test_get_module_path(self):
+        data = [
+          'gpu/gpu.gyp',
+          'tests/MatrixTest.cpp',
+          'chrome/renderer/content_settings_observer.cc',
+          'chrome/browser/devtools/devtools_window.cc',
+          'gm/cubicpaths.cpp',
+          'AUTHORS',
+          'src/vm/service_api_impl.cc',
+          'chrome/browser/devtools/devtools_window.h',
+          'chrome/browser/guest_view/chrome_guest_view_manager_delegate.cc',
+          'chrome/browser/task_management/sampling/shared_sampler.h',
+          'chrome/browser/task_manager/providers/web_contents/panel_task.cc',
+          'components/memory_coordinator/public/interfaces/child_memory_coordi'
+          'nator.mojom',
+          'content/browser/accessibility/browser_accessibility_auralinux.cc',
+          'content/ppapi_plugin/ppapi_thread.h',
+          'content/renderer/device_sensors/device_orientation_event_pump_unitt'
+          'est.cc',
+          'content/shell/browser/shell_content_browser_client.cc',
+          'content/shell/browser/shell_devtools_manager_delegate.h'
+        ]
+        expected = [
+          'gpu',
+          'tests',
+          'chrome/renderer',
+          'chrome/browser/devtools',
+          'gm',
+          '',
+          'src/vm',
+          'chrome/browser/devtools',
+          'chrome/browser/guest_view',
+          'chrome/browser/task_management/sampling',
+          'chrome/browser/task_manager/providers/web_contents',
+          'components/memory_coordinator/public/interfaces',
+          'content/browser/accessibility',
+          'content/ppapi_plugin',
+          'content/renderer/device_sensors',
+          'content/shell/browser',
+          'content/shell/browser'
+        ]
+        actual = [helpers.get_module_path(item) for item in data]
+        self.assertEqual(expected, actual)
+
     def test_get_parent(self):
         # Mocking Data
         # Reference URI: /2886483002/diff/160001/net/http/http_cache_writers.cc

@@ -165,6 +165,11 @@ def get_json(url, parameters):
     return (status, json)
 
 
+def get_module_path(filepath):
+    """Return module path deduced from a filepath"""
+    return os.path.dirname(filepath)
+
+
 def get_row(model, *args, **kwargs):
     """
     This is a wrapper for a database lookup. Returns None if the specified
