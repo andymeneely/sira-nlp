@@ -3,12 +3,14 @@
 @AUTHOR: meyersbs
 """
 
+import codecs
 import csv
 import json
 import os
 import random
 import re
 import time
+import unicodedata
 
 from collections import OrderedDict
 from splat.complexity import levenshtein_distance
@@ -309,3 +311,9 @@ def line_changed(line_number, patch_a, patch_b):
         return True
     else:
         return False
+
+def to_json(response):
+    r = ''.join(
+            char for char in response if unicodedata.category(char)[0]!="C"
+        )
+    return json.loads(r)

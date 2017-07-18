@@ -63,3 +63,14 @@ class SentimentAnalyzerTestCase(TestCase):
         expected = {'vpos': 0, 'pos': 0, 'neut': 0, 'neg': 1, 'vneg': 0}
         actual = analyzers.SentimentAnalyzer(data).analyze()
         self.assertEqual(expected, actual, msg=data[:50])
+
+    def test_issue_21(self):
+        '''Unit test the fix for issue #21
+
+        See https://github.com/andymeneely/sira-nlp/issues/21 for more
+        information.
+        '''
+        data = 'I am the \x1a walrus.'
+        expected = {'vpos': 0, 'pos': 0, 'neut': 1, 'neg': 0, 'vneg': 0}
+        actual = analyzers.SentimentAnalyzer(data).analyze()
+        self.assertEqual(expected, actual, msg=data[:50])

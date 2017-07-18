@@ -21,6 +21,52 @@ class HelpersTestCase(TestCase):
     def setUp(self):
         pass
 
+    def test_to_json(self):
+        data = (
+                '{"sentences":[{"index":0,"parse":"(ROOT\\n  (S\\n    (NP (PRP '
+                'I))\\n    (VP (VBP am)\\n      (NP (DT the) (NN walrus)))\\n  '
+                '  (. .)))","basicDependencies":[{"dep":"ROOT","governor":0,"go'
+                'vernorGloss":"ROOT","dependent":4,"dependentGloss":"walrus"},{'
+                '"dep":"nsubj","governor":4,"governorGloss":"walrus","dependent'
+                '":1,"dependentGloss":"I"},{"dep":"cop","governor":4,"governorG'
+                'loss":"walrus","dependent":2,"dependentGloss":"am"},{"dep":"de'
+                't","governor":4,"governorGloss":"walrus","dependent":3,"depend'
+                'entGloss":"the"},{"dep":"punct","governor":4,"governorGloss":"'
+                'walrus","dependent":5,"dependentGloss":"."}],"enhancedDependen'
+                'cies":[{"dep":"ROOT","governor":0,"governorGloss":"ROOT","depe'
+                'ndent":4,"dependentGloss":"walrus"},{"dep":"nsubj","governor":'
+                '4,"governorGloss":"walrus","dependent":1,"dependentGloss":"I"}'
+                ',{"dep":"cop","governor":4,"governorGloss":"walrus","dependent'
+                '":2,"dependentGloss":"am"},{"dep":"det","governor":4,"governor'
+                'Gloss":"walrus","dependent":3,"dependentGloss":"the"},{"dep":"'
+                'punct","governor":4,"governorGloss":"walrus","dependent":5,"de'
+                'pendentGloss":"."}],"enhancedPlusPlusDependencies":[{"dep":"RO'
+                'OT","governor":0,"governorGloss":"ROOT","dependent":4,"depende'
+                'ntGloss":"walrus"},{"dep":"nsubj","governor":4,"governorGloss"'
+                ':"walrus","dependent":1,"dependentGloss":"I"},{"dep":"cop","go'
+                'vernor":4,"governorGloss":"walrus","dependent":2,"dependentGlo'
+                'ss":"am"},{"dep":"det","governor":4,"governorGloss":"walrus","'
+                'dependent":3,"dependentGloss":"the"},{"dep":"punct","governor"'
+                ':4,"governorGloss":"walrus","dependent":5,"dependentGloss":"."'
+                '}],"sentimentValue":"2","sentiment":"Neutral","tokens":[{"inde'
+                'x":1,"word":"I","originalText":"I","characterOffsetBegin":0,"c'
+                'haracterOffsetEnd":1,"pos":"PRP","before":"","after":" "},{"in'
+                'dex":2,"word":"am","originalText":"am","characterOffsetBegin":'
+                '2,"characterOffsetEnd":4,"pos":"VBP","before":" ","after":" "}'
+                ',{"index":3,"word":"the","originalText":"the","characterOffset'
+                'Begin":5,"characterOffsetEnd":8,"pos":"DT","before":" ","after'
+                '":" \x1a "},{"index":4,"word":"walrus","originalText":"walrus"'
+                ',"characterOffsetBegin":11,"characterOffsetEnd":17,"pos":"NN",'
+                '"before":" \x1a ","after":""},{"index":5,"word":".","originalT'
+                'ext":".","characterOffsetBegin":17,"characterOffsetEnd":18,"po'
+                's":".","before":"","after":""}]}]}'
+            )
+
+        expected = {'sentences': [{'sentimentValue': '2', 'tokens': [{'after': ' ', 'originalText': 'I', 'pos': 'PRP', 'characterOffsetEnd': 1, 'characterOffsetBegin': 0, 'word': 'I', 'index': 1, 'before': ''}, {'after': ' ', 'originalText': 'am', 'pos': 'VBP', 'characterOffsetEnd': 4, 'characterOffsetBegin': 2, 'word': 'am', 'index': 2, 'before': ' '}, {'after': '  ', 'originalText': 'the', 'pos': 'DT', 'characterOffsetEnd': 8, 'characterOffsetBegin': 5, 'word': 'the', 'index': 3, 'before': ' '}, {'after': '', 'originalText': 'walrus', 'pos': 'NN', 'characterOffsetEnd': 17, 'characterOffsetBegin': 11, 'word': 'walrus', 'index': 4, 'before': '  '}, {'after': '', 'originalText': '.', 'pos': '.', 'characterOffsetEnd': 18, 'characterOffsetBegin': 17, 'word': '.', 'index': 5, 'before': ''}], 'parse': '(ROOT\n  (S\n    (NP (PRP I))\n    (VP (VBP am)\n      (NP (DT the) (NN walrus)))\n    (. .)))', 'sentiment': 'Neutral', 'basicDependencies': [{'governor': 0, 'governorGloss': 'ROOT', 'dependent': 4, 'dep': 'ROOT', 'dependentGloss': 'walrus'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 1, 'dep': 'nsubj', 'dependentGloss': 'I'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 2, 'dep': 'cop', 'dependentGloss': 'am'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 3, 'dep': 'det', 'dependentGloss': 'the'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 5, 'dep': 'punct', 'dependentGloss': '.'}], 'index': 0, 'enhancedDependencies': [{'governor': 0, 'governorGloss': 'ROOT', 'dependent': 4, 'dep': 'ROOT', 'dependentGloss': 'walrus'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 1, 'dep': 'nsubj', 'dependentGloss': 'I'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 2, 'dep': 'cop', 'dependentGloss': 'am'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 3, 'dep': 'det', 'dependentGloss': 'the'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 5, 'dep': 'punct', 'dependentGloss': '.'}], 'enhancedPlusPlusDependencies': [{'governor': 0, 'governorGloss': 'ROOT', 'dependent': 4, 'dep': 'ROOT', 'dependentGloss': 'walrus'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 1, 'dep': 'nsubj', 'dependentGloss': 'I'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 2, 'dep': 'cop', 'dependentGloss': 'am'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 3, 'dep': 'det', 'dependentGloss': 'the'}, {'governor': 4, 'governorGloss': 'walrus', 'dependent': 5, 'dep': 'punct', 'dependentGloss': '.'}]}]}
+
+        actual = helpers.to_json(data)
+        self.assertDictEqual(expected, actual)
+
     def test_chunk(self):
         data = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
         expected = [

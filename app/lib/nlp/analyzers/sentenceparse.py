@@ -9,7 +9,7 @@ import requests
 
 from requests.exceptions import RequestException
 
-from app.lib.helpers import JSON_NULL
+from app.lib.helpers import JSON_NULL, to_json
 from app.lib.nlp import analyzers
 
 HEADERS = {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'}
@@ -40,7 +40,7 @@ class SentenceParseAnalyzer(analyzers.Analyzer):
                     data=self.text.encode('UTF-8')
                 )
             response.raise_for_status()
-            for sentence in response.json()['sentences']:
+            for sentence in to_json(response.text)['sentences']:
                 parse['trees'] = sentence['parse']
                 parse['deps'] = sentence['enhancedPlusPlusDependencies']
 #            return parse
