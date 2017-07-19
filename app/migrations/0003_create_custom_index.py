@@ -15,11 +15,11 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             'CREATE INDEX review_document_reviewed_files_idx '
             'ON review USING GIN'
-            '((document -> \'reviewed_files\') jsonb_path_ops);'
+            '((document -> \'reviewed_files\'));'
         ),
         migrations.RunSQL(
             'CREATE INDEX review_document_committed_files_idx '
             'ON review USING GIN'
-            '((document -> \'committed_files\') jsonb_path_ops);'
+            '((document -> \'committed_files\'));'
         )
     ]
