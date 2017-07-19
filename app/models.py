@@ -32,6 +32,7 @@ class PatchSet(models.Model):
 
     created = models.DateTimeField()
     files = fields.ArrayField(models.CharField(max_length=255), default=list)
+    modules = fields.ArrayField(models.CharField(max_length=255), default=list)
 
     # Navigation Fields
     review = models.ForeignKey('Review')
@@ -45,7 +46,8 @@ class Patch(models.Model):
     _id = models.AutoField(primary_key=True)  # Hack
     id = models.BigIntegerField()
 
-    path = models.CharField(max_length=255)
+    file_path = models.CharField(max_length=255)
+    module_path = models.CharField(max_length=255)
     num_added = models.IntegerField(default=0)
     num_removed = models.IntegerField(default=0)
 
