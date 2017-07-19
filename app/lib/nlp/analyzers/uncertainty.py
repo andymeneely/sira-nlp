@@ -26,6 +26,8 @@ class UncertaintyAnalyzer(analyzers.Analyzer):
         self.root = root_type
 
     def analyze(self):
+        uncertainty = None
+
         try:
             tok_list = []
             if self.root == "stem":
@@ -38,7 +40,7 @@ class UncertaintyAnalyzer(analyzers.Analyzer):
             uncertainty = classifier.predict(tok_list)
         except Exception as error:  # pragma: no cover
             sys.stderr.write('Exception\n')
-            sys.stderr.write('  Text: {}\n'.format(self.text[:50]))
+            sys.stderr.write('  Tokens: {}\n'.format(self.tokens[:10]))
             extype, exvalue, extrace = sys.exc_info()
             traceback.print_exception(extype, exvalue, extrace)
 
