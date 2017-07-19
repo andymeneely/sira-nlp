@@ -103,7 +103,6 @@ class Command(BaseCommand):
         """
         processes = options['processes']
         condition = options['condition']
-        stanford = options['stanford']
         year = options['year']
         begin = dt.now()
         try:
