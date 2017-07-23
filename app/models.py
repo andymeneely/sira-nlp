@@ -24,6 +24,7 @@ class Review(models.Model):
 
     class Meta:
         db_table = 'review'
+        indexes = [models.Index(['created'], 'review_created_idx')]
 
 
 class PatchSet(models.Model):
