@@ -68,6 +68,7 @@ class Comment(models.Model):
     text = models.TextField(default='')
     is_useful = models.BooleanField(default=False)
     by_reviewer = models.BooleanField(default=False)
+    metrics = fields.JSONField(default=dict)
 
     # Navigation Fields
     patch = models.ForeignKey('patch')
