@@ -6,7 +6,7 @@ import multiprocessing
 import sys
 import traceback
 
-from django.db import Error, transaction
+from django.db import connection, Error, transaction
 
 from app.lib import files, helpers, loaders
 from app.lib.utils import parallel
@@ -20,8 +20,8 @@ def aggregate(oqueue, cqueue, num_doers):
         if item == parallel.DD:
             done += 1
             if done == num_doers:
-                break  # All doers are done
-            continue # pragma: no cover
+                break   # All doers are done
+            continue  # pragma: no cover
 
         (review, bug_ids) = item
         try:
@@ -36,7 +36,7 @@ def aggregate(oqueue, cqueue, num_doers):
                 if review_bugs:
                     ReviewBug.objects.bulk_create(review_bugs)
                 count += 1
-        except Error as err: # pragma: no cover
+        except Error as err:  # pragma: no cover
             sys.stderr.write('Exception\n')
             sys.stderr.write('  Review  {}\n'.format(review.id))
             extype, exvalue, extrace = sys.exc_info()
@@ -45,7 +45,7 @@ def aggregate(oqueue, cqueue, num_doers):
     oqueue.put(count)
 
 
-def do(iqueue, cqueue): # pragma: no cover
+def do(iqueue, cqueue):  # pragma: no cover
     while True:
         item = iqueue.get()
         if item == parallel.EOI:
@@ -59,7 +59,6 @@ def do(iqueue, cqueue): # pragma: no cover
             )
         bug_ids = set(helpers.parse_bugids(item['description']))
 
-        #print("REVIEW: " + str(review.id))
         cqueue.put((review, bug_ids))
 
 
@@ -90,7 +89,18 @@ class ReviewLoader(loaders.Loader):
         count = parallel.run(do, aggregate, iqueue, self.num_processes)
         process.join()
 
+        self._cluster()
+
         return count
+
+    def _cluster(self):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('CLUSTER review USING review_created_idx')
+        except Error as err:
+            sys.stderr.write('Exception\n')
+            extype, exvalue, extrace = sys.exc_info()
+            traceback.print_exception(extype, exvalue, extrace)
 
     def _start_streaming(self, iqueue):
         process = multiprocessing.Process(
