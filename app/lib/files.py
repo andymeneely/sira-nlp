@@ -305,19 +305,25 @@ class Files(object):
         """
         patchsets = review['patchsets']
 
-        reviewed_files = set()
+        reviewed_files, reviewed_modules = set(), set()
         for (_, patchset) in patchsets.items():
             for file in patchset['files']:
                 reviewed_files.add(file)
+                reviewed_modules.add(helpers.get_module_path(file))
 
         patchsets = helpers.sort(patchsets, by='key', cast=int, desc=True)
-        committed_files = None
+        committed_files, committed_modules = None, None
         for (_, patchset) in patchsets.items():
             committed_files = set(list(patchset['files'].keys()))
+            committed_modules = set([
+                    helpers.get_module_path(file) for file in committed_files
+                ])
             break
 
         review['reviewed_files'] = list(reviewed_files)
+        review['reviewed_modules'] = list(reviewed_modules)
         review['committed_files'] = list(committed_files)
+        review['committed_modules'] = list(committed_modules)
 
         return review
 

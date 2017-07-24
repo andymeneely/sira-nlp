@@ -36,6 +36,280 @@ ALL_SIDS, FIXED_SIDS, MISSED_SIDS, NEUTRAL_SIDS, NM_SIDS, NF_SIDS, \
 TABLES = ['review', 'message', 'comment', 'patch', 'patchset', 'sentence',
           'token', 'bug', 'vulnerability']
 
+
+def get_project_experience(comment):
+    """Return review experience of author of comment at the project level.
+
+    Parameters
+    ----------
+    comment: object
+        An instance of app.models.Comment that contains the email address of
+        the developer and the timestamp at which the comment was posted. The
+        review experience metrics collected will include all reviews before the
+        timestamp.
+
+    Returns
+    -------
+    experience: dict
+        A dictionary with two keys---uniform and proportional---with values
+        being the review experience of a developer at the time the comment was
+        posted. The review experience associated with the two keys (i.e.
+        uniform and proportional) represent two variants of the review
+        experience metrics that differ in the way contribution in a code review
+        is quantified. In case of the uniform variant, all reviewers
+        participating in a review are assumed to have contributed uniformly. In
+        case of the proportional variant, the review contribution is
+        proportional to the number of comments posted by a reviewer.
+    """
+    experience = {'uniform': None, 'proportional': None}
+
+    params = {'date': comment.posted, 'reviewer': comment.author}
+
+    # Variant: Uniform
+    query = '''
+        SELECT SUM(1::float / jsonb_array_length(document -> 'reviewers')) /
+          (SELECT COUNT(*) FROM review WHERE created < %(date)s)
+        FROM review
+        WHERE document -> 'reviewers' ? %(reviewer)s AND created < %(date)s;
+    '''
+    experience['uniform'] = _get_row(query, params)
+
+    # Variant: Proportional
+    query = '''
+        SELECT SUM(i.num_comments / i.total_num_comments::float) /
+          (SELECT COUNT(*) FROM review WHERE created < %(date)s)
+        FROM
+        (
+          SELECT
+            (
+              SELECT COUNT(*)
+              FROM comment c
+                JOIN patch p ON p._id = c.patch_id
+                JOIN patchset ps ON ps._id = p.patchset_id
+                JOIN review r ON r.id = ps.review_id
+              WHERE ps.review_id = rr.id AND c.author = %(reviewer)s
+            ) "num_comments",
+            (
+              SELECT COUNT(*)
+              FROM comment c
+                JOIN patch p ON p._id = c.patch_id
+                JOIN patchset ps ON ps._id = p.patchset_id
+                JOIN review r ON r.id = ps.review_id
+              WHERE ps.review_id = rr.id AND c.by_reviewer IS true
+            ) "total_num_comments"
+          FROM review rr
+          WHERE rr.document -> 'reviewers' ? %(reviewer)s AND
+            rr.created < %(date)s
+        ) AS i
+        WHERE i.total_num_comments > 0;
+    '''
+    experience['proportional'] = _get_row(query, params)
+
+    return experience
+
+
+def get_module_experience(comment):
+    """Return review experience of author of comment at the module level.
+
+    Parameters
+    ----------
+    comment: object
+        An instance of app.models.Comment that contains the email address of
+        the developer and the timestamp at which the comment was posted. The
+        review experience metrics collected will include all reviews before the
+        timestamp.
+
+    Returns
+    -------
+    experience: dict
+        A dictionary with two keys---uniform and proportional---with values
+        being the review experience of a developer at the time the comment was
+        posted. The review experience associated with the two keys (i.e.
+        uniform and proportional) represent two variants of the review
+        experience metrics that differ in the way contribution in a code review
+        is quantified. In case of the uniform variant, all reviewers
+        participating in a review are assumed to have contributed uniformly. In
+        case of the proportional variant, the review contribution is
+        proportional to the number of comments posted by a reviewer.
+    """
+    experience = {'uniform': None, 'proportional': None}
+
+    params = {
+            'date': comment.posted, 'reviewer': comment.author,
+            'module': comment.patch.module_path
+        }
+
+    # Variant: Uniform
+    query = '''
+        SELECT SUM(1::float / jsonb_array_length(document -> 'reviewers')) /
+          (
+            SELECT COUNT(*) FROM review
+            WHERE created < %(date)s AND
+              document -> 'reviewed_modules' ? %(module)s
+          )
+        FROM review
+        WHERE document -> 'reviewers' ? %(reviewer)s AND
+          created < %(date)s AND
+          document -> 'reviewed_modules' ? %(module)s
+    '''
+    experience['uniform'] = _get_row(query, params)
+
+    # Variant: Proportional
+    query = '''
+        SELECT SUM(i.num_comments / i.total_num_comments::float) /
+          (
+            SELECT COUNT(*)
+            FROM review
+            WHERE created < %(date)s AND
+              document -> 'reviewed_modules' ? %(module)s
+          )
+        FROM
+        (
+          SELECT
+            (
+              SELECT COUNT(*)
+              FROM comment c
+                JOIN patch p ON p._id = c.patch_id
+                JOIN patchset ps ON ps._id = p.patchset_id
+                JOIN review r ON r.id = ps.review_id
+              WHERE ps.review_id = rr.id AND c.author = %(reviewer)s AND
+                p.module_path = %(module)s
+            ) "num_comments",
+            (
+              SELECT COUNT(*)
+              FROM comment c
+                JOIN patch p ON p._id = c.patch_id
+                JOIN patchset ps ON ps._id = p.patchset_id
+                JOIN review r ON r.id = ps.review_id
+              WHERE ps.review_id = rr.id AND p.module_path = %(module)s AND
+                c.by_reviewer IS true
+            ) "total_num_comments"
+          FROM review rr
+          WHERE rr.document -> 'reviewers' ? %(reviewer)s AND
+            rr.created < %(date)s AND
+            rr.document -> 'reviewed_modules' ? %(module)s
+        ) AS i
+        WHERE i.total_num_comments > 0;
+    '''
+    experience['proportional'] = _get_row(query, params)
+
+    return experience
+
+
+def get_file_experience(comment):
+    """Return review experience of author of comment at the file level.
+
+    Parameters
+    ----------
+    comment: object
+        An instance of app.models.Comment that contains the email address of
+        the developer and the timestamp at which the comment was posted. The
+        review experience metrics collected will include all reviews before the
+        timestamp.
+
+    Returns
+    -------
+    experience: dict
+        A dictionary with two keys---uniform and proportional---with values
+        being the review experience of a developer at the time the comment was
+        posted. The review experience associated with the two keys (i.e.
+        uniform and proportional) represent two variants of the review
+        experience metrics that differ in the way contribution in a code review
+        is quantified. In case of the uniform variant, all reviewers
+        participating in a review are assumed to have contributed uniformly. In
+        case of the proportional variant, the review contribution is
+        proportional to the number of comments posted by a reviewer.
+    """
+    experience = {'uniform': None, 'proportional': None}
+
+    params = {
+            'date': comment.posted, 'reviewer': comment.author,
+            'file': comment.patch.file_path
+        }
+
+    # Variant: Uniform
+    query = '''
+        SELECT SUM(1::float / jsonb_array_length(document -> 'reviewers')) /
+          (
+            SELECT COUNT(*)
+            FROM review
+            WHERE created < %(date)s AND
+              document -> 'reviewed_files' ? %(file)s
+          )
+        FROM review
+        WHERE document -> 'reviewers' ? %(reviewer)s AND
+          created < %(date)s AND
+          document -> 'reviewed_files' ? %(file)s
+    '''
+    experience['uniform'] = _get_row(query, params)
+
+    # Variant: Proportional
+    query = '''
+        SELECT SUM(i.num_comments / i.total_num_comments::float) /
+          (
+            SELECT COUNT(*)
+            FROM review
+            WHERE created < %(date)s AND
+              document -> 'reviewed_files' ? %(file)s
+          )
+        FROM
+        (
+          SELECT
+            (
+              SELECT COUNT(*)
+              FROM comment c
+                JOIN patch p ON p._id = c.patch_id
+                JOIN patchset ps ON ps._id = p.patchset_id
+                JOIN review r ON r.id = ps.review_id
+              WHERE ps.review_id = rr.id AND c.author = %(reviewer)s AND
+                p.file_path = %(file)s
+            ) "num_comments",
+            (
+              SELECT COUNT(*)
+              FROM comment c
+                JOIN patch p ON p._id = c.patch_id
+                JOIN patchset ps ON ps._id = p.patchset_id
+                JOIN review r ON r.id = ps.review_id
+              WHERE ps.review_id = rr.id AND p.file_path = %(file)s AND
+                c.by_reviewer IS true
+            ) "total_num_comments"
+          FROM review rr
+          WHERE rr.document -> 'reviewers' ? %(reviewer)s AND
+            rr.created < %(date)s AND
+            rr.document -> 'reviewed_files' ? %(file)s
+        ) AS i
+        WHERE i.total_num_comments > 0;
+    '''
+    experience['proportional'] = _get_row(query, params)
+
+    return experience
+
+
+def is_familiar_with_bug(comment):
+    '''Return familiarity of comment author with bugs tied to the review.
+
+    The experience of a reviewer can be assessed at different levels such
+    as project, module and file. Bug familiarity is another assessment of
+    the reviewers' experience.
+
+    Parameters
+    ----------
+    comment: object
+        An instance of app.models.Comment that contains the email address of
+        the developer and the timestamp at which the comment was posted.
+
+    Returns
+    -------
+    is_familiar: bool
+        True if the author of the comment contributed to (any) bug associated
+        with the code review in which the comment was posted, False otherwise.
+    '''
+    for bug in comment.patch.patchset.review.bug_set:
+        if comment.author in bug.document['contributors']:
+            return True
+    return False
+
+
 def clear_objects():
     global OBJECTS
     OBJECTS = {
@@ -47,10 +321,12 @@ def clear_objects():
             'sentence': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
             'token': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
             'bug': {'all': [], 'fixed': [], 'missed': [], 'neutral': []},
-            'vulnerability': {'all': [], 'fixed': [], 'missed': [], 'neutral': []}
+            'vulnerability': {
+                'all': [], 'fixed': [], 'missed': [], 'neutral': []
+            }
         }
 
-################################################################################
+
 def query_by_year(year, table, ids=True):
     assert year in [2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016]
 
@@ -83,7 +359,7 @@ def query_by_year(year, table, ids=True):
     else:
         return results.values_list('id', flat=True)
 
-################################################################################
+
 def query_all(table, ids=True):
     global OBJECTS
     results = None
@@ -106,7 +382,7 @@ def query_all(table, ids=True):
         if len(OBJECTS[table]['all']) != 0:
             results = OBJECTS[table]['all']
         else:
-            results =  Comment.objects.all()
+            results = Comment.objects.all()
     elif table == 'message':
         if len(OBJECTS[table]['all']) != 0:
             results = OBJECTS[table]['all']
@@ -142,7 +418,7 @@ def query_all(table, ids=True):
     else:
         return results.values_list('id', flat=True)
 
-#### TF-IDF ####################################################################
+
 def query_TF_dict(review_id, key='lemma'):
     """
     Returns the numerator of TF, the number of occurrences of the token in
@@ -154,6 +430,7 @@ def query_TF_dict(review_id, key='lemma'):
                         .annotate(tf=Count(key))
 
     return queryResults
+
 
 def query_DF(review_ids, key='lemma'):
     """
@@ -172,7 +449,7 @@ def query_DF(review_ids, key='lemma'):
 
     return queryResults
 
-#### Complexity ################################################################
+
 def query_rIDs_empty():
     """
     Return a list of review IDs that have messages containing a complexity
@@ -183,7 +460,7 @@ def query_rIDs_empty():
 
     return queryResults
 
-#### Messages ##################################################################
+
 def query_mIDs(population):
     """ Passthrough function for determining which queries to run. """
     global ALL_MIDS, FIXED_MIDS, MISSED_MIDS, NEUTRAL_MIDS
@@ -203,6 +480,7 @@ def query_mIDs(population):
     else:
         return query_mIDs_year(population)
 
+
 def query_mIDs_all():
     """ Return a list of all message IDs. """
     global ALL_MIDS
@@ -214,12 +492,16 @@ def query_mIDs_all():
 
     return ALL_MIDS
 
+
 def query_mIDs_random(message_ids, rand):
     """ Returns a list of all review IDs in the corpus. """
-    queryResults = list(Message.objects.filter(id__in=message_ids) \
-        .order_by('?').values_list('id', flat=True)[0:rand])
+    queryResults = list(
+            Message.objects.filter(id__in=message_ids)
+                   .order_by('?').values_list('id', flat=True)[0:rand]
+        )
 
     return queryResults
+
 
 def query_mIDs_fixed():
     """ Returns a list of message IDs that fixed a vulnerability. """
@@ -234,6 +516,7 @@ def query_mIDs_fixed():
 
     return FIXED_MIDS
 
+
 def query_mIDs_missed():
     """ Returns a list of message IDs that missed a vulnerability. """
     global MISSED_MIDS
@@ -247,9 +530,10 @@ def query_mIDs_missed():
 
     return MISSED_MIDS
 
+
 def query_mIDs_neutral():
     """
-    Returns a list of message IDs that have not fixed or missed a vulnerability.
+    Returns message IDs that have not fixed or missed a vulnerability.
     """
     global NEUTRAL_MIDS
     if len(NEUTRAL_MIDS) > 0:
@@ -263,6 +547,7 @@ def query_mIDs_neutral():
     NEUTRAL_MIDS = list(queryResults)
 
     return NEUTRAL_MIDS
+
 
 def query_mIDs_fm():
     """
@@ -281,6 +566,7 @@ def query_mIDs_fm():
 
     return FM_MIDS
 
+
 def query_mIDs_nf():
     """
     Returns a list of message IDs that have fixed a vulnerability or have not
@@ -297,6 +583,7 @@ def query_mIDs_nf():
 
     return NF_MIDS
 
+
 def query_mIDs_year(year):
     """ Returns a list of message IDs from the specified year. """
     years = [str(i) for i in range(2008, 2017)]
@@ -307,6 +594,7 @@ def query_mIDs_year(year):
             .values_list('id', flat=True)
 
     return queryResults
+
 
 def query_mIDs_nm():
     """
@@ -324,6 +612,7 @@ def query_mIDs_nm():
 
     return NM_MIDS
 
+
 def query_mID_text(message_id):
     """ Return the text field of the given message. """
     queryResults = Message.objects.filter(id__exact=message_id) \
@@ -331,7 +620,7 @@ def query_mID_text(message_id):
 
     return list(queryResults)[0] if len(list(queryResults)) > 0 else -1
 
-#### Reviews ###################################################################
+
 def query_rIDs(population):
     """ Passthrough function for determining which queries to run. """
     global ALL_RIDS, FIXED_RIDS, MISSED_RIDS, NEUTRAL_RIDS
@@ -351,6 +640,7 @@ def query_rIDs(population):
     else:
         return query_rIDs_year(population)
 
+
 def query_rIDs_all():
     """ Returns a list of all review IDs in the corpus. """
     global ALL_RIDS
@@ -362,6 +652,7 @@ def query_rIDs_all():
 
     return ALL_RIDS
 
+
 def query_rIDs_random(review_ids, rand):
     """ Returns a list of all review IDs in the corpus. """
     queryResults = list(
@@ -369,6 +660,7 @@ def query_rIDs_random(review_ids, rand):
             .order_by('?').values_list('id', flat=True)
         )
     return random.sample(queryResults, math.floor(len(queryResults) / rand))
+
 
 def query_rIDs_year(year):
     """ Returns a list of review IDs from the specified year. """
@@ -380,6 +672,7 @@ def query_rIDs_year(year):
             .values_list('id', flat=True)
 
     return queryResults
+
 
 def query_rIDs_fixed():
     """ Returns a list of review IDs that fixed a vulnerability. """
@@ -395,6 +688,7 @@ def query_rIDs_fixed():
 
     return FIXED_RIDS
 
+
 def query_rIDs_missed():
     """ Returns a list of review IDs that missed a vulnerability. """
     global MISSED_RIDS
@@ -407,6 +701,7 @@ def query_rIDs_missed():
     MISSED_RIDS = list(queryResults)
 
     return MISSED_RIDS
+
 
 def query_rIDs_neutral():
     """
@@ -430,6 +725,7 @@ def query_rIDs_neutral():
 
     return NEUTRAL_RIDS
 
+
 def query_rIDs_fm():
     """
     Returns a list of review IDs that have fixed or missed a vulnerability.
@@ -443,6 +739,7 @@ def query_rIDs_fm():
     FM_RIDS = list(set(fixed) | set(missed))
 
     return FM_RIDS
+
 
 def query_rIDs_nf():
     """
@@ -458,6 +755,7 @@ def query_rIDs_nf():
 
     return NF_RIDS
 
+
 def query_rIDs_nm():
     """
     Returns a list of review IDs that have missed a vulnerability or have not
@@ -472,14 +770,14 @@ def query_rIDs_nm():
 
     return NM_RIDS
 
-#### Sentences #################################################################
+
 def query_sIDs_all():
     """ Returns a list of all sentence IDs in the corpus. """
     queryResults = Sentence.objects.all().values_list('id', flat=True)
 
     return queryResults
 
-#### Tokens ####################################################################
+
 def query_tokens(review_ids, key='lemma'):
     if key == 'lemma':
         queryResults = ReviewLemmaView.objects.distinct(key) \
@@ -492,6 +790,7 @@ def query_tokens(review_ids, key='lemma'):
 
     return queryResults
 
+
 def query_tokens_all(key='lemma'):
     if key == 'lemma':
         queryResults = ReviewLemmaView.objects.distinct(key) \
@@ -501,6 +800,7 @@ def query_tokens_all(key='lemma'):
             .values_list(key, flat=True)
 
     return queryResults
+
 
 def query_top_x_tokens(review_ids, x, key='lemma'):
     message_ids = Message.objects.distinct('id') \
@@ -516,3 +816,13 @@ def query_top_x_tokens(review_ids, x, key='lemma'):
         .values_list(key, flat=True)
 
     return queryResults[0:x]
+
+
+def _get_row(query, params):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            row = cursor.fetchone()
+            return None if row is None else row[0] if len(row) == 1 else row
+    except:
+        return None

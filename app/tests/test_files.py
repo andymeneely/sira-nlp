@@ -367,25 +367,63 @@ class FilesTestCase(TestCase):
         self.assertCountEqual(expected, actual)
 
     def test_transform_review(self):
-        expected = [
-                'cc/test/layer_tree_test.h',
-                'cc/test/layer_tree_test.cc',
-                'cc/layers/surface_layer_unittest.cc',
-                'cc/trees/layer_tree_host_unittest.cc',
-                'cc/trees/layer_tree_host_unittest_copyrequest.cc',
-                'cc/trees/layer_tree_host_unittest_context.cc'
-            ]
+        expected = {
+            'reviewed_files':
+                [
+                    'cc/test/layer_tree_test.h',
+                    'cc/test/layer_tree_test.cc',
+                    'cc/layers/surface_layer_unittest.cc',
+                    'cc/trees/layer_tree_host_unittest.cc',
+                    'cc/trees/layer_tree_host_unittest_copyrequest.cc',
+                    'cc/trees/layer_tree_host_unittest_context.cc'
+                ],
+            'reviewed_modules':
+                [
+                    'cc/test',
+                    'cc/layers',
+                    'cc/trees',
+                ],
+            'committed_files':
+                [
+                    'cc/test/layer_tree_test.h',
+                    'cc/test/layer_tree_test.cc',
+                    'cc/layers/surface_layer_unittest.cc',
+                    'cc/trees/layer_tree_host_unittest.cc',
+                    'cc/trees/layer_tree_host_unittest_copyrequest.cc',
+                    'cc/trees/layer_tree_host_unittest_context.cc'
+                ],
+            'committed_modules':
+                [
+                    'cc/test',
+                    'cc/layers',
+                    'cc/trees',
+                ]
+            }
 
         actual = self.files.transform_review(
                 self.files.get_review(id=2140383005, year=2016)
             )
 
-        self.assertCountEqual(expected, actual['reviewed_files'])
-        self.assertCountEqual(expected, actual['committed_files'])
+        self.assertCountEqual(
+                expected['reviewed_files'], actual['reviewed_files']
+            )
+        self.assertCountEqual(
+                expected['reviewed_modules'], actual['reviewed_modules']
+            )
+        self.assertCountEqual(
+                expected['committed_files'], actual['committed_files']
+            )
+        self.assertCountEqual(
+                expected['committed_modules'], actual['committed_modules']
+            )
 
     def test_transform_review_keys_added(self):
         review = self.files.get_review(id=1999153002, year=2016)
-        expected = list(review.keys()) + ['reviewed_files', 'committed_files']
+        expected = list(review.keys()) + \
+            [
+                'reviewed_files', 'reviewed_modules',
+                'committed_files', 'committed_modules'
+            ]
 
         actual = list(self.files.transform_review(review).keys())
 

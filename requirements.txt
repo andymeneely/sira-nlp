@@ -4,7 +4,7 @@ coverage==4.2
 Django==1.10.1
 google-api-python-client==1.6.2
 matplotlib
-nltk==3.2.1
+nltk==3.2.4
 nose
 numpy==1.12.1
 packaging==16.8

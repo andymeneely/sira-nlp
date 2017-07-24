@@ -13,14 +13,15 @@ from app.models import *
 
 PATTERN = re.compile(r'>\s([^\n]*)\n\n')
 
+
 def _get_aggregate(comments):
     aggregate = dict()
     for comment in comments:
-        if comment.patch.path not in aggregate:
-            aggregate[comment.patch.path] = dict()
-        if comment.line not in aggregate[comment.patch.path]:
-            aggregate[comment.patch.path][comment.line] = list()
-        aggregate[comment.patch.path][comment.line].append(comment)
+        if comment.patch.file_path not in aggregate:
+            aggregate[comment.patch.file_path] = dict()
+        if comment.line not in aggregate[comment.patch.file_path]:
+            aggregate[comment.patch.file_path][comment.line] = list()
+        aggregate[comment.patch.file_path][comment.line].append(comment)
     return aggregate
 
 
@@ -32,12 +33,12 @@ def aggregate(oqueue, cqueue, num_doers):
             done += 1
             if done == num_doers:
                 break
-            continue # pragma: no cover
+            continue  # pragma: no cover
         count += item
     oqueue.put(count)
 
 
-def do(iqueue, cqueue): # pragma: no cover
+def do(iqueue, cqueue):  # pragma: no cover
     while True:
         item = iqueue.get()
         if item == parallel.EOI:
@@ -48,16 +49,16 @@ def do(iqueue, cqueue): # pragma: no cover
         cnt = 0
         with transaction.atomic():
             try:
-                for line in lines:
-                    for comment in lines[line]:
-                        if comment.by_reviewer == False and \
-                            comment.text.startswith("\nDone."):
-                            if comment.parent is not None:
-                                comment.parent.is_useful = True
-                                comment.parent.save()
-                                cnt += 1
+                for (line, comments) in lines.items():
+                    for comment in comments:
+                        is_done = comment.text.startswith('\nDone.') and \
+                                  not comment.by_reviewer
 
-            except Error as err: # pragma: no cover
+                        if is_done and comment.parent is not None:
+                            comment.parent.is_useful = True
+                            comment.parent.save()
+                            cnt += 1
+            except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Path  {}\n'.format(path))
                 extype, exvalue, extrace = sys.exc_info()
@@ -69,8 +70,9 @@ def do(iqueue, cqueue): # pragma: no cover
 def stream(review_ids, iqueue, num_doers):
     for review_id in review_ids:
         review = Review.objects.filter(id=review_id)
-        comments = Comment.objects.filter(patch__patchset__review=review) \
-                                  .order_by('patch__path', 'line', 'posted')
+        comments = Comment.objects                                        \
+                          .filter(patch__patchset__review=review)         \
+                          .order_by('patch__file_path', 'line', 'posted')
         for (path, lines) in _get_aggregate(comments).items():
             iqueue.put((path, lines))
 

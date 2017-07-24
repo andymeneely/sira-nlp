@@ -115,10 +115,62 @@ class HelpersTestCase(TestCase):
         self.assertEqual(200, actual[0])
         self.assertTrue(type(actual[1]) is dict)
 
+    def test_get_module_path(self):
+        data = [
+          'gpu/gpu.gyp',
+          'tests/MatrixTest.cpp',
+          'chrome/renderer/content_settings_observer.cc',
+          'chrome/browser/devtools/devtools_window.cc',
+          'gm/cubicpaths.cpp',
+          'AUTHORS',
+          'src/vm/service_api_impl.cc',
+          'chrome/browser/devtools/devtools_window.h',
+          'chrome/browser/guest_view/chrome_guest_view_manager_delegate.cc',
+          'chrome/browser/task_management/sampling/shared_sampler.h',
+          'chrome/browser/task_manager/providers/web_contents/panel_task.cc',
+          'components/memory_coordinator/public/interfaces/child_memory_coordi'
+          'nator.mojom',
+          'content/browser/accessibility/browser_accessibility_auralinux.cc',
+          'content/ppapi_plugin/ppapi_thread.h',
+          'content/renderer/device_sensors/device_orientation_event_pump_unitt'
+          'est.cc',
+          'content/shell/browser/shell_content_browser_client.cc',
+          'content/shell/browser/shell_devtools_manager_delegate.h'
+        ]
+        expected = [
+          'gpu',
+          'tests',
+          'chrome/renderer',
+          'chrome/browser/devtools',
+          'gm',
+          '',
+          'src/vm',
+          'chrome/browser/devtools',
+          'chrome/browser/guest_view',
+          'chrome/browser/task_management/sampling',
+          'chrome/browser/task_manager/providers/web_contents',
+          'components/memory_coordinator/public/interfaces',
+          'content/browser/accessibility',
+          'content/ppapi_plugin',
+          'content/renderer/device_sensors',
+          'content/shell/browser',
+          'content/shell/browser'
+        ]
+        actual = [helpers.get_module_path(item) for item in data]
+        self.assertEqual(expected, actual)
+
     def test_get_parent(self):
         # Mocking Data
         # Reference URI: /2886483002/diff/160001/net/http/http_cache_writers.cc
         comments = list()
+
+        # Case: No parent
+        data = 'What drove adding the network transaction here rather than o' \
+               'n construction?  It\'s only the first HC::T that\'ll add a n' \
+               'etwork transaction, so having it as part of the AddTransacti' \
+               'on method feels a bit funny.  '
+        actual = helpers.get_parent(data, comments)
+        self.assertIsNone(actual, msg='None')
 
         comment = mocks.Comment()
         comment.id = 1
@@ -131,6 +183,25 @@ class HelpersTestCase(TestCase):
                'on method feels a bit funny.  '
         comment.text = text
         comments.append(comment)
+
+        # Case: Single
+        data = 'On 2017/05/18 at 01:02:54, Randy Smith (Not in Mondays) wrot' \
+               'e:\n> What drove adding the network transaction here rather ' \
+               'than on construction?  It\'s only the first HC::T that\'ll a' \
+               'dd a network transaction, so having it as part of the AddTra' \
+               'nsaction method feels a bit funny.\n\nI am hoping writers ca' \
+               'n be a member variable of ActiveEntry instead of a unique_pt' \
+               'r and in that case writers will be created even before a tra' \
+               'nsaction is added to it.'
+        expected = None
+        for comment in comments:  # pragma: no cover
+            if comment.id == 1:
+                expected = comment
+                break
+        actual = helpers.get_parent(data, comments)
+
+        self.assertEqual(expected.id, actual.id, msg='ID: Single')
+        self.assertEqual(expected.text, actual.text, msg='Text: Single')
 
         comment = mocks.Comment()
         comment.id = 2
@@ -169,49 +240,6 @@ class HelpersTestCase(TestCase):
         comment.text = text
         comments.append(comment)
 
-        comment = mocks.Comment()
-        comment.id = 5
-        comment.posted = '2017-05-31 19:21:26.490670'
-        comment.line = 28
-        comment.author = 'shivanisha@chromium.org'
-        text = 'Done'
-        comment.text = text
-        comments.append(comment)
-
-        comment = mocks.Comment()
-        comment.id = 6
-        comment.posted = '2017-05-31 19:21:26.567530'
-        comment.line = 28
-        comment.author = 'shivanisha@chromium.org'
-        text = 'Added the dcheck'
-        comment.text = text
-        comments.append(comment)
-
-        # Case: No parent
-        data = 'Worthwhile adding a DCHECK that network_transaction_ wasn\'t' \
-               ' already set?'
-        actual = helpers.get_parent(data, comments)
-        self.assertIsNone(actual, msg='None')
-
-        # Case: Single
-        data = 'On 2017/05/18 at 01:02:54, Randy Smith (Not in Mondays) wrot' \
-               'e:\n> What drove adding the network transaction here rather ' \
-               'than on construction?  It\'s only the first HC::T that\'ll a' \
-               'dd a network transaction, so having it as part of the AddTra' \
-               'nsaction method feels a bit funny.\n\nI am hoping writers ca' \
-               'n be a member variable of ActiveEntry instead of a unique_pt' \
-               'r and in that case writers will be created even before a tra' \
-               'nsaction is added to it.'
-        expected = None
-        for comment in comments:  # pragma: no cover
-            if comment.id == 1:
-                expected = comment
-                break
-        actual = helpers.get_parent(data, comments)
-
-        self.assertEqual(expected.id, actual.id, msg='ID: Single')
-        self.assertEqual(expected.text, actual.text, msg='Text: Single')
-
         # Case: Multiple
         data = 'On 2017/05/24 at 23:09:18, Randy Smith (Not in Mondays) wrot' \
                'e:\n> Worthwhile adding a DCHECK that network_transaction_ w' \
@@ -225,6 +253,57 @@ class HelpersTestCase(TestCase):
 
         self.assertEqual(expected.id, actual.id, msg='ID: Multiple')
         self.assertEqual(expected.text, actual.text, msg='Text: Multiple')
+
+        comment = mocks.Comment()
+        comment.id = 5
+        comment.posted = '2017-05-31 19:21:26.490670'
+        comment.line = 28
+        comment.author = 'shivanisha@chromium.org'
+        text = 'Done'
+        comment.text = text
+        comments.append(comment)
+
+        # Case: Multiple
+        data = 'On 2017/05/24 at 23:09:18, Randy Smith (Not in Mondays) wrot' \
+               'e:\n> Worthwhile adding a DCHECK that network_transaction_ w' \
+               'asn\'t already set?\n\nAdded the dcheck'
+        expected = None
+        for comment in comments:  # pragma: no cover
+            if comment.id == 4:
+                expected = comment
+                break
+        actual = helpers.get_parent(data, comments)
+
+        self.assertEqual(expected.id, actual.id, msg='ID: Multiple')
+        self.assertEqual(expected.text, actual.text, msg='Text: Multiple')
+
+    def test_get_parent_no_quote(self):
+        # Mocking Data
+        # Reference URI: /1282313002/diff/180001/content/common/gpu/
+        #                gpu_memory_buffer_factory_io_surface.cc
+        comments = list()
+
+        comment = expected = mocks.Comment()
+        comment.id = 1
+        comment.posted = '2015-08-11 08:20:08.288830'
+        comment.line = 132
+        comment.author = 'reveman@chromium.org'
+        text = 'This is unfortunate. What happens if we remove this if state' \
+               'ment? Single plane formats don\'t work unless kIOSurfaceByte' \
+               'sPerElement is set?\n\nIn that case, I\'d prefer if we handl' \
+               'ed this explicitly using a large \"switch (format)\" stateme' \
+               'nt to make it very clear what formats need the plane info an' \
+               'd what formats don\'t.'
+        comment.text = text
+        comments.append(comment)
+
+        data = 'Done.\nI removed the if statement, and it seems to work just' \
+               ' fine.\n'
+
+        actual = helpers.get_parent(data, comments)
+
+        self.assertEqual(expected.id, actual.id, msg='ID: No quote')
+        self.assertEqual(expected.text, actual.text, msg='Text: No quote')
 
     def test_get_verbs(self):
         keys, values = set(), set()

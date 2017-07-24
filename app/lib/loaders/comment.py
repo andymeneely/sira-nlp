@@ -43,16 +43,18 @@ def do(iqueue, cqueue):  # pragma: no cover
                         )
                     patchset.save()
 
-                    files = list()
+                    files, modules = list(), list()
                     for (path, p) in ps['files'].items():
                         patch = Patch(
-                                patchset=patchset, id=p['id'], path=path,
+                                patchset=patchset, id=p['id'], file_path=path,
+                                module_path=helpers.get_module_path(path),
                                 num_added=p['num_added'],
                                 num_removed=p['num_removed']
                             )
                         patch.save()
 
                         files.append(path)
+                        modules.append(helpers.get_module_path(path))
                         if 'messages' in p:
                             previous = dict()
                             for i, m in enumerate(p['messages']):
@@ -71,8 +73,9 @@ def do(iqueue, cqueue):  # pragma: no cover
                                 comment.save()
                                 previous[line].append(comment)
                                 cnt += 1
-                    if files:
+                    if files or modules:
                         patchset.files = files
+                        patchset.modules = modules
                         patchset.save()
             except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')

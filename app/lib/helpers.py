@@ -114,7 +114,7 @@ def get_parent(raw, comments):
 
         match = DATE_TIME_RE.search(header)
         if match is None:
-            logger.error("NONE: " + str(raw))
+            logger.error('NONE: ' + raw)
             return None
         components = match.groupdict()
         timestamp = '{date} {time}'.format(
@@ -143,7 +143,7 @@ def get_parent(raw, comments):
                 text = '> {}'.format(comment.text.replace(r'\n', r'\n> '))
                 if text in raw:
                     return comment
-    return None
+    return None if len(comments) == 0 else comments[-1]
 
 
 def get_elapsed(begin, end):
@@ -163,6 +163,11 @@ def get_json(url, parameters):
         json = response.json()
 
     return (status, json)
+
+
+def get_module_path(filepath):
+    """Return module path deduced from a filepath"""
+    return os.path.dirname(filepath)
 
 
 def get_row(model, *args, **kwargs):
