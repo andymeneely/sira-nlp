@@ -46,9 +46,10 @@ class ImplicatureAnalyzer(analyzers.Analyzer):
         for word in words:
             feats.update(word.get_features())
         fv = self.vectorizer.transform(feats)
-        probs = self.classifier.predict_proba(fv)
+        probs = self.classifier.predict(fv)
 
-        return {"implicative": probs[0][1], "unimplicative": probs[0][0]}
+        return probs[0]
+        #return {"implicative": probs[0][1], "unimplicative": probs[0][0]}
 
     def analyze(self):  # pragma: no cover
         implicature = DEFAULT_IMPLICATURE.copy()
