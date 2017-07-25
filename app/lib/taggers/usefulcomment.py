@@ -11,7 +11,8 @@ from app.lib.nlp import analyzers
 from app.lib.utils import parallel
 from app.models import *
 
-PATTERN = re.compile(r'>\s([^\n]*)\n\n')
+#PATTERN = re.compile(r'>\s([^\n]*)\n\n')
+PATTERN = re.compile(r'^\nDone\.')
 
 
 def _get_aggregate(comments):
@@ -51,12 +52,13 @@ def do(iqueue, cqueue):  # pragma: no cover
             try:
                 for (line, comments) in lines.items():
                     for comment in comments:
-                        is_done = comment.text.startswith('\nDone.') and \
-                                  not comment.by_reviewer
+                        is_done = PATTERN.match(comment.text) and \
+                                not comment.by_reviewer
 
                         if is_done and comment.parent is not None:
                             comment.parent.is_useful = True
                             comment.parent.save()
+                            print("USEFUL: " + str(comment.parent.id))
                             cnt += 1
             except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
