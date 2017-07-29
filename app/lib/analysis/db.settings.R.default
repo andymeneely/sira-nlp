@@ -1,0 +1,18 @@
+db.settings <- list(
+  "production" = list(
+    "provider" = "PostgreSQL",
+    "host" = "", port = ,
+    "user" = "", "password" = "",
+    "dbname" = ""
+  ),
+  "development" = list(
+    "provider" = "PostgreSQL",
+    "host" = "", port = ,
+    "user" = "", "password" = "",
+    "dbname" = ""
+  )
+)
+
+GetDbSettings <- function(region){
+  return(db.settings[region])
+}
