@@ -305,8 +305,9 @@ def is_familiar_with_bug(comment):
         with the code review in which the comment was posted, False otherwise.
     '''
     for bug in comment.patch.patchset.review.bug_set.all():
-        if comment.author in bug.document['contributors']:
-            return True
+        if 'contributors' in bug.document:
+            if comment.author in bug.document['contributors']:
+                return True
     return False
 
 
