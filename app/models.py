@@ -89,6 +89,14 @@ class Comment(models.Model):
         d['parent'] = self.parent
         return d
 
+    @property
+    def file_path(self):
+        return self.patch.file_path
+
+    @property
+    def module_path(self):
+        return self.patch.module_path
+
     class Meta:
         db_table = 'comment'
 
