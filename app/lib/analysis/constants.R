@@ -92,6 +92,34 @@ COMMENT.IMPLICATURE.LABELS <- c(
   "max_implicature" = "Maximum Implicature"
 )
 
+## Sentence Level Metrics ====
+
+SENTENCE.METRIC.LABELS <- c(
+  # Complexity
+  "yngve" = "Yngve",
+  "frazier" = "Frazier",
+  "pdensity" = "Propositional Density",
+  "cdensity" = "Content Density",
+  # Politeness
+  "politeness" = "Politeness",
+  # Formality
+  "formality" = "Formality",
+  # Informativeness
+  "informativeness" = "Informativeness",
+  # Implicature
+  "implicature" = "Implicature",
+  # Uncertainty
+  "D" = "Doxastic",
+  "E" = "Epistemic",
+  "N" = "Conditional",
+  "I" = "Investigative",
+  "C" = "Certain",
+  # Sentiment
+  "positive" = "Positive",
+  "neutral" = "Neutral",
+  "negative" = "Negative"
+)
+
 # Miscellaneous ----
 
 COMMENT.TYPE.LABELS <- c("useful" = "Acted Upon", "notuseful" = "Others")
