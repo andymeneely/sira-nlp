@@ -14,5 +14,5 @@ db.settings <- list(
 )
 
 GetDbSettings <- function(region){
-  return(db.settings[region])
+  return(db.settings[[region]])
 }
