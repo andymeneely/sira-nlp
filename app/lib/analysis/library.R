@@ -177,3 +177,13 @@ PlotDistributions <- function(dataset){
 
   return(plots)
 }
+
+## Normality ===
+TestNormality <- function(data, label) {
+  test.outcome <- ad.test(data)
+  if (test.outcome$p.value < 0.05) {
+    cat(label, "IS NOT normally distributed (p=", test.outcome$p.value, ")\n")
+  } else {
+    cat(label, "IS normally distributed (p=", test.outcome$p.value, ")\n")
+  }
+}
