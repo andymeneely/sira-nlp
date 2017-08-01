@@ -196,3 +196,21 @@ GetImplicature <- function(normalize = FALSE){
     warning("No implementation for normalization yet.")
   return(dataset)
 }
+
+GetSentenceLength <- function(normalize = FALSE){
+  query <- "
+    SELECT cs.comment_id AS comment_id,
+      (SELECT COUNT(*) FROM token t WHERE t.sentence_id = s.id)
+        AS sentence_length
+    FROM comment c
+      JOIN comment_sentences cs ON cs.comment_id = c.id
+      JOIN sentence s ON s.id = cs.sentence_id
+    WHERE c.by_reviewer IS true;
+  "
+  connection <- GetDbConnection(db.settings)
+  dataset <- GetData(connection, query)
+  Disconnect(connection)
+  if(normalize)
+    warning("No implementation for normalization yet.")
+  return(dataset)
+}

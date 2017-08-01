@@ -279,3 +279,29 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+
+## Sentence Length ====
+
+### Query Data
+dataset <- GetSentenceLength(normalize = F)
+
+### Plot
+metric <- "Sentence Length (Log Scale)"
+title <- "Distribution of Sentence Length"
+
+plot.dataset <- dataset %>%
+  inner_join(., COMMENT.TYPE, by = "comment_id") %>%
+  select(-comment_id) %>%
+  melt(., id.vars = c("type"))
+
+# Resolution: 500 x 400
+ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
+  geom_boxplot() +
+  scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
+  scale_y_log10() +
+  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  facet_wrap(~ variable, nrow = 1, scales = "free",
+             labeller = as_labeller(SENTENCE.METRIC.LABELS)) +
+  labs(title = title, x = "Comment Type", y = metric) +
+  GetTheme() +
+  theme(legend.position = "none")
