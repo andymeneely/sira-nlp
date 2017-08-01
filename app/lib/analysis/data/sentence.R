@@ -1,6 +1,9 @@
-GetYngve <- function(normalize = FALSE){
+KEYS <- c("comment_id", "sentence_id")
+
+GetYngve <- function(normalize = FALSE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
+      cs.sentence_id AS sentence_id,
       (s.metrics #>> '{complexity,yngve}')::numeric AS yngve
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
@@ -11,14 +14,19 @@ GetYngve <- function(normalize = FALSE){
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if(normalize)
-    warning("No implementation for normalization yet.")
+  if (normalize) {
+    normalization.dataset <- GetSentenceLength()
+    dataset <- inner_join(dataset, normalization.dataset, by = KEYS) %>%
+      mutate(yngve = ifelse(slength > 0, yngve / slength, yngve)) %>%
+      select(-slength)
+  }
   return(dataset)
 }
 
-GetFrazier <- function(normalize = FALSE){
+GetFrazier <- function(normalize = FALSE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
+      cs.sentence_id AS sentence_id,
       (s.metrics #>> '{complexity,frazier}')::numeric AS frazier
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
@@ -34,9 +42,10 @@ GetFrazier <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetPdensity <- function(normalize = FALSE){
+GetPdensity <- function(normalize = FALSE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
+      cs.sentence_id AS sentence_id,
       (s.metrics #>> '{complexity,pdensity}')::numeric AS pdensity
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
@@ -52,9 +61,10 @@ GetPdensity <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetCdensity <- function(normalize = FALSE){
+GetCdensity <- function(normalize = FALSE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
+      cs.sentence_id AS sentence_id,
       (s.metrics #>> '{complexity,cdensity}')::numeric AS cdensity
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
@@ -70,9 +80,10 @@ GetCdensity <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetSentiment <- function(normalize = FALSE){
+GetSentiment <- function(normalize = FALSE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
+      cs.sentence_id AS sentence_id,
       CASE
         WHEN (
           (s.metrics #>> '{sentiment,vneg}')::int +
@@ -103,7 +114,7 @@ GetSentiment <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetUncertainty <- function(normalize = FALSE){
+GetUncertainty <- function(normalize = FALSE) {
   query <- "
     SELECT DISTINCT
       cs.comment_id AS comment_id,
@@ -124,9 +135,10 @@ GetUncertainty <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetPoliteness <- function(normalize = FALSE){
+GetPoliteness <- function(normalize = FALSE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
+      cs.sentence_id AS sentence_id,
       (s.metrics #>> '{politeness,polite}')::numeric AS politeness
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
@@ -141,9 +153,10 @@ GetPoliteness <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetFormality <- function(normalize = FALSE){
+GetFormality <- function(normalize = FALSE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
+      cs.sentence_id AS sentence_id,
       (s.metrics #>> '{formality,formal}')::numeric AS formality
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
@@ -158,9 +171,10 @@ GetFormality <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetInformativeness <- function(normalize = FALSE){
+GetInformativeness <- function(normalize = FALSE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
+      cs.sentence_id AS sentence_id,
       (s.metrics #>> '{informativeness,informative}')::numeric
         AS informativeness
     FROM comment c
@@ -176,9 +190,10 @@ GetInformativeness <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetImplicature <- function(normalize = FALSE){
+GetImplicature <- function(normalize = FALSE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
+      cs.sentence_id AS sentence_id,
       (s.metrics #>> '{implicature,implicative}')::numeric
         AS implicature
     FROM comment c
@@ -197,11 +212,11 @@ GetImplicature <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetSentenceLength <- function(normalize = FALSE){
+GetSentenceLength <- function(normalize = FALSE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
-      (SELECT COUNT(*) FROM token t WHERE t.sentence_id = s.id)
-        AS sentence_length
+      cs.sentence_id AS sentence_id,
+      (SELECT COUNT(*) FROM token t WHERE t.sentence_id = s.id) AS slength
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
       JOIN sentence s ON s.id = cs.sentence_id
@@ -212,5 +227,38 @@ GetSentenceLength <- function(normalize = FALSE){
   Disconnect(connection)
   if(normalize)
     warning("No implementation for normalization yet.")
+  return(dataset)
+}
+
+GetContinuousMetrics <- function(normalize = FALSE) {
+  dataset <- NA
+
+  interim.dataset <- GetYngve(normalize = normalize)
+  dataset <- interim.dataset
+
+  interim.dataset <- GetFrazier(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = keys)
+
+  interim.dataset <- GetPdensity(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = keys)
+
+  interim.dataset <- GetCdensity(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = keys)
+
+  interim.dataset <- GetPoliteness(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = keys)
+
+  interim.dataset <- GetFormality(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = keys)
+
+  interim.dataset <- GetInformativeness(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = keys)
+
+  interim.dataset <- GetImplicature(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = keys)
+
+  interim.dataset <- GetSentenceLength(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = keys)
+
   return(dataset)
 }
