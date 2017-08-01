@@ -25,7 +25,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   scale_y_log10() +
   scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
-             labeller = as_labeller(COMMENT.YNGVE.LABELS)) +
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
@@ -50,7 +50,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
-             labeller = as_labeller(COMMENT.FRAZIER.LABELS)) +
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
@@ -75,7 +75,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
-             labeller = as_labeller(COMMENT.PDENSITY.LABELS)) +
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
@@ -101,7 +101,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   scale_y_sqrt() +
   scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
-             labeller = as_labeller(COMMENT.CDENSITY.LABELS)) +
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
@@ -126,7 +126,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
-             labeller = as_labeller(COMMENT.SENTIMENT.LABELS)) +
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
@@ -152,7 +152,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   scale_y_log10() +
   scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
-             labeller = as_labeller(COMMENT.UNCERTAINTY.LABELS)) +
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
@@ -177,7 +177,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
-             labeller = as_labeller(COMMENT.POLITENESS.LABELS)) +
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
@@ -202,7 +202,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
-             labeller = as_labeller(COMMENT.FORMALITY.LABELS)) +
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
@@ -227,7 +227,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
-             labeller = as_labeller(COMMENT.INFORMATIVENESS.LABELS)) +
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
@@ -252,7 +252,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
-             labeller = as_labeller(COMMENT.IMPLICATURE.LABELS)) +
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
