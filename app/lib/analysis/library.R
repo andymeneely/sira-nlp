@@ -7,9 +7,8 @@ source("data/data.R")
 
 ## Generic ====
 InitLibraries <- function(){
-  libraries <- c(
-    "DBI", "effsize", "plyr", "dplyr", "ggplot2", "tidyr", "reshape2"
-  )
+  libraries <- c("DBI", "effsize", "Hmisc", "nortest", "plyr", "dplyr", "ggplot2",
+                 "reshape2", "tidyr")
   for(lib in libraries){
     suppressPackageStartupMessages(library(lib, character.only = T))
   }
@@ -19,6 +18,16 @@ InitGlobals <- function(){
   db.connection <- GetDbConnection(db.settings)
   COMMENT.TYPE <<- GetCommentType(db.connection)
   Disconnect(db.connection)
+}
+
+SplitByCommentType <- function(dataset, metric) {
+  if (!(metric %in% colnames(dataset))) {
+    stop(cat(metric, "is not a column in the dataset"))
+  }
+  x <- dataset %>% filter(type == "useful") %>% .[[metric]] %>% na.omit(.)
+  y <- dataset %>% filter(type == "notuseful") %>% .[[metric]] %>% na.omit(.)
+
+  return(list("x" = x, "y" = y))
 }
 
 ## Database ====
@@ -70,10 +79,14 @@ GetSpearmansRho <- function(dataset, column.one, column.two, p.value = 0.05){
   return(list("significant" = p <= p.value, "rho" = rho))
 }
 
-GetCorrelation <- function(dataset, ignore){
+GetCorrelation <- function(dataset, ignore = NA){
+  if (!missing(ignore)) {
+    dataset <- dataset %>%
+      select(-(one_of(ignore)))
+  }
+
   dataset <- na.omit(dataset)
   correlation <- dataset %>%
-    select(-(one_of(ignore))) %>%
     cor(., method = "spearman")
 
   correlation[lower.tri(correlation)] <- NA
@@ -84,18 +97,33 @@ GetCorrelation <- function(dataset, ignore){
 }
 
 ## Association ====
-GetAssociation <- function(population.a, population.b, p.value = 0.05){
-  htest <- wilcox.test(population.a, population.b)
+GetAssociation <- function(x, y, x.label, y.label, include.es = TRUE,
+                           p.value = 0.05) {
+  htest <- wilcox.test(x, y)
 
   p <- htest$p.value
   if(p > p.value){
     warning(paste("Association outcome insignificant with p-value =", p))
   }
-  return(list(
-    "significant" = p <= p.value,
-    "mean.a" = mean(population.a), "mean.b" = mean(population.b),
-    "median.a" = median(population.a), "median.b" = median(population.b)
-  ))
+
+  effect.size <- NA
+  effect.magnitude <- NA
+  if (include.es) {
+    effect <- cliff.delta(x, y)
+    effect.size <- effect$estimate
+    effect.magnitude <- effect$magnitude
+  }
+
+  test.outcome <- list()
+  test.outcome[["p"]] <- p
+  test.outcome[["significant"]] <- p <= p.value
+  test.outcome[["effect.size"]] <- effect.size
+  test.outcome[["effect.magnitude"]] <- effect.magnitude
+  test.outcome[[paste("mean.", x.label, sep = "")]] <- mean(x)
+  test.outcome[[paste("mean.", y.label, sep = "")]] <- mean(y)
+  test.outcome[[paste("median.", x.label, sep = "")]] <- median(x)
+  test.outcome[[paste("median.", y.label, sep = "")]] <- median(y)
+  return(test.outcome)
 }
 
 TestAssociation <- function(dataset, types, labels, p.value = 0.05){
@@ -146,7 +174,6 @@ TestAssociation <- function(dataset, types, labels, p.value = 0.05){
     )
   }
 }
-
 
 ## Plotting ====
 PlotDistributions <- function(dataset){
