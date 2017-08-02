@@ -41,13 +41,13 @@ def do(iqueue, cqueue): # pragma: no cover
             try:
                 if 'formality' in metrics:
                     results = analyzers.FormalityAnalyzer(sent.text, tokens).analyze()
-                    sent.metrics['formality'] = "formal" if results == "F" else "informal"
+                    sent.metrics['formality'] = results
                 if 'informativeness' in metrics:
                     results = analyzers.InformativenessAnalyzer(sent.text, tokens).analyze()
-                    sent.metrics['informativeness'] = "informative" if results == "I" else "uninformative"
+                    sent.metrics['informativeness'] = results
                 if 'implicature' in metrics:
                     results = analyzers.ImplicatureAnalyzer(sent.text, tokens).analyze()
-                    sent.metrics['implicature'] = "implicative" if results == "I" else "unimplicative"
+                    sent.metrics['implicature'] = results
 
                 sent.save()
             except Error as err: # pragma: no cover

@@ -46,10 +46,9 @@ class FormalityAnalyzer(analyzers.Analyzer):
         for word in words:
             feats.update(word.get_features())
         fv = self.vectorizer.transform(feats)
-        probs = self.classifier.predict(fv)
+        probs = self.classifier.predict_proba(fv)
 
-        return probs[0]
-        #return {"formal": probs[0][1], "informal": probs[0][0]}
+        return {"formal": probs[0][1], "informal": probs[0][0]}
 
     def analyze(self):  # pragma: no cover
         formality = DEFAULT_FORMALITY.copy()

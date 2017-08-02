@@ -46,10 +46,9 @@ class InformativenessAnalyzer(analyzers.Analyzer):
         for word in words:
             feats.update(word.get_features())
         fv = self.vectorizer.transform(feats)
-        probs = self.classifier.predict(fv)
+        probs = self.classifier.predict_proba(fv)
 
-        return probs[0]
-        #return {"informative": probs[0][1], "uninformative": probs[0][0]}
+        return {"informative": probs[0][1], "uninformative": probs[0][0]}
 
     def analyze(self):  # pragma: no cover
         informativeness = DEFAULT_INFORMATIVENESS.copy()
