@@ -1,0 +1,57 @@
+# Initialize Boilerplate ----
+source("boilerplate.R")
+source("data/sentence.R")
+
+## Continuous Valued Metrics ====
+
+### Query Data ####
+dataset <- GetContinuousMetrics()
+
+### Plot: Spearman's Correlation Coefficient ####
+title <- "Correlation among Continuous-valued Sentence Metrics"
+
+plot.dataset <- GetCorrelation(dataset, ignore = c("comment_id", "sentence_id"))
+
+# Resolution: 650 x 650
+ggplot(plot.dataset, aes(Var2, Var1, fill = value)) +
+  geom_tile() +
+  geom_text(aes(Var2, Var1, label = sprintf("%.2f", value)),
+            color = "black", size = 4) +
+  scale_x_discrete(labels = SENTENCE.METRIC.LABELS) +
+  scale_y_discrete(labels = SENTENCE.METRIC.LABELS) +
+  scale_fill_gradient2(low = "#636363", high = "#636363", mid = "#f0f0f0",
+                       midpoint = 0, limit = c(-1,1)) +
+  guides(fill = guide_colorbar(barwidth = 10, barheight = 0.5,
+                               title = expression(paste("Spearman's ", rho)),
+                               title.position = "top", title.hjust = 0.5)) +
+  coord_fixed() +
+  labs(title = title, x = NULL, y = NULL) +
+  GetTheme() +
+  theme(panel.grid.major = element_blank(), panel.border = element_blank(),
+        panel.background = element_blank(), axis.ticks = element_blank())
+
+### Plot: Variable Clustering ####
+title <- "Similarity among Continuous-valued Sentence Metrics"
+
+plot.dataset <- varclus(as.matrix(analysis.dataset))$sim
+plot.dataset[lower.tri(plot.dataset)] <- NA
+plot.dataset <- melt(plot.dataset)
+plot.dataset <- na.omit(plot.dataset)
+
+# Resolution: 650 x 650
+ggplot(plot.dataset, aes(Var2, Var1, fill = value)) +
+  geom_tile() +
+  geom_text(aes(Var2, Var1, label = sprintf("%.2f", value)),
+            color = "black", size = 4) +
+  scale_x_discrete(labels = SENTENCE.METRIC.LABELS) +
+  scale_y_discrete(labels = SENTENCE.METRIC.LABELS) +
+  scale_fill_gradient2(low = "#ffffff", high = "#636363", mid = "#f0f0f0",
+                       midpoint = 0.5, limit = c(0,1)) +
+  guides(fill = guide_colorbar(barwidth = 10, barheight = 0.5,
+                               title = "Similarity", title.position = "top",
+                               title.hjust = 0.5)) +
+  coord_fixed() +
+  labs(title = title, x = NULL, y = NULL) +
+  GetTheme() +
+  theme(panel.grid.major = element_blank(), panel.border = element_blank(),
+        panel.background = element_blank(), axis.ticks = element_blank())
