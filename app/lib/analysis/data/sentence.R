@@ -1,6 +1,6 @@
 KEYS <- c("comment_id", "sentence_id")
 
-GetYngve <- function(normalize = FALSE) {
+GetYngve <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
@@ -23,7 +23,7 @@ GetYngve <- function(normalize = FALSE) {
   return(dataset)
 }
 
-GetFrazier <- function(normalize = FALSE) {
+GetFrazier <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
@@ -37,12 +37,10 @@ GetFrazier <- function(normalize = FALSE) {
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if(normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetPdensity <- function(normalize = FALSE) {
+GetPdensity <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
@@ -56,12 +54,10 @@ GetPdensity <- function(normalize = FALSE) {
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if(normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetCdensity <- function(normalize = FALSE) {
+GetCdensity <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
@@ -75,12 +71,10 @@ GetCdensity <- function(normalize = FALSE) {
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if(normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetSentiment <- function(normalize = FALSE) {
+GetSentiment <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
@@ -109,12 +103,10 @@ GetSentiment <- function(normalize = FALSE) {
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if(normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetUncertainty <- function(normalize = FALSE) {
+GetUncertainty <- function(normalize = TRUE) {
   query <- "
     SELECT DISTINCT
       cs.comment_id AS comment_id,
@@ -130,12 +122,10 @@ GetUncertainty <- function(normalize = FALSE) {
     filter(uncertainty != 'C') %>%
     select(-sentence_id)
   Disconnect(connection)
-  if(normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetPoliteness <- function(normalize = FALSE) {
+GetPoliteness <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
@@ -148,12 +138,10 @@ GetPoliteness <- function(normalize = FALSE) {
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if(normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetFormality <- function(normalize = FALSE) {
+GetFormality <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
@@ -166,12 +154,10 @@ GetFormality <- function(normalize = FALSE) {
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if(normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetInformativeness <- function(normalize = FALSE) {
+GetInformativeness <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
@@ -185,12 +171,10 @@ GetInformativeness <- function(normalize = FALSE) {
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if(normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetImplicature <- function(normalize = FALSE) {
+GetImplicature <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
@@ -207,12 +191,10 @@ GetImplicature <- function(normalize = FALSE) {
   dataset <- dataset %>%
     mutate(implicature = as.numeric(implicature))
   dataset <- na.omit(dataset)
-  if(normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetSentenceLength <- function(normalize = FALSE) {
+GetSentenceLength <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
@@ -225,12 +207,10 @@ GetSentenceLength <- function(normalize = FALSE) {
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if(normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetContinuousMetrics <- function(normalize = FALSE) {
+GetContinuousMetrics <- function(normalize = TRUE) {
   dataset <- NA
 
   interim.dataset <- GetYngve(normalize = normalize)
@@ -260,5 +240,20 @@ GetContinuousMetrics <- function(normalize = FALSE) {
   interim.dataset <- GetSentenceLength(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = keys)
 
+  return(dataset)
+}
+
+GetMetric <- function(metric, normalize = TRUE) {
+  dataset = switch(metric,
+                   yngve = GetYngve(),
+                   frazier = GetFrazier(),
+                   pdensity = GetPdensity(),
+                   cdensity = GetCdensity(),
+                   sentiment = GetSentiment(),
+                   uncertainty = GetUncertainty(),
+                   politeness = GetPoliteness(),
+                   formality = GetFormality(),
+                   informativeness = GetInformativeness(),
+                   implicature = GetImplicature())
   return(dataset)
 }

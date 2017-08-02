@@ -1,4 +1,4 @@
-GetYngve <- function(normalize = FALSE){
+GetYngve <- function(normalize = TRUE){
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,yngve}')::numeric)
@@ -26,7 +26,7 @@ GetYngve <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetFrazier <- function(normalize = FALSE){
+GetFrazier <- function(normalize = TRUE){
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,frazier}')::numeric)
@@ -54,7 +54,7 @@ GetFrazier <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetPdensity <- function(normalize = FALSE){
+GetPdensity <- function(normalize = TRUE){
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,pdensity}')::numeric)
@@ -82,7 +82,7 @@ GetPdensity <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetCdensity <- function(normalize = FALSE){
+GetCdensity <- function(normalize = TRUE){
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,cdensity}')::numeric)
@@ -110,7 +110,7 @@ GetCdensity <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetSentiment <- function(normalize = FALSE){
+GetSentiment <- function(normalize = TRUE){
   query <- "
     SELECT cs.comment_id AS comment_id,
       SUM(
@@ -151,12 +151,12 @@ GetSentiment <- function(normalize = FALSE){
     mutate(pct_nne_sentences = num_nne_sentences / num_sentences) %>%
     select(comment_id, pct_neg_sentences, pct_neu_sentences, pct_pos_sentences,
            pct_nne_sentences)
-  if (normalize)
+    if (normalize)
     warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetUncertainty <- function(normalize = FALSE){
+GetUncertainty <- function(normalize = TRUE){
   query <- "
     SELECT c.id AS comment_id,
       (
@@ -234,12 +234,12 @@ GetUncertainty <- function(normalize = FALSE){
     mutate(pct_unc_sentences = num_unc_sentences / num_sentences) %>%
     select(comment_id, pct_dox_sentences, pct_epi_sentences, pct_con_sentences,
            pct_inv_sentences, pct_unc_sentences)
-  if (normalize)
+    if (normalize)
     warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetPoliteness <- function(normalize = FALSE){
+GetPoliteness <- function(normalize = TRUE){
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{politeness,polite}')::numeric)
@@ -266,7 +266,7 @@ GetPoliteness <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetFormality <- function(normalize = FALSE){
+GetFormality <- function(normalize = TRUE){
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{formality,formal}')::numeric)
@@ -293,7 +293,7 @@ GetFormality <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetInformativeness <- function(normalize = FALSE){
+GetInformativeness <- function(normalize = TRUE){
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{informativeness,informative}')::numeric)
@@ -320,7 +320,7 @@ GetInformativeness <- function(normalize = FALSE){
   return(dataset)
 }
 
-GetImplicature <- function(normalize = FALSE){
+GetImplicature <- function(normalize = TRUE){
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{implicature,implicative}')::numeric)
@@ -344,5 +344,20 @@ GetImplicature <- function(normalize = FALSE){
   Disconnect(connection)
   if (normalize)
     warning("No implementation for normalization yet.")
+  return(dataset)
+}
+
+GetMetric <- function(metric, normalize = TRUE) {
+  dataset = switch(metric,
+                   yngve = GetYngve(),
+                   frazier = GetFrazier(),
+                   pdensity = GetPdensity(),
+                   cdensity = GetCdensity(),
+                   sentiment = GetSentiment(),
+                   uncertainty = GetUncertainty(),
+                   politeness = GetPoliteness(),
+                   formality = GetFormality(),
+                   informativeness = GetInformativeness(),
+                   implicature = GetImplicature())
   return(dataset)
 }
