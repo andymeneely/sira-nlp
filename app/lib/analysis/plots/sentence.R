@@ -15,7 +15,7 @@ title <- "Distribution of Sentence Yngve"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id) %>%
+  select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
 # Resolution: 500 x 400
@@ -41,7 +41,7 @@ title <- "Distribution of Sentence Frazier"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id) %>%
+  select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
 # Resolution: 500 x 400
@@ -66,7 +66,7 @@ title <- "Distribution of Sentence Density"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id) %>%
+  select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
 # Resolution: 500 x 400
@@ -91,7 +91,7 @@ title <- "Distribution of Sentence Density"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id) %>%
+  select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
 # Resolution: 500 x 400
@@ -117,7 +117,7 @@ title <- "Distribution of Sentiment in Sentences"
 
 interim.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id)
+  select(-comment_id, -sentence_id)
 
 alpha.dataset <- interim.dataset %>%
   group_by(sentiment, type) %>%
@@ -154,7 +154,7 @@ title <- "Distribution of Uncertain Sentences"
 
 interim.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id)
+  select(-comment_id, -sentence_id)
 
 alpha.dataset <- interim.dataset %>%
   group_by(uncertainty, type) %>%
@@ -191,7 +191,7 @@ title <- "Distribution of Sentence Politeness"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id) %>%
+  select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
 # Resolution: 500 x 400
@@ -216,7 +216,7 @@ title <- "Distribution of Sentence Formality"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id) %>%
+  select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
 # Resolution: 500 x 400
@@ -241,7 +241,7 @@ title <- "Distribution of Sentence Informativeness"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id) %>%
+  select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
 # Resolution: 500 x 400
@@ -266,7 +266,7 @@ title <- "Distribution of Sentence Implicature"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id) %>%
+  select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
 # Resolution: 500 x 400
@@ -291,7 +291,7 @@ title <- "Distribution of Sentence Length"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id) %>%
+  select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
 # Resolution: 500 x 400
