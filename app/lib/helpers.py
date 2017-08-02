@@ -14,9 +14,14 @@ import unicodedata
 
 from collections import OrderedDict
 from splat.complexity import levenshtein_distance
+from splat.corpora import *
+from splat.Util import count_pronouns
 
+import difflib
 import pandas
 import requests
+
+import app.queryStrings as qs
 
 from app.lib import patch, logger
 
@@ -65,6 +70,63 @@ DATE_TIME_RE = re.compile(
 # Match the name of the author in header that is inserted to comment response
 # E.g. Raymond Reddington
 AUTHOR_RE = re.compile(', (.*) wrote:')
+
+
+TOKENS = qs.query_all('token', ids=False)
+PRONOUNS_1 = ['I', 'ME', 'MYSELF', 'MY', 'MINE', 'WE', 'US', 'OURSELVES', 'OUR',
+              'OURS']
+PRONOUNS_2 = ['YOU', 'YOURSELF', 'YOUR', 'YOURS', 'YOURSELVES']
+PRONOUNS_3 = ['SHE', 'ITSELF', 'HER', 'HE', 'ITS', 'HIM', 'IT', 'HIMSELF',
+              'HERSELF', 'HERS', 'HIS', 'THEY', 'THEM', 'THEMSELVES', 'THEIR',
+              'THEIRS']
+
+def get_syllable_count(tokens):
+    total = 0
+    pron = []
+    for token in tokens:
+        word = token.strip("\n")
+        try:
+            pron = CMUDICT[word.lower()]
+        except KeyError:
+            if re.search(r'[aeiouy]', word.lower()) is not None:
+                closest_matches = difflib.get_close_matches(word.lower(), CMUDICT.keys(), 5)
+                levs = {}
+                for match in closest_matches:
+                    l = levenshtein_distance(match, word.lower())
+                    if l not in levs.keys(): levs[l] = []
+                    levs[l].append(match)
+                try:
+                    min_lev = min(levs.keys())
+                    closest = levs[min_lev][0]
+                    pron = CMUDICT[closest]
+                except:
+                    pron = CMUDICT['to']
+            else:
+                pron = CMUDICT['to']
+
+        temp_count = max([len(list(y for y in x if y[-1].isdigit())) for x in pron])
+
+        if len(re.findall(r'[aeiouy]', word.lower())) == 1 and len(pron) > 1: total += 1
+        else: total += temp_count
+
+    return total
+
+def get_type_token_ratio(tokens):
+    toks = [ t[0] for t in tokens ]
+    return len(list(set(toks))) / len(toks)
+
+def get_pronoun_density(tokens):
+    prn_1, prn_2, prn_3, prn_total = 0, 0, 0, 0
+    for tok in tokens:
+        if tok[1] in ["PRP", "PRP$", "WP", "WP$"]:
+            prn_1 += 1 if tok[0].upper() in PRONOUNS_1 else 0
+            prn_2 += 1 if tok[0].upper() in PRONOUNS_2 else 0
+            prn_3 += 1 if tok[0].upper() in PRONOUNS_3 else 0
+
+    prn_total = prn_1 + prn_2 + prn_3
+    pronoun_density = {'1ST': prn_1/len(tokens), '2ND': prn_2/len(tokens),
+                       '3RD': prn_3/len(tokens), 'TOT': prn_total/len(tokens)}
+    return pronoun_density
 
 
 def enumerate_iter(iterable, offset=0, step=1):
