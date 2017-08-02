@@ -24,6 +24,7 @@ class Review(models.Model):
 
     class Meta:
         db_table = 'review'
+        indexes = [models.Index(['created'], 'review_created_idx')]
 
 
 class PatchSet(models.Model):
@@ -68,6 +69,7 @@ class Comment(models.Model):
     text = models.TextField(default='')
     is_useful = models.BooleanField(default=False)
     by_reviewer = models.BooleanField(default=False)
+    metrics = fields.JSONField(default=dict)
 
     # Navigation Fields
     patch = models.ForeignKey('patch')
@@ -86,6 +88,14 @@ class Comment(models.Model):
         d['patch'] = self.patch
         d['parent'] = self.parent
         return d
+
+    @property
+    def file_path(self):
+        return self.patch.file_path
+
+    @property
+    def module_path(self):
+        return self.patch.module_path
 
     class Meta:
         db_table = 'comment'

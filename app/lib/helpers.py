@@ -15,6 +15,7 @@ import unicodedata
 from collections import OrderedDict
 from splat.complexity import levenshtein_distance
 
+import pandas
 import requests
 
 from app.lib import patch, logger
@@ -154,6 +155,54 @@ def get_elapsed(begin, end):
     return (end - begin).total_seconds() / 60
 
 
+def get_file_experience(comment, reviews, comments):
+    """Return review experience of author of comment at the file level.
+
+    Parameters
+    ----------
+    comment: object
+        An instance of app.models.Comment that contains the email address of
+        the developer and the timestamp at which the comment was posted. The
+        review experience metrics collected will include all reviews before the
+        timestamp.
+    reviews: object
+        An instance of pandas.DataFrame that contains all reviews that were
+        created before the comment being processed.
+    comments:
+        An instance of pandas.DataFrame that contains all comments that were
+        posted before the comment being processed.
+
+    Returns
+    -------
+    experience: dict
+        A dictionary with two keys---uniform and proportional---with values
+        being the review experience of a developer at the time the comment was
+        posted. The review experience associated with the two keys (i.e.
+        uniform and proportional) represent two variants of the review
+        experience metrics that differ in the way contribution in a code review
+        is quantified. In case of the uniform variant, all reviewers
+        participating in a review are assumed to have contributed uniformly. In
+        case of the proportional variant, the review contribution is
+        proportional to the number of comments posted by a reviewer.
+    """
+    experience = None
+
+    # Filters
+    filter = reviews.reviewed_files.apply(lambda f: comment.file_path in f)
+    reviews = reviews[filter]
+    num_reviews, _ = reviews.shape
+    reviews = reviews[reviews.reviewers.apply(lambda r: comment.author in r)]
+    comments = comments[comments.review_id.isin(reviews.id)]
+    comments = comments[comments.file_path == comment.file_path]
+
+    if num_reviews > 0:
+        experience = dict()
+        (uniform, proportional) = _get_contribution(comment, reviews, comments)
+        experience['uniform'] = uniform / num_reviews
+        experience['proportional'] = proportional / num_reviews
+    return experience
+
+
 def get_json(url, parameters):
     """ Return the json associated with the given URL. """
     (status, json) = (None, None)
@@ -165,9 +214,102 @@ def get_json(url, parameters):
     return (status, json)
 
 
+def get_module_experience(comment, reviews, comments):
+    """Return review experience of author of comment at the module level.
+
+    Parameters
+    ----------
+    comment: object
+        An instance of app.models.Comment that contains the email address of
+        the developer and the timestamp at which the comment was posted. The
+        review experience metrics collected will include all reviews before the
+        timestamp.
+    reviews: object
+        An instance of pandas.DataFrame that contains all reviews that were
+        created before the comment being processed.
+    comments:
+        An instance of pandas.DataFrame that contains all comments that were
+        posted before the comment being processed.
+
+    Returns
+    -------
+    experience: dict
+        A dictionary with two keys---uniform and proportional---with values
+        being the review experience of a developer at the time the comment was
+        posted. The review experience associated with the two keys (i.e.
+        uniform and proportional) represent two variants of the review
+        experience metrics that differ in the way contribution in a code review
+        is quantified. In case of the uniform variant, all reviewers
+        participating in a review are assumed to have contributed uniformly. In
+        case of the proportional variant, the review contribution is
+        proportional to the number of comments posted by a reviewer.
+    """
+    experience = None
+
+    # Filters
+    filter = reviews.reviewed_modules.apply(lambda m: comment.module_path in m)
+    reviews = reviews[filter]
+    num_reviews, _ = reviews.shape
+    reviews = reviews[reviews.reviewers.apply(lambda r: comment.author in r)]
+    comments = comments[comments.review_id.isin(reviews.id)]
+    comments = comments[comments.module_path == comment.module_path]
+
+    if num_reviews > 0:
+        experience = dict()
+        (uniform, proportional) = _get_contribution(comment, reviews, comments)
+        experience['uniform'] = uniform / num_reviews
+        experience['proportional'] = proportional / num_reviews
+    return experience
+
+
 def get_module_path(filepath):
     """Return module path deduced from a filepath"""
     return os.path.dirname(filepath)
+
+
+def get_project_experience(comment, reviews, comments):
+    """Return review experience of author of comment at the project level.
+
+    Parameters
+    ----------
+    comment: object
+        An instance of app.models.Comment that contains the email address of
+        the developer and the timestamp at which the comment was posted. The
+        review experience metrics collected will include all reviews before the
+        timestamp.
+    reviews: object
+        An instance of pandas.DataFrame that contains all reviews that were
+        created before the comment being processed.
+    comments:
+        An instance of pandas.DataFrame that contains all comments that were
+        posted before the comment being processed.
+
+    Returns
+    -------
+    experience: dict
+        A dictionary with two keys---uniform and proportional---with values
+        being the review experience of a developer at the time the comment was
+        posted. The review experience associated with the two keys (i.e.
+        uniform and proportional) represent two variants of the review
+        experience metrics that differ in the way contribution in a code review
+        is quantified. In case of the uniform variant, all reviewers
+        participating in a review are assumed to have contributed uniformly. In
+        case of the proportional variant, the review contribution is
+        proportional to the number of comments posted by a reviewer.
+    """
+    experience = None
+
+    # Filters
+    num_reviews, _ = reviews.shape
+    reviews = reviews[reviews.reviewers.apply(lambda r: comment.author in r)]
+    comments = comments[comments.review_id.isin(reviews.id)]
+
+    if num_reviews > 0:
+        experience = dict()
+        (uniform, proportional) = _get_contribution(comment, reviews, comments)
+        experience['uniform'] = uniform / num_reviews
+        experience['proportional'] = proportional / num_reviews
+    return experience
 
 
 def get_row(model, *args, **kwargs):
@@ -317,8 +459,35 @@ def line_changed(line_number, patch_a, patch_b):
     else:
         return False
 
+
 def to_json(response):
     r = ''.join(
-            char for char in response if unicodedata.category(char)[0]!="C"
+            char for char in response if unicodedata.category(char)[0] != "C"
         )
     return json.loads(r)
+
+# Private Functions
+
+
+def _get_contribution(comment, reviews, comments):
+    # Variant: Uniform
+    contribution = 1 / reviews.num_reviewers
+    uniform = contribution.sum()
+
+    # Variant: Proportional
+    num_comments = pandas \
+        .DataFrame({'count': comments.groupby('review_id').size()}) \
+        .reset_index()
+    comments = comments[comments.author == comment.author]
+    num_authorcomments = pandas \
+        .DataFrame({'count': comments.groupby('review_id').size()}) \
+        .reset_index()
+
+    merged = pandas.merge(
+            num_authorcomments, num_comments, on='review_id',
+            suffixes=('_ac', '_c')
+        )
+    contribution = merged.count_ac / merged.count_c
+    proportional = contribution.sum()
+
+    return (uniform, proportional)
