@@ -3,7 +3,7 @@
 @AUTHOR: meyersbs
 """
 
-from django.contrib.postgres import fields
+from django.contrib.postgres.fields import array, jsonb
 from django.db import models
 
 
@@ -17,7 +17,7 @@ class Review(models.Model):
     missed_vulnerability = models.BooleanField(default=False)
     num_messages = models.PositiveIntegerField(default=0)
 
-    document = fields.JSONField(default=dict)
+    document = jsonb.JSONField(default=dict)
 
     # Navigations Fields
     bugs = models.ManyToManyField('Bug', through='ReviewBug')
@@ -32,8 +32,8 @@ class PatchSet(models.Model):
     id = models.BigIntegerField()
 
     created = models.DateTimeField()
-    files = fields.ArrayField(models.CharField(max_length=255), default=list)
-    modules = fields.ArrayField(models.CharField(max_length=255), default=list)
+    files = array.ArrayField(models.CharField(max_length=255), default=list)
+    modules = array.ArrayField(models.CharField(max_length=255), default=list)
 
     # Navigation Fields
     review = models.ForeignKey('Review')
@@ -69,7 +69,7 @@ class Comment(models.Model):
     text = models.TextField(default='')
     is_useful = models.BooleanField(default=False)
     by_reviewer = models.BooleanField(default=False)
-    metrics = fields.JSONField(default=dict)
+    metrics = jsonb.JSONField(default=dict)
 
     # Navigation Fields
     patch = models.ForeignKey('patch')
@@ -108,7 +108,7 @@ class Bug(models.Model):
     type = models.CharField(max_length=25, default='')
     status = models.CharField(max_length=25, default='')
 
-    document = fields.JSONField(default=dict)
+    document = jsonb.JSONField(default=dict)
 
     # Navigations Fields
     reviews = models.ManyToManyField('Review', through='ReviewBug')
@@ -184,8 +184,8 @@ class Sentence(models.Model):
     id = models.AutoField(primary_key=True)
     text = models.TextField(default='')
 
-    parses = fields.JSONField(default=dict)
-    metrics = fields.JSONField(
+    parses = jsonb.JSONField(default=dict)
+    metrics = jsonb.JSONField(
             default={'sentiment': {}, 'complexity': {}, 'politeness': {},
                      'formality': {}, 'implicature': {}, 'informativeness': {}}
         )
