@@ -17,8 +17,9 @@ GetSentenceYngve <- function(normalize = TRUE) {
   if (normalize) {
     normalization.dataset <- GetSentenceLength()
     dataset <- inner_join(dataset, normalization.dataset, by = KEYS) %>%
-      mutate(yngve = ifelse(slength > 0, yngve / slength, yngve)) %>%
-      select(-slength)
+      mutate(yngve = ifelse(sentence_length > 0,
+                            yngve / sentence_length, yngve)) %>%
+      select(-sentence_length)
   }
   return(dataset)
 }
@@ -195,7 +196,8 @@ GetSentenceLength <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
-      (SELECT COUNT(*) FROM token t WHERE t.sentence_id = s.id) AS slength
+      (SELECT COUNT(*) FROM token t WHERE t.sentence_id = s.id)
+        AS sentence_length
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
       JOIN sentence s ON s.id = cs.sentence_id

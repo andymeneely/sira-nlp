@@ -241,7 +241,7 @@ SENTENCE.METRIC.LABELS <- c(
   "neutral" = "Neutral",
   "negative" = "Negative",
   # Miscellaneous
-  "slength" = "Sentence Length"
+  "sentence_length" = "Sentence Length"
 )
 
 # Miscellaneous ----
