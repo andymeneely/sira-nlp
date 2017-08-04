@@ -10,7 +10,7 @@ dataset <- GetContinuousMetrics()
 ### Plot: Spearman's Correlation Coefficient ####
 title <- "Correlation among Continuous-valued Sentence Metrics"
 
-plot.dataset <- GetCorrelation(dataset, ignore = c("comment_id", "sentence_id"))
+plot.dataset <- GetCorrelation(dataset, ignore = KEYS)
 
 # Resolution: 650 x 650
 ggplot(plot.dataset, aes(Var2, Var1, fill = value)) +
