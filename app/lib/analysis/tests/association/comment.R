@@ -13,7 +13,7 @@ for (i in 1:length(metrics)) {
   metric.label <- COMMENT.METRIC.LABELS[[metric]]
   cat("[", i, "/", length(metrics), "] ", metric.label, "\n", sep = "")
 
-  dataset <- GetMetric(metric, normalize = TRUE)
+  dataset <- GetMetric(metric)
   analysis.dataset <- dataset %>%
     inner_join(., COMMENT.TYPE, by = "comment_id") %>%
     select(-comment_id)
