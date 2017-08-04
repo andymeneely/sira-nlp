@@ -5,7 +5,7 @@ source("data/sentence.R")
 ## Continuous Valued Metrics ====
 
 ### Query Data ####
-dataset <- GetContinuousMetrics()
+dataset <- GetSentenceContinuousMetrics()
 
 ### Plot: Spearman's Correlation Coefficient ####
 title <- "Correlation among Continuous-valued Sentence Metrics"

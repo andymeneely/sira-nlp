@@ -5,7 +5,7 @@ source("data/sentence.R")
 ## Yngve ====
 
 ### Query Data
-dataset <- GetYngve(normalize = F)
+dataset <- GetSentenceYngve(normalize = F)
 
 ### Test
 TestNormality(dataset$yngve, label = "Yngve")
@@ -13,7 +13,7 @@ TestNormality(dataset$yngve, label = "Yngve")
 ## Frazier ====
 
 ### Query Data
-dataset <- GetFrazier(normalize = F)
+dataset <- GetSentenceFrazier(normalize = F)
 
 ### Test
 TestNormality(dataset$frazier, label = "Frazier")
@@ -21,7 +21,7 @@ TestNormality(dataset$frazier, label = "Frazier")
 ## Propositional Density ====
 
 ### Query Data
-dataset <- GetPdensity(normalize = F)
+dataset <- GetSentencePdensity(normalize = F)
 
 ### Test
 TestNormality(dataset$pdensity, label = "Propositional Density")
@@ -29,7 +29,7 @@ TestNormality(dataset$pdensity, label = "Propositional Density")
 ## Content Density ====
 
 ### Query Data
-dataset <- GetCdensity(normalize = F)
+dataset <- GetSentenceCdensity(normalize = F)
 
 ### Test
 TestNormality(dataset$cdensity, label = "Content Density")
@@ -37,7 +37,7 @@ TestNormality(dataset$cdensity, label = "Content Density")
 ## Politeness ====
 
 ### Query Data
-dataset <- GetPoliteness(normalize = F)
+dataset <- GetSentencePoliteness(normalize = F)
 
 ### Test
 TestNormality(dataset$politeness, label = "Politeness")
@@ -45,7 +45,7 @@ TestNormality(dataset$politeness, label = "Politeness")
 ## Formality ====
 
 ### Query Data
-dataset <- GetFormality(normalize = F)
+dataset <- GetSentenceFormality(normalize = F)
 
 ### Test
 TestNormality(dataset$formality, label = "Formality")
@@ -53,7 +53,7 @@ TestNormality(dataset$formality, label = "Formality")
 ## Informativeness ====
 
 ### Query Data
-dataset <- GetInformativeness(normalize = F)
+dataset <- GetSentenceInformativeness(normalize = F)
 
 ### Test
 TestNormality(dataset$informativeness, label = "Informativeness")
@@ -61,7 +61,7 @@ TestNormality(dataset$informativeness, label = "Informativeness")
 ## Implicature ====
 
 ### Query Data
-dataset <- GetImplicature(normalize = F)
+dataset <- GetSentenceImplicature(normalize = F)
 
 ### Test
 TestNormality(dataset$implicature, label = "Implicature")

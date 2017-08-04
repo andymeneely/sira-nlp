@@ -11,7 +11,7 @@ for (i in 1:length(SENTENCE.CV.METRICS)) {
   label <- SENTENCE.METRIC.LABELS[metric]
   cat("[", i, "/", length(SENTENCE.CV.METRICS), "] ", label, "\n", sep = "")
 
-  dataset <- GetMetric(metric, normalize = TRUE)
+  dataset <- GetSentenceMetric(metric, normalize = TRUE)
   analysis.dataset <- dataset %>%
     inner_join(., COMMENT.TYPE, by = "comment_id") %>%
     select(-comment_id, -sentence_id)

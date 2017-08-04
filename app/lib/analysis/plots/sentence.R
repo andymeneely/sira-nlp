@@ -9,7 +9,7 @@ InitGlobals()
 ## Yngve ====
 
 ### Query Data
-dataset <- GetYngve()
+dataset <- GetSentenceYngve()
 
 ### Plot
 metric <- "Sentence Yngve (Log Scale)"
@@ -35,7 +35,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Frazier ====
 
 ### Query Data
-dataset <- GetFrazier()
+dataset <- GetSentenceFrazier()
 
 ### Plot
 metric <- "Sentence Frazier"
@@ -60,7 +60,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Propositional Density ====
 
 ### Query Data
-dataset <- GetPdensity()
+dataset <- GetSentencePdensity()
 
 ### Plot
 metric <- "Sentence Propositional Density"
@@ -85,7 +85,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Content Density ====
 
 ### Query Data
-dataset <- GetCdensity()
+dataset <- GetSentenceCdensity()
 
 ### Plot
 metric <- "Sentence Content Density (Sqrt Scale)"
@@ -111,7 +111,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Sentiment ====
 
 ### Query Data
-dataset <- GetSentiment()
+dataset <- GetSentenceSentiment()
 
 ### Plot
 metric <- "% Sentences"
@@ -148,7 +148,7 @@ ggplot(plot.dataset, aes(x = type, y = pct_sentences, fill = sentiment)) +
 ## Uncertainty ====
 
 ### Query Data
-dataset <- GetUncertainty()
+dataset <- GetSentenceUncertainty()
 
 ### Plot
 metric <- "% Sentences"
@@ -185,7 +185,7 @@ ggplot(plot.dataset, aes(x = type, y = pct_sentences, fill = uncertainty)) +
 ## Politeness ====
 
 ### Query Data
-dataset <- GetPoliteness()
+dataset <- GetSentencePoliteness()
 
 ### Plot
 metric <- "Sentence Politeness"
@@ -210,7 +210,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Formality ====
 
 ### Query Data
-dataset <- GetFormality()
+dataset <- GetSentenceFormality()
 
 ### Plot
 metric <- "Sentence Formality"
@@ -235,7 +235,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Informativeness ====
 
 ### Query Data
-dataset <- GetInformativeness()
+dataset <- GetSentenceInformativeness()
 
 ### Plot
 metric <- "Sentence Informativeness"
@@ -260,7 +260,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Implicature ====
 
 ### Query Data
-dataset <- GetImplicature()
+dataset <- GetSentenceImplicature()
 
 ### Plot
 metric <- "Sentence Implicature"

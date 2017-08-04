@@ -5,7 +5,7 @@ source("data/sentence.R")
 ## Continuous Valued Metrics ====
 
 ### Query Data ####
-dataset <- GetContinuousMetrics()
+dataset <- GetSentenceContinuousMetrics()
 
 analysis.dataset <- dataset %>%
   select(-comment_id, -sentence_id)
