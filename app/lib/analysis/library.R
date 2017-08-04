@@ -206,6 +206,12 @@ PlotDistributions <- function(dataset){
 }
 
 ## Normality ===
+GetNormality <- function(data, p.value = 0.05) {
+  test.outcome <- ad.test(data)
+  return(list("p" = test.outcome$p.value,
+              "is.normal" = test.outcome$p.value > p.value))
+}
+
 TestNormality <- function(data, label) {
   test.outcome <- ad.test(data)
   if (test.outcome$p.value < 0.05) {
