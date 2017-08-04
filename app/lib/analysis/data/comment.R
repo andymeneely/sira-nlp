@@ -22,11 +22,31 @@ GetYngve <- function(normalize = TRUE) {
       s.metrics #>> '{complexity,yngve}' <> 'null'
     GROUP BY cs.comment_id;
   "
+  if (normalize)
+    query <- "
+      SELECT i.comment_id AS comment_id,
+        min(i.yngve) AS min_yngve,
+        median(i.yngve) AS med_yngve,
+        avg(i.yngve) AS mean_yngve,
+        variance(i.yngve) AS var_yngve,
+        max(i.yngve) AS max_yngve
+      FROM (
+        SELECT cs.comment_id AS comment_id,
+          (
+            (s.metrics #>> '{complexity,yngve}')::numeric / 
+            (SELECT COUNT(*) FROM token t WHERE t.sentence_id = s.id)
+          ) AS yngve
+        FROM comment c
+          JOIN comment_sentences cs ON cs.comment_id = c.id
+          JOIN sentence s ON s.id = cs.sentence_id
+        WHERE c.by_reviewer IS true AND
+          s.metrics #>> '{complexity,yngve}' <> 'null'
+      ) AS i
+      GROUP BY i.comment_id;
+    "
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if (normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
