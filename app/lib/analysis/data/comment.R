@@ -1,4 +1,8 @@
-GetYngve <- function(normalize = TRUE){
+KEYS <- c("comment_id")
+
+# Natural Language Metrics ----
+
+GetYngve <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,yngve}')::numeric)
@@ -26,7 +30,7 @@ GetYngve <- function(normalize = TRUE){
   return(dataset)
 }
 
-GetFrazier <- function(normalize = TRUE){
+GetFrazier <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,frazier}')::numeric)
@@ -49,12 +53,10 @@ GetFrazier <- function(normalize = TRUE){
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if (normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetPdensity <- function(normalize = TRUE){
+GetPdensity <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,pdensity}')::numeric)
@@ -77,12 +79,10 @@ GetPdensity <- function(normalize = TRUE){
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if (normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetCdensity <- function(normalize = TRUE){
+GetCdensity <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,cdensity}')::numeric)
@@ -105,12 +105,10 @@ GetCdensity <- function(normalize = TRUE){
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if (normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetSentiment <- function(normalize = TRUE){
+GetSentiment <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       SUM(
@@ -151,12 +149,10 @@ GetSentiment <- function(normalize = TRUE){
     mutate(pct_nne_sentences = num_nne_sentences / num_sentences) %>%
     select(comment_id, pct_neg_sentences, pct_neu_sentences, pct_pos_sentences,
            pct_nne_sentences)
-    if (normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetUncertainty <- function(normalize = TRUE){
+GetUncertainty <- function(normalize = TRUE) {
   query <- "
     SELECT c.id AS comment_id,
       (
@@ -234,12 +230,10 @@ GetUncertainty <- function(normalize = TRUE){
     mutate(pct_unc_sentences = num_unc_sentences / num_sentences) %>%
     select(comment_id, pct_dox_sentences, pct_epi_sentences, pct_con_sentences,
            pct_inv_sentences, pct_unc_sentences)
-    if (normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetPoliteness <- function(normalize = TRUE){
+GetPoliteness <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{politeness,polite}')::numeric)
@@ -261,12 +255,10 @@ GetPoliteness <- function(normalize = TRUE){
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if (normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetFormality <- function(normalize = TRUE){
+GetFormality <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{formality,formal}')::numeric)
@@ -288,12 +280,10 @@ GetFormality <- function(normalize = TRUE){
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if (normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetInformativeness <- function(normalize = TRUE){
+GetInformativeness <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{informativeness,informative}')::numeric)
@@ -315,12 +305,10 @@ GetInformativeness <- function(normalize = TRUE){
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if (normalize)
-    warning("No implementation for normalization yet.")
   return(dataset)
 }
 
-GetImplicature <- function(normalize = TRUE){
+GetImplicature <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{implicature,implicative}')::numeric)
@@ -342,8 +330,107 @@ GetImplicature <- function(normalize = TRUE){
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  if (normalize)
-    warning("No implementation for normalization yet.")
+  return(dataset)
+}
+
+# Experience Metrics ----
+
+GetProjectExperience <- function(normalize = TRUE) {
+  query <- "
+    SELECT c.id AS comment_id,
+      (c.metrics #>> '{experience,project,uniform}')::numeric
+        AS uni_prj_experience,
+      (c.metrics #>> '{experience,project,proportional}')::numeric
+        AS prp_prj_experience
+    FROM comment c
+    WHERE c.by_reviewer IS true;
+  "
+  connection <- GetDbConnection(db.settings)
+  dataset <- GetData(connection, query)
+  Disconnect(connection)
+  return(na.omit(dataset))
+}
+
+GetModuleExperience <- function(normalize = TRUE) {
+  query <- "
+    SELECT c.id AS comment_id,
+      (c.metrics #>> '{experience,module,uniform}')::numeric
+        AS uni_mod_experience,
+      (c.metrics #>> '{experience,module,proportional}')::numeric
+        AS prp_mod_experience
+    FROM comment c
+    WHERE c.by_reviewer IS true;
+  "
+  connection <- GetDbConnection(db.settings)
+  dataset <- GetData(connection, query)
+  Disconnect(connection)
+  return(na.omit(dataset))
+}
+
+GetFileExperience <- function(normalize = TRUE) {
+  query <- "
+    SELECT c.id AS comment_id,
+      (c.metrics #>> '{experience,file,uniform}')::numeric
+        AS uni_fil_experience,
+      (c.metrics #>> '{experience,file,proportional}')::numeric
+        AS prp_fil_experience
+    FROM comment c
+    WHERE c.by_reviewer IS true;
+  "
+  connection <- GetDbConnection(db.settings)
+  dataset <- GetData(connection, query)
+  Disconnect(connection)
+  return(na.omit(dataset))
+}
+
+GetBugFamiliarity <- function(normalize = TRUE) {
+  query <- "
+    SELECT c.id AS comment_id,
+      (c.metrics #>> '{experience,bug}')::boolean AS is_bugfamiliar
+    FROM comment c
+    WHERE c.by_reviewer IS true;
+  "
+  connection <- GetDbConnection(db.settings)
+  dataset <- GetData(connection, query)
+  Disconnect(connection)
+  return(na.omit(dataset))
+}
+
+# Miscellaneous ----
+
+GetContinuousMetrics <- function(normalize = TRUE) {
+  dataset <- NA
+
+  interim.dataset <- GetYngve(normalize = normalize)
+  dataset <- interim.dataset
+
+  interim.dataset <- GetFrazier(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+
+  interim.dataset <- GetPdensity(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+
+  interim.dataset <- GetCdensity(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+
+  interim.dataset <- GetSentiment(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+
+  interim.dataset <- GetUncertainty(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+
+  interim.dataset <- GetPoliteness(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+
+  interim.dataset <- GetFormality(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+
+  interim.dataset <- GetInformativeness(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+
+  interim.dataset <- GetImplicature(normalize = normalize)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+
   return(dataset)
 }
 

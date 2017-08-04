@@ -15,7 +15,8 @@ COMMENT.CV.METRICS <- c(
   "politeness",
   "formality",
   "informativeness",
-  "implicature"
+  "implicature",
+  "experience"
 )
 
 YNGVE.VARIANTS <- list(
@@ -87,6 +88,14 @@ IMPLICATURE.VARIANTS <-list(
   "var_implicature",
   "max_implicature"
 )
+EXPERIENCE.VARIANTS <- list(
+  "prj_uni_experience",
+  "prj_prp_experience",
+  "mod_uni_experience",
+  "mod_prp_experience",
+  "fil_uni_experience",
+  "fil_prp_experience"
+)
 COMMENT.CV.METRIC.VARIANTS <- list(
   "yngve" = YNGVE.VARIANTS,
   "frazier" = FRAZIER.VARIANTS,
@@ -97,7 +106,8 @@ COMMENT.CV.METRIC.VARIANTS <- list(
   "politeness" = POLITENESS.VARIANTS,
   "formality" = FORMALITY.VARIANTS,
   "informativeness" = INFORMATIVENESS.VARIANTS,
-  "implicature" = IMPLICATURE.VARIANTS
+  "implicature" = IMPLICATURE.VARIANTS,
+  "experience" = EXPERIENCE.VARIANTS
 )
 
 ## Sentence Level Metrics ====
@@ -184,7 +194,24 @@ COMMENT.METRIC.LABELS <- c(
   "med_implicature" = "Median Implicature",
   "mean_implicature" = "Mean Implicature",
   "var_implicature" = "Variance in Implicature",
-  "max_implicature" = "Maximum Implicature"
+  "max_implicature" = "Maximum Implicature",
+  # Experience
+  "experience" = "Experience",
+  # Experience: Project
+  "uni_prj_experience" = "Unform Experience",
+  "prp_prj_experience" = "Proportional Experience",
+  # Experience: Module
+  "uni_mod_experience" = "Unform Experience",
+  "prp_mod_experience" = "Proportional Experience",
+  # Experience: File
+  "uni_fil_experience" = "Unform Experience",
+  "prp_fil_experience" = "Proportional Experience",
+  # Bug Familiarity
+  "is_bugfamiliar" = "Familiar with Bug",
+  # Miscellaneous
+  "TRUE" = "Yes",
+  "FALSE" = "No",
+  "num_sentences" = "Number of Sentences"
 )
 
 ## Sentence Level Metrics ====

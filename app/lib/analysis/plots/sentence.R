@@ -4,10 +4,12 @@ source("data/sentence.R")
 
 InitGlobals()
 
+# Natural Language Metrics ----
+
 ## Yngve ====
 
 ### Query Data
-dataset <- GetYngve(normalize = F)
+dataset <- GetYngve()
 
 ### Plot
 metric <- "Sentence Yngve (Log Scale)"
@@ -23,7 +25,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_y_log10() +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(SENTENCE.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -33,7 +35,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Frazier ====
 
 ### Query Data
-dataset <- GetFrazier(normalize = F)
+dataset <- GetFrazier()
 
 ### Plot
 metric <- "Sentence Frazier"
@@ -48,7 +50,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(SENTENCE.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -58,7 +60,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Propositional Density ====
 
 ### Query Data
-dataset <- GetPdensity(normalize = F)
+dataset <- GetPdensity()
 
 ### Plot
 metric <- "Sentence Propositional Density"
@@ -73,7 +75,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(SENTENCE.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -83,7 +85,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Content Density ====
 
 ### Query Data
-dataset <- GetCdensity(normalize = F)
+dataset <- GetCdensity()
 
 ### Plot
 metric <- "Sentence Content Density (Sqrt Scale)"
@@ -99,7 +101,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_y_sqrt() +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(SENTENCE.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -109,7 +111,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Sentiment ====
 
 ### Query Data
-dataset <- GetSentiment(normalize = F)
+dataset <- GetSentiment()
 
 ### Plot
 metric <- "% Sentences"
@@ -131,22 +133,22 @@ plot.dataset <- inner_join(alpha.dataset, beta.dataset, by = "type") %>%
   mutate(pct_sentences = alpha_num_sentences / beta_num_sentences) %>%
   select(sentiment, type, pct_sentences)
 
-# Resolution: 600 x 600
-ggplot(plot.dataset, aes(x = sentiment, y = pct_sentences, fill = type)) +
+# Resolution: 450 x 450
+ggplot(plot.dataset, aes(x = type, y = pct_sentences, fill = sentiment)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(aes(label = scales::percent(pct_sentences)), vjust = "inward",
             position = position_dodge(width=0.9)) +
-  scale_x_discrete(labels = SENTENCE.METRIC.LABELS) +
+  scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_y_continuous(labels = scales::percent) +
-  scale_fill_manual(name = "Comment Type", values = COMMENT.TYPE.FILLCOLORS,
+  scale_fill_manual(name = "Comment Type", values = FILLCOLORS,
                     labels = COMMENT.TYPE.LABELS) +
-  labs(title = title, x = "Comment Type", y = metric) +
+  labs(title = title, x = "Sentiment", y = metric) +
   GetTheme()
 
 ## Uncertainty ====
 
 ### Query Data
-dataset <- GetUncertainty(normalize = F)
+dataset <- GetUncertainty()
 
 ### Plot
 metric <- "% Sentences"
@@ -154,7 +156,7 @@ title <- "Distribution of Uncertain Sentences"
 
 interim.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id, -sentence_id)
+  select(-comment_id)
 
 alpha.dataset <- interim.dataset %>%
   group_by(uncertainty, type) %>%
@@ -169,21 +171,21 @@ plot.dataset <- inner_join(alpha.dataset, beta.dataset, by = "type") %>%
   select(uncertainty, type, pct_sentences)
 
 # Resolution: 600 x 600
-ggplot(plot.dataset, aes(x = uncertainty, y = pct_sentences, fill = type)) +
+ggplot(plot.dataset, aes(x = type, y = pct_sentences, fill = uncertainty)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(aes(label = scales::percent(pct_sentences)), vjust = "inward",
             position = position_dodge(width=0.9)) +
-  scale_x_discrete(labels = SENTENCE.METRIC.LABELS) +
+  scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_y_continuous(labels = scales::percent) +
-  scale_fill_manual(name = "Comment Type", values = COMMENT.TYPE.FILLCOLORS,
-                    labels = COMMENT.TYPE.LABELS) +
+  scale_fill_manual(name = "Uncertainty", values = FILLCOLORS,
+                    labels = SENTENCE.METRIC.LABELS) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme()
 
 ## Politeness ====
 
 ### Query Data
-dataset <- GetPoliteness(normalize = F)
+dataset <- GetPoliteness()
 
 ### Plot
 metric <- "Sentence Politeness"
@@ -198,7 +200,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(SENTENCE.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -208,7 +210,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Formality ====
 
 ### Query Data
-dataset <- GetFormality(normalize = F)
+dataset <- GetFormality()
 
 ### Plot
 metric <- "Sentence Formality"
@@ -223,7 +225,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(SENTENCE.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -233,7 +235,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Informativeness ====
 
 ### Query Data
-dataset <- GetInformativeness(normalize = F)
+dataset <- GetInformativeness()
 
 ### Plot
 metric <- "Sentence Informativeness"
@@ -248,7 +250,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(SENTENCE.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -258,7 +260,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Implicature ====
 
 ### Query Data
-dataset <- GetImplicature(normalize = F)
+dataset <- GetImplicature()
 
 ### Plot
 metric <- "Sentence Implicature"
@@ -273,7 +275,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(SENTENCE.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -283,7 +285,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Sentence Length ====
 
 ### Query Data
-dataset <- GetSentenceLength(normalize = F)
+dataset <- GetSentenceLength()
 
 ### Plot
 metric <- "Sentence Length (Log Scale)"
@@ -299,9 +301,10 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_y_log10() +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(SENTENCE.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+

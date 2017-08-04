@@ -7,7 +7,7 @@ InitGlobals()
 ## Yngve ====
 
 ### Query Data
-dataset <- GetYngve(normalize = F)
+dataset <- GetYngve()
 
 ### Plot
 metric <- "Comment Yngve (Log Scale)"
@@ -23,7 +23,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_y_log10() +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -33,7 +33,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Frazier ====
 
 ### Query Data
-dataset <- GetFrazier(normalize = F)
+dataset <- GetFrazier()
 
 ### Plot
 metric <- "Comment Frazier"
@@ -48,7 +48,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -58,7 +58,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Propositional Density ====
 
 ### Query Data
-dataset <- GetPdensity(normalize = F)
+dataset <- GetPdensity()
 
 ### Plot
 metric <- "Comment Propositional Density"
@@ -73,7 +73,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -83,7 +83,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Content Density ====
 
 ### Query Data
-dataset <- GetCdensity(normalize = F)
+dataset <- GetCdensity()
 
 ### Plot
 metric <- "Comment Content Density (Sqrt Scale)"
@@ -99,7 +99,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_y_sqrt() +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -109,7 +109,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Sentiment ====
 
 ### Query Data
-dataset <- GetSentiment(normalize = F)
+dataset <- GetSentiment()
 
 ### Plot
 metric <- "Comment Sentiment"
@@ -124,7 +124,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -134,7 +134,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Uncertainty ====
 
 ### Query Data
-dataset <- GetUncertainty(normalize = F)
+dataset <- GetUncertainty()
 
 ### Plot
 metric <- "Comment Uncertainty (Log Scale)"
@@ -150,7 +150,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_y_log10() +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -160,7 +160,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Politeness ====
 
 ### Query Data
-dataset <- GetPoliteness(normalize = F)
+dataset <- GetPoliteness()
 
 ### Plot
 metric <- "Comment Politeness"
@@ -175,7 +175,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -185,7 +185,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Formality ====
 
 ### Query Data
-dataset <- GetFormality(normalize = F)
+dataset <- GetFormality()
 
 ### Plot
 metric <- "Comment Formality"
@@ -200,7 +200,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -210,7 +210,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Informativeness ====
 
 ### Query Data
-dataset <- GetInformativeness(normalize = F)
+dataset <- GetInformativeness()
 
 ### Plot
 metric <- "Comment Informativeness"
@@ -225,7 +225,7 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
@@ -235,7 +235,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Implicature ====
 
 ### Query Data
-dataset <- GetImplicature(normalize = F)
+dataset <- GetImplicature()
 
 ### Plot
 metric <- "Comment Implicature"
@@ -250,9 +250,123 @@ plot.dataset <- dataset %>%
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
-  scale_fill_manual(values = COMMENT.TYPE.FILLCOLORS) +
+  scale_fill_manual(values = FILLCOLORS) +
   facet_wrap(~ variable, nrow = 1, scales = "free",
              labeller = as_labeller(COMMENT.METRIC.LABELS)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+
+
+## Project Experience ====
+
+### Query Data
+dataset <- GetProjectExperience()
+
+### Plot
+metric <- "Project Experience (Sqrt Scale)"
+title <- "Distribution of Project Experience"
+
+plot.dataset <- dataset %>%
+  inner_join(., COMMENT.TYPE, by = "comment_id") %>%
+  select(-comment_id) %>%
+  melt(., id.vars = c("type"))
+
+# Resolution: 500 x 400
+ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
+  geom_boxplot() +
+  scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
+  scale_y_sqrt() +
+  scale_fill_manual(values = FILLCOLORS) +
+  facet_wrap(~ variable, nrow = 1, scales = "free",
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
+  labs(title = title, x = "Comment Type", y = metric) +
+  GetTheme() +
+  theme(legend.position = "none")
+
+## Module Experience ====
+
+### Query Data
+dataset <- GetModuleExperience()
+
+### Plot
+metric <- "Module Experience"
+title <- "Distribution of Module Experience"
+
+plot.dataset <- dataset %>%
+  inner_join(., COMMENT.TYPE, by = "comment_id") %>%
+  select(-comment_id) %>%
+  melt(., id.vars = c("type"))
+
+# Resolution: 500 x 400
+ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
+  geom_boxplot() +
+  scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
+  scale_fill_manual(values = FILLCOLORS) +
+  facet_wrap(~ variable, nrow = 1, scales = "free",
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
+  labs(title = title, x = "Comment Type", y = metric) +
+  GetTheme() +
+  theme(legend.position = "none")
+
+## File Experience ====
+
+### Query Data
+dataset <- GetFileExperience()
+
+### Plot
+metric <- "File Experience"
+title <- "Distribution of File Experience"
+
+plot.dataset <- dataset %>%
+  inner_join(., COMMENT.TYPE, by = "comment_id") %>%
+  select(-comment_id) %>%
+  melt(., id.vars = c("type"))
+
+# Resolution: 500 x 400
+ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
+  geom_boxplot() +
+  scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
+  scale_fill_manual(values = FILLCOLORS) +
+  facet_wrap(~ variable, nrow = 1, scales = "free",
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
+  labs(title = title, x = "Comment Type", y = metric) +
+  GetTheme() +
+  theme(legend.position = "none")
+
+## Bug Familiarity ====
+
+### Query Data
+dataset <- GetBugFamiliarity()
+
+### Plot
+metric <- "Bug Familiarity"
+title <- "Distribution of Bug Familiarity"
+
+interim.dataset <- dataset %>%
+  inner_join(., COMMENT.TYPE, by = "comment_id") %>%
+  select(-comment_id)
+
+alpha.dataset <- interim.dataset %>%
+  group_by(type, is_bugfamiliar) %>%
+  summarize(alpha_num_comments = n())
+
+beta.dataset <- interim.dataset %>%
+  group_by(type) %>%
+  summarize(beta_num_comments = n())
+
+plot.dataset <- inner_join(alpha.dataset, beta.dataset, by = "type") %>%
+  mutate(pct_comments = alpha_num_comments / beta_num_comments) %>%
+  select(type, is_bugfamiliar, pct_comments)
+
+# Resolution: 500 x 400
+ggplot(plot.dataset, aes(x = type, y = pct_comments, fill = is_bugfamiliar)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = scales::percent(pct_comments)), vjust = "inward",
+            position = position_dodge(width=0.9)) +
+  scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(name = "Comment Type", values = FILLCOLORS,
+                    labels = COMMENT.METRIC.LABELS) +
+  labs(title = title, x = metric, y = "% Comments") +
+  GetTheme()

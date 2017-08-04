@@ -1,5 +1,14 @@
 # Colors ----
-COMMENT.TYPE.FILLCOLORS <- c("useful" = "#ed7d31", "notuseful" = "#70ad47")
+FILLCOLORS <- c(
+  # Comment Type
+  "useful" = "#ed7d31", "notuseful" = "#70ad47",
+  # Sentiment
+  "negative" = "#ed7d31", "neutral" = "#bcbcbc", "positive" = "#70ad47",
+  # Uncertainty
+  "D" = "#ed7d31", "E" = "#bcbcbc", "N" = "#70ad47", "I" = "#4776ad",
+  # Bug Familiarity
+  "TRUE" = "#ed7d31", "FALSE" = "#70ad47"
+)
 
 # Function ----
 GetTheme <- function(){
