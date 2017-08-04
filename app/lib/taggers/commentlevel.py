@@ -22,7 +22,8 @@ def __calc_content_density(tags):
         elif tag in closed_class_list:
             closed_count += 1
         else:
-            logger.warning("Unknown tag " + tag + "\n")
+            #logger.warning("Unknown tag " + tag + "\n")
+            pass
 
     return float(open_count / closed_count) if closed_count != 0 else 0
 
@@ -65,7 +66,7 @@ def do(iqueue, cqueue): # pragma: no cover
                 count += 1
             except Error as err: # pragma: no cover
                 sys.stderr.write('Exception\n')
-                sys.stderr.write('  Sentence:  {}\n'.format(sent.id))
+                sys.stderr.write('  Comment:  {}\n'.format(comm.id))
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 
