@@ -2,6 +2,7 @@ import csv
 import itertools
 import numpy as np
 import re
+import sys
 import _pickle
 
 import warnings
@@ -130,9 +131,9 @@ class Word(object):
 
 
 class Sentence(object):
-    def __init__(self, sentence, label):
+    def __init__(self, sentence, label, pos_label="P", neg_label="N"):
         self.sentence = sentence
-        self.label = 'U' if label <= 4.00 else 'I'
+        self.label = pos_label if label <= 4.00 else neg_label
         self.words = list()
 
         tokens = word_tokenize(self.sentence)
@@ -144,6 +145,35 @@ class Sentence(object):
             next_word = pos_tags[i+1][0] if i+1 < len(pos_tags) else None
             w = Word(token[0], token[1], i, self.label, prev_word, next_word, chunks[i])
             self.words.append(w)
+
+    def _score(self):
+        feats = dict()
+        for w in self.words:
+            feats.update(w.get_features())
+        with open('vec_form.p', 'rb') as V:
+            VEC = _pickle.load(V)
+            with open('cls_form.p', 'rb') as C:
+                CLS = _pickle.load(C)
+                fv = VEC.transform(feats)
+                probs = CLS.predict_proba(fv)
+                print("  FORMAL: " + str(probs[0][1]))
+                print("INFORMAL: " + str(probs[0][0]))
+        with open('vec_info.p', 'rb') as V:
+            VEC = _pickle.load(V)
+            with open('cls_info.p', 'rb') as C:
+                CLS = _pickle.load(C)
+                fv = VEC.transform(feats)
+                probs = CLS.predict_proba(fv)
+                print("  INFORMATIVE: " + str(probs[0][1]))
+                print("UNINFORMATIVE: " + str(probs[0][0]))
+        with open('vec_impl.p', 'rb') as V:
+            VEC = _pickle.load(V)
+            with open('cls_impl.p', 'rb') as C:
+                CLS = _pickle.load(C)
+                fv = VEC.transform(feats)
+                probs = CLS.predict_proba(fv)
+                print("  IMPLICATIVE: " + str(probs[0][1]))
+                print("UNIMPLICATIVE: " + str(probs[0][0]))
 
     def get_sentence(self):
         return self.sentence
@@ -161,55 +191,69 @@ class Sentence(object):
 
         return feats
 
+def classify():
+    with open("mturk_merged.csv", newline='') as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
 
-with open("mturk_merged.csv", newline='') as csvfile:
-    csv_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+        next(csv_reader, None) # Skip header row
 
-    next(csv_reader, None) # Skip header row
+        labs = {1: ["F", "I"], 2: ["I", "U"], 3: ["I", "U"]}
+        sents = dict()
+        for sentence in csv_reader:
+            # sentence[0]: id, sentence[1]: formality, sentence[2]: informativeness,
+            # sentence[3]: implicature, sentence[5]: sentence
+            sent = Sentence(sentence[-1], float(sentence[3]), labs[3][0], labs[3][1])
+            sents[int(sentence[0])] = sent
+        print("#  SENTENCES: {:d}".format(len(sents.keys())))
 
-    sents = dict()
-    for sentence in csv_reader:
-        # sentence[0]: id, sentence[1]: formality, sentence[2]: informativeness,
-        # sentence[3]: implicature, sentence[5]: sentence
-        sent = Sentence(sentence[-1], float(sentence[3]))
-        sents[int(sentence[0])] = sent
-    print("#  SENTENCES: {:d}".format(len(sents.keys())))
+        print("Gathering Features...")
+        X, y = list(), list()
+        for key, sent in sents.items():
+            X.append(sent.get_features())
+            y.append(sent.get_label())
 
-    print("Gathering Features...")
-    X, y = list(), list()
-    for key, sent in sents.items():
-        X.append(sent.get_features())
-        y.append(sent.get_label())
+        print("Splitting Train/Test...")
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.0)
 
-    print("Splitting Train/Test...")
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.0)
+        print("Generating Feature Vectors...")
+        vectorizer = DictVectorizer()
+        X_train = vectorizer.fit_transform(X_train)
 
-    print("Generating Feature Vectors...")
-    vectorizer = DictVectorizer()
-    X_train = vectorizer.fit_transform(X_train)
+        print("Dumping Vectorizer to Disk...")
+    #    with open('vec_form.p', 'wb') as f:
+    #    with open('vec_info.p', 'wb') as f:
+        with open('vec_impl.p', 'wb') as f:
+            _pickle.dump(vectorizer, f)
 
-    print("Dumping Vectorizer to Disk...")
-#    with open('vec_form.p', 'wb') as f:
-#    with open('vec_info.p', 'wb') as f:
-    with open('vec_impl.p', 'wb') as f:
-        _pickle.dump(vectorizer, f)
+        print("Training Classifier...")
+        classifier = LogisticRegression()
+        classifier.fit(X_train, y_train)
 
-    print("Training Classifier...")
-    classifier = LogisticRegression()
-    classifier.fit(X_train, y_train)
+        print("Dumping Classifier to Disk...")
+    #    with open('cls_form.p', 'wb') as f:
+    #    with open('cls_info.p', 'wb') as f:
+        with open('cls_impl.p', 'wb') as f:
+            _pickle.dump(classifier, f)
 
-    print("Dumping Classifier to Disk...")
-#    with open('cls_form.p', 'wb') as f:
-#    with open('cls_info.p', 'wb') as f:
-    with open('cls_impl.p', 'wb') as f:
-        _pickle.dump(classifier, f)
+        '''
+        print("Making Predictions...")
+        X_test = vectorizer.transform(X_test)
+        y_pred = classifier.predict(X_test)
 
-    '''
-    print("Making Predictions...")
-    X_test = vectorizer.transform(X_test)
-    y_pred = classifier.predict(X_test)
+        print(classification_report(y_test, y_pred))
+        print("\n")
+        print(confusion_matrix(y_test, y_pred))
+        '''
 
-    print(classification_report(y_test, y_pred))
-    print("\n")
-    print(confusion_matrix(y_test, y_pred))
-    '''
+def score(sentence):
+    sent = Sentence(sentence, 0.00)
+    sent._score()
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if args[0] == 'score':
+        score(args[1])
+    elif args[0] == 'classify':
+        #classify()
+        pass
+
