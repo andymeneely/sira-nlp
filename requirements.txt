@@ -8,6 +8,7 @@ nltk==3.2.4
 nose
 numpy==1.12.1
 packaging==16.8
+pandas>=0.20
 psutil
 psycopg2==2.6.2
 pyparsing==2.2.0

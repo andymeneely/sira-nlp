@@ -176,11 +176,15 @@ class BaselinesTaggerTestCase(test.TransactionTestCase):
         q1 = Q(message__review_id=1259853004)
         q2 = Q(comment__patch__patchset__review_id=1259853004)
         actual = [
-                (s.text, s.metrics['length'], s.metrics['type_token_ratio'],
-                 s.metrics['flesch_kincaid'], s.metrics['pronoun_density'])
+                (
+                    s.text,
+                    s.metrics['baselines']['length'],
+                    s.metrics['baselines']['type_token_ratio'],
+                    s.metrics['baselines']['flesch_kincaid'],
+                    s.metrics['baselines']['pronoun_density']
+                )
                 for s in Sentence.objects.filter(q1 | q2)
             ]
         actual = sorted(actual)
-        print(actual)
         for i in range(0, len(expected)):
             self.assertEqual(expected[i], actual[i])
