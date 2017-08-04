@@ -448,3 +448,17 @@ GetMetric <- function(metric, normalize = TRUE) {
                    implicature = GetImplicature())
   return(dataset)
 }
+
+GetNumSentences <- function(normalize = TRUE) {
+  query <- "
+    SELECT cs.comment_id AS comment_id, COUNT(*) AS num_sentences
+    FROM comment_sentences cs
+      JOIN comment c ON c.id = cs.comment_id
+    WHERE c.by_reviewer IS true
+    GROUP BY cs.comment_id;
+  "
+  connection <- GetDbConnection(db.settings)
+  dataset <- GetData(connection, query)
+  Disconnect(connection)
+  return(na.omit(dataset))
+}

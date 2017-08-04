@@ -370,3 +370,29 @@ ggplot(plot.dataset, aes(x = type, y = pct_comments, fill = is_bugfamiliar)) +
                     labels = COMMENT.METRIC.LABELS) +
   labs(title = title, x = metric, y = "% Comments") +
   GetTheme()
+
+## Number of Sentences ====
+
+### Query Data
+dataset <- GetNumSentences()
+
+### Plot
+metric <- "# Sentences (Log Scale)"
+title <- "Distribution of Number of Sentences"
+
+plot.dataset <- dataset %>%
+  inner_join(., COMMENT.TYPE, by = "comment_id") %>%
+  select(-comment_id) %>%
+  melt(., id.vars = c("type"))
+
+# Resolution: 500 x 400
+ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
+  geom_boxplot() +
+  scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
+  scale_y_log10() +
+  scale_fill_manual(values = FILLCOLORS) +
+  facet_wrap(~ variable, nrow = 1, scales = "free",
+             labeller = as_labeller(COMMENT.METRIC.LABELS)) +
+  labs(title = title, x = "Comment Type", y = metric) +
+  GetTheme() +
+  theme(legend.position = "none")
