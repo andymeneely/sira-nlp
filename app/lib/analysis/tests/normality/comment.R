@@ -5,7 +5,7 @@ source("data/comment.R")
 ## Yngve ====
 
 ### Query Data
-dataset <- GetYngve(normalize = F)
+dataset <- GetCommentYngve(normalize = F)
 
 ### Test
 TestNormality(dataset$min_yngve, label = "Minimum Yngve")
@@ -17,7 +17,7 @@ TestNormality(dataset$max_yngve, label = "Maximum Yngve")
 ## Frazier ====
 
 ### Query Data
-dataset <- GetFrazier(normalize = F)
+dataset <- GetCommentFrazier(normalize = F)
 
 ### Test
 TestNormality(dataset$min_frazier, label = "Minimum Frazier")
@@ -29,7 +29,7 @@ TestNormality(dataset$max_frazier, label = "Maximum Frazier")
 ## Propositional Density ====
 
 ### Query Data
-dataset <- GetPdensity(normalize = F)
+dataset <- GetCommentPdensity(normalize = F)
 
 ### Test
 TestNormality(dataset$min_pdensity, label = "Minimum Propositional Density")
@@ -41,7 +41,7 @@ TestNormality(dataset$max_pdensity, label = "Maximum Propositional Density")
 ## Content Density ====
 
 ### Query Data
-dataset <- GetCdensity(normalize = F)
+dataset <- GetCommentCdensity(normalize = F)
 
 ### Test
 TestNormality(dataset$min_cdensity, label = "Minimum Content Density")
@@ -53,7 +53,7 @@ TestNormality(dataset$max_cdensity, label = "Maximum Content Density")
 ## Sentiment ====
 
 ### Query Data
-dataset <- GetSentiment(normalize = F)
+dataset <- GetCommentSentiment(normalize = F)
 
 ### Test
 TestNormality(dataset$pct_neg_sentences, label = "% Negative Sentences")
@@ -64,7 +64,7 @@ TestNormality(dataset$pct_nne_sentences, label = "% Non-neutral Sentences")
 ## Uncertainty ====
 
 ### Query Data
-dataset <- GetUncertainty(normalize = F)
+dataset <- GetCommentUncertainty(normalize = F)
 
 ### Test
 TestNormality(dataset$pct_dox_sentences, label = "% Doxastic Sentences")
@@ -77,7 +77,7 @@ TestNormality(dataset$pct_unc_sentences, label = "% Uncertain Sentences")
 ## Politeness ====
 
 ### Query Data
-dataset <- GetPoliteness(normalize = F)
+dataset <- GetCommentPoliteness(normalize = F)
 
 ### Test
 TestNormality(dataset$min_politeness, label = "Minimum Politeness")
@@ -89,7 +89,7 @@ TestNormality(dataset$max_politeness, label = "Maximum Politeness")
 ## Formality ====
 
 ### Query Data
-dataset <- GetFormality(normalize = F)
+dataset <- GetCommentFormality(normalize = F)
 
 ### Test
 TestNormality(dataset$min_formality, label = "Minimum Formality")
@@ -101,7 +101,7 @@ TestNormality(dataset$max_formality, label = "Maximum Formality")
 ## Informativeness ====
 
 ### Query Data
-dataset <- GetInformativeness(normalize = F)
+dataset <- GetCommentInformativeness(normalize = F)
 
 ### Test
 TestNormality(dataset$min_informativeness, label = "Minimum Informativeness")
@@ -114,7 +114,7 @@ TestNormality(dataset$max_informativeness, label = "Maximum Informativeness")
 ## Implicature ====
 
 ### Query Data
-dataset <- GetImplicature(normalize = F)
+dataset <- GetCommentImplicature(normalize = F)
 
 ### Test
 TestNormality(dataset$min_implicature, label = "Minimum Implicature")

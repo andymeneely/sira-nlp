@@ -2,7 +2,7 @@ KEYS <- c("comment_id")
 
 # Natural Language Metrics ----
 
-GetYngve <- function(normalize = TRUE) {
+GetCommentYngve <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,yngve}')::numeric)
@@ -50,7 +50,7 @@ GetYngve <- function(normalize = TRUE) {
   return(dataset)
 }
 
-GetFrazier <- function(normalize = TRUE) {
+GetCommentFrazier <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,frazier}')::numeric)
@@ -76,7 +76,7 @@ GetFrazier <- function(normalize = TRUE) {
   return(dataset)
 }
 
-GetPdensity <- function(normalize = TRUE) {
+GetCommentPdensity <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,pdensity}')::numeric)
@@ -102,7 +102,7 @@ GetPdensity <- function(normalize = TRUE) {
   return(dataset)
 }
 
-GetCdensity <- function(normalize = TRUE) {
+GetCommentCdensity <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{complexity,cdensity}')::numeric)
@@ -128,7 +128,7 @@ GetCdensity <- function(normalize = TRUE) {
   return(dataset)
 }
 
-GetSentiment <- function(normalize = TRUE) {
+GetCommentSentiment <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       SUM(
@@ -172,7 +172,7 @@ GetSentiment <- function(normalize = TRUE) {
   return(dataset)
 }
 
-GetUncertainty <- function(normalize = TRUE) {
+GetCommentUncertainty <- function(normalize = TRUE) {
   query <- "
     SELECT c.id AS comment_id,
       (
@@ -253,7 +253,7 @@ GetUncertainty <- function(normalize = TRUE) {
   return(dataset)
 }
 
-GetPoliteness <- function(normalize = TRUE) {
+GetCommentPoliteness <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{politeness,polite}')::numeric)
@@ -278,7 +278,7 @@ GetPoliteness <- function(normalize = TRUE) {
   return(dataset)
 }
 
-GetFormality <- function(normalize = TRUE) {
+GetCommentFormality <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{formality,formal}')::numeric)
@@ -303,7 +303,7 @@ GetFormality <- function(normalize = TRUE) {
   return(dataset)
 }
 
-GetInformativeness <- function(normalize = TRUE) {
+GetCommentInformativeness <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{informativeness,informative}')::numeric)
@@ -328,7 +328,7 @@ GetInformativeness <- function(normalize = TRUE) {
   return(dataset)
 }
 
-GetImplicature <- function(normalize = TRUE) {
+GetCommentImplicature <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       min((s.metrics #>> '{implicature,implicative}')::numeric)
@@ -418,58 +418,58 @@ GetBugFamiliarity <- function(normalize = TRUE) {
 
 # Miscellaneous ----
 
-GetContinuousMetrics <- function(normalize = TRUE) {
+GetCommentContinuousMetrics <- function(normalize = TRUE) {
   dataset <- NA
 
-  interim.dataset <- GetYngve(normalize = normalize)
+  interim.dataset <- GetCommentYngve(normalize = normalize)
   dataset <- interim.dataset
 
-  interim.dataset <- GetFrazier(normalize = normalize)
+  interim.dataset <- GetCommentFrazier(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
-  interim.dataset <- GetPdensity(normalize = normalize)
+  interim.dataset <- GetCommentPdensity(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
-  interim.dataset <- GetCdensity(normalize = normalize)
+  interim.dataset <- GetCommentCdensity(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
-  interim.dataset <- GetSentiment(normalize = normalize)
+  interim.dataset <- GetCommentSentiment(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
-  interim.dataset <- GetUncertainty(normalize = normalize)
+  interim.dataset <- GetCommentUncertainty(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
-  interim.dataset <- GetPoliteness(normalize = normalize)
+  interim.dataset <- GetCommentPoliteness(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
-  interim.dataset <- GetFormality(normalize = normalize)
+  interim.dataset <- GetCommentFormality(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
-  interim.dataset <- GetInformativeness(normalize = normalize)
+  interim.dataset <- GetCommentInformativeness(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
-  interim.dataset <- GetImplicature(normalize = normalize)
+  interim.dataset <- GetCommentImplicature(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
   return(dataset)
 }
 
-GetMetric <- function(metric, normalize = TRUE) {
+GetCommentMetric <- function(metric, normalize = TRUE) {
   dataset = switch(metric,
-                   yngve = GetYngve(),
-                   frazier = GetFrazier(),
-                   pdensity = GetPdensity(),
-                   cdensity = GetCdensity(),
-                   sentiment = GetSentiment(),
-                   uncertainty = GetUncertainty(),
-                   politeness = GetPoliteness(),
-                   formality = GetFormality(),
-                   informativeness = GetInformativeness(),
-                   implicature = GetImplicature())
+                   yngve = GetCommentYngve(),
+                   frazier = GetCommentFrazier(),
+                   pdensity = GetCommentPdensity(),
+                   cdensity = GetCommentCdensity(),
+                   sentiment = GetCommentSentiment(),
+                   uncertainty = GetCommentUncertainty(),
+                   politeness = GetCommentPoliteness(),
+                   formality = GetCommentFormality(),
+                   informativeness = GetCommentInformativeness(),
+                   implicature = GetCommentImplicature())
   return(dataset)
 }
 
-GetNumSentences <- function(normalize = TRUE) {
+GetCommentLength <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id, COUNT(*) AS num_sentences
     FROM comment_sentences cs

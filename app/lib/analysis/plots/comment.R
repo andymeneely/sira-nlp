@@ -7,7 +7,7 @@ InitGlobals()
 ## Yngve ====
 
 ### Query Data
-dataset <- GetYngve()
+dataset <- GetCommentYngve()
 
 ### Plot
 metric <- "Comment Yngve (Log Scale)"
@@ -33,7 +33,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Frazier ====
 
 ### Query Data
-dataset <- GetFrazier()
+dataset <- GetCommentFrazier()
 
 ### Plot
 metric <- "Comment Frazier"
@@ -58,7 +58,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Propositional Density ====
 
 ### Query Data
-dataset <- GetPdensity()
+dataset <- GetCommentPdensity()
 
 ### Plot
 metric <- "Comment Propositional Density"
@@ -83,7 +83,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Content Density ====
 
 ### Query Data
-dataset <- GetCdensity()
+dataset <- GetCommentCdensity()
 
 ### Plot
 metric <- "Comment Content Density (Sqrt Scale)"
@@ -109,7 +109,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Sentiment ====
 
 ### Query Data
-dataset <- GetSentiment()
+dataset <- GetCommentSentiment()
 
 ### Plot
 metric <- "Comment Sentiment"
@@ -134,7 +134,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Uncertainty ====
 
 ### Query Data
-dataset <- GetUncertainty()
+dataset <- GetCommentUncertainty()
 
 ### Plot
 metric <- "Comment Uncertainty (Log Scale)"
@@ -160,7 +160,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Politeness ====
 
 ### Query Data
-dataset <- GetPoliteness()
+dataset <- GetCommentPoliteness()
 
 ### Plot
 metric <- "Comment Politeness"
@@ -185,7 +185,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Formality ====
 
 ### Query Data
-dataset <- GetFormality()
+dataset <- GetCommentFormality()
 
 ### Plot
 metric <- "Comment Formality"
@@ -210,7 +210,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Informativeness ====
 
 ### Query Data
-dataset <- GetInformativeness()
+dataset <- GetCommentInformativeness()
 
 ### Plot
 metric <- "Comment Informativeness"
@@ -235,7 +235,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 ## Implicature ====
 
 ### Query Data
-dataset <- GetImplicature()
+dataset <- GetCommentImplicature()
 
 ### Plot
 metric <- "Comment Implicature"
@@ -374,7 +374,7 @@ ggplot(plot.dataset, aes(x = type, y = pct_comments, fill = is_bugfamiliar)) +
 ## Number of Sentences ====
 
 ### Query Data
-dataset <- GetNumSentences()
+dataset <- GetCommentLength()
 
 ### Plot
 metric <- "# Sentences (Log Scale)"
