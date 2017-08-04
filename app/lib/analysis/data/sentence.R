@@ -188,9 +188,6 @@ GetImplicature <- function(normalize = TRUE) {
   connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
   Disconnect(connection)
-  dataset <- dataset %>%
-    mutate(implicature = as.numeric(implicature))
-  dataset <- na.omit(dataset)
   return(dataset)
 }
 
@@ -217,28 +214,28 @@ GetContinuousMetrics <- function(normalize = TRUE) {
   dataset <- interim.dataset
 
   interim.dataset <- GetFrazier(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = keys)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
   interim.dataset <- GetPdensity(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = keys)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
   interim.dataset <- GetCdensity(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = keys)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
   interim.dataset <- GetPoliteness(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = keys)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
   interim.dataset <- GetFormality(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = keys)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
   interim.dataset <- GetInformativeness(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = keys)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
   interim.dataset <- GetImplicature(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = keys)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
   interim.dataset <- GetSentenceLength(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = keys)
+  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
 
   return(dataset)
 }
