@@ -10,3 +10,4 @@ from app.lib.taggers.uncertainty import UncertaintyTagger
 from app.lib.taggers.sentenceparse import SentenceParseTagger
 from app.lib.taggers.sentiment import SentimentTagger
 from app.lib.taggers.baselines import BaselinesTagger
+from app.lib.taggers.commentlevel import CommentLevelTagger
