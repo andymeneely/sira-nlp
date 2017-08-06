@@ -20,7 +20,8 @@ plot.dataset <- dataset %>%
   select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
-# Resolution: 500 x 400
+# Render
+png("diagrams/sentence.yngve.png", width = 500, height = 400)
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
@@ -31,6 +32,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+dev.off()
 
 ## Frazier ====
 
@@ -46,7 +48,8 @@ plot.dataset <- dataset %>%
   select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
-# Resolution: 500 x 400
+# Render
+png("diagrams/sentence.frazier.png", width = 500, height = 400)
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
@@ -56,6 +59,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+dev.off()
 
 ## Propositional Density ====
 
@@ -63,15 +67,16 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 dataset <- GetSentencePdensity()
 
 ### Plot
-metric <- "Sentence Propositional Density"
-title <- "Distribution of Sentence Density"
+metric <- "Sentence p-density"
+title <- "Distribution of Sentence p-density"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
   select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
-# Resolution: 500 x 400
+# Render
+png("diagrams/sentence.pdensity.png", width = 500, height = 400)
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
@@ -81,6 +86,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+dev.off()
 
 ## Content Density ====
 
@@ -88,15 +94,16 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
 dataset <- GetSentenceCdensity()
 
 ### Plot
-metric <- "Sentence Content Density (Sqrt Scale)"
-title <- "Distribution of Sentence Density"
+metric <- "Sentence c-density (Sqrt Scale)"
+title <- "Distribution of Sentence c-density"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
   select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
-# Resolution: 500 x 400
+# Render
+png("diagrams/sentence.cdensity.png", width = 500, height = 400)
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
@@ -107,6 +114,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+dev.off()
 
 ## Sentiment ====
 
@@ -133,17 +141,19 @@ plot.dataset <- inner_join(alpha.dataset, beta.dataset, by = "type") %>%
   mutate(pct_sentences = alpha_num_sentences / beta_num_sentences) %>%
   select(sentiment, type, pct_sentences)
 
-# Resolution: 450 x 450
+# Render
+png("diagrams/sentence.sentiment.png", width = 450, height = 450)
 ggplot(plot.dataset, aes(x = type, y = pct_sentences, fill = sentiment)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(aes(label = scales::percent(pct_sentences)), vjust = "inward",
             position = position_dodge(width=0.9)) +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
   scale_y_continuous(labels = scales::percent) +
-  scale_fill_manual(name = "Comment Type", values = FILLCOLORS,
-                    labels = COMMENT.TYPE.LABELS) +
-  labs(title = title, x = "Sentiment", y = metric) +
+  scale_fill_manual(name = "Sentiment", values = FILLCOLORS,
+                    labels = SENTENCE.METRIC.LABELS) +
+  labs(title = title, x = "Comment Type", y = metric) +
   GetTheme()
+dev.off()
 
 ## Uncertainty ====
 
@@ -169,8 +179,11 @@ beta.dataset <- interim.dataset %>%
 plot.dataset <- inner_join(alpha.dataset, beta.dataset, by = "type") %>%
   mutate(pct_sentences = alpha_num_sentences / beta_num_sentences) %>%
   select(uncertainty, type, pct_sentences)
+plot.dataset$uncertainty <- factor(plot.dataset$uncertainty,
+                                   levels = c("D", "E", "N", "I"))
 
-# Resolution: 600 x 600
+# Render
+png("diagrams/sentence.uncertainty.png", width = 600, height = 600)
 ggplot(plot.dataset, aes(x = type, y = pct_sentences, fill = uncertainty)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(aes(label = scales::percent(pct_sentences)), vjust = "inward",
@@ -181,6 +194,7 @@ ggplot(plot.dataset, aes(x = type, y = pct_sentences, fill = uncertainty)) +
                     labels = SENTENCE.METRIC.LABELS) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme()
+dev.off()
 
 ## Politeness ====
 
@@ -196,7 +210,8 @@ plot.dataset <- dataset %>%
   select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
-# Resolution: 500 x 400
+# Render
+png("diagrams/sentence.politeness.png", width = 500, height = 400)
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
@@ -206,6 +221,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+dev.off()
 
 ## Formality ====
 
@@ -221,7 +237,8 @@ plot.dataset <- dataset %>%
   select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
-# Resolution: 500 x 400
+# Render
+png("diagrams/sentence.formality.png", width = 500, height = 400)
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
@@ -231,6 +248,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+dev.off()
 
 ## Informativeness ====
 
@@ -246,7 +264,8 @@ plot.dataset <- dataset %>%
   select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
-# Resolution: 500 x 400
+# Render
+png("diagrams/sentence.informativeness.png", width = 500, height = 400)
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
@@ -256,6 +275,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+dev.off()
 
 ## Implicature ====
 
@@ -271,7 +291,8 @@ plot.dataset <- dataset %>%
   select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
-# Resolution: 500 x 400
+# Render
+png("diagrams/sentence.implicature.png", width = 500, height = 400)
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
@@ -281,6 +302,7 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
+dev.off()
 
 ## Sentence Length ====
 
@@ -296,7 +318,8 @@ plot.dataset <- dataset %>%
   select(-comment_id, -sentence_id) %>%
   melt(., id.vars = c("type"))
 
-# Resolution: 500 x 400
+# Render
+png("diagrams/sentence.length.png", width = 500, height = 400)
 ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   geom_boxplot() +
   scale_x_discrete(labels = COMMENT.TYPE.LABELS) +
@@ -307,4 +330,4 @@ ggplot(plot.dataset, aes(x = type, y = value, fill = type)) +
   labs(title = title, x = "Comment Type", y = metric) +
   GetTheme() +
   theme(legend.position = "none")
-
+dev.off()

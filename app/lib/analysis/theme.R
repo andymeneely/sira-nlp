@@ -1,13 +1,25 @@
 # Colors ----
 FILLCOLORS <- c(
   # Comment Type
-  "useful" = "#ed7d31", "notuseful" = "#70ad47",
+  "useful" = "#ed7d31",
+  "notuseful" = "#70ad47",
   # Sentiment
-  "negative" = "#ed7d31", "neutral" = "#bcbcbc", "positive" = "#70ad47",
+  "negative" = "#f3ac7b",
+  "neutral" = "#bcbcbc",
+  "positive" = "#b1d29a",
   # Uncertainty
-  "D" = "#ed7d31", "E" = "#bcbcbc", "N" = "#70ad47", "I" = "#4776ad",
+  "D" = "#d2e8de",
+  "E" = "#a5d1bd",
+  "N" = "#78ba9c",
+  "I" = "#4ca37b",
+  "has_doxastic" = "#d2e8de",
+  "has_epistemic" = "#a5d1bd",
+  "has_conditional" = "#78ba9c",
+  "has_investigative" = "#4ca37b",
+  "has_uncertainty" = "#1f8c5a",
   # Bug Familiarity
-  "TRUE" = "#ed7d31", "FALSE" = "#70ad47"
+  "TRUE" = "#f3ac7b",
+  "FALSE" = "#b1d29a"
 )
 
 # Function ----

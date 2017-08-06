@@ -4,6 +4,23 @@
 
 ## Comment Level Metrics ====
 
+### Boolean Valued
+COMMENT.BV.METRICS <- c(
+  "uncertainty"
+)
+
+UNCERTAINTY.VARIANTS <- c(
+  "has_doxastic",
+  "has_epistemic",
+  "has_conditional",
+  "has_investigative",
+  "has_uncertainty"
+)
+
+COMMENT.BV.METRICS.VARIANTS <- c(
+  "uncertainty" = UNCERTAINTY.VARIANTS
+)
+
 ### Continuous Valued
 COMMENT.CV.METRICS <- c(
   "yngve",
@@ -11,7 +28,6 @@ COMMENT.CV.METRICS <- c(
   "pdensity",
   "cdensity",
   "sentiment",
-  "uncertainty",
   "politeness",
   "formality",
   "informativeness",
@@ -19,76 +35,21 @@ COMMENT.CV.METRICS <- c(
   "experience"
 )
 
-YNGVE.VARIANTS <- list(
-  "min_yngve",
-  "mean_yngve",
-  "med_yngve",
-  "var_yngve",
-  "max_yngve"
+SENTIMENT.VARIANTS <- c(
+  "pct_neg_tokens",
+  "pct_neu_tokens",
+  "pct_pos_tokens",
+  "pct_nne_tokens"
 )
-FRAZIER.VARIANTS <- list(
-  "min_frazier",
-  "mean_frazier",
-  "med_frazier",
-  "var_frazier",
-  "max_frazier"
-)
-PDENSITY.VARIANTS <- list(
-  "min_pdensity",
-  "mean_pdensity",
-  "med_pdensity",
-  "var_pdensity",
-  "max_pdensity"
-)
-CDENSITY.VARIANTS <- list(
-  "min_cdensity",
-  "mean_cdensity",
-  "med_cdensity",
-  "var_cdensity",
-  "max_cdensity"
-)
-SENTIMENT.VARIANTS <- list(
-  "pct_neg_sentences",
-  "pct_neu_sentences",
-   "pct_pos_sentences",
-   "pct_nne_sentences"
-)
-UNCERTAINTY.VARIANTS <-list(
-  "pct_dox_sentences",
-  "pct_epi_sentences",
-  "pct_con_sentences",
-  "pct_inv_sentences",
-  "pct_unc_sentences"
-)
-POLITENESS.VARIANTS <- list(
+POLITENESS.VARIANTS <- c(
   "min_politeness",
-  "mean_politeness",
-  "med_politeness",
-  "var_politeness",
   "max_politeness"
 )
-FORMALITY.VARIANTS <-list(
+FORMALITY.VARIANTS <- c(
   "min_formality",
-  "mean_formality",
-  "med_formality",
-  "var_formality",
   "max_formality"
 )
-INFORMATIVENESS.VARIANTS <-list(
-  "min_informativeness",
-  "mean_informativeness",
-  "med_informativeness",
-  "var_informativeness",
-  "max_informativeness"
-)
-IMPLICATURE.VARIANTS <-list(
-  "min_implicature",
-  "mean_implicature",
-  "med_implicature",
-  "var_implicature",
-  "max_implicature"
-)
-EXPERIENCE.VARIANTS <- list(
+EXPERIENCE.VARIANTS <- c(
   "prj_uni_experience",
   "prj_prp_experience",
   "mod_uni_experience",
@@ -96,17 +57,11 @@ EXPERIENCE.VARIANTS <- list(
   "fil_uni_experience",
   "fil_prp_experience"
 )
-COMMENT.CV.METRIC.VARIANTS <- list(
-  "yngve" = YNGVE.VARIANTS,
-  "frazier" = FRAZIER.VARIANTS,
-  "pdensity" = PDENSITY.VARIANTS,
-  "cdensity" = CDENSITY.VARIANTS,
+
+COMMENT.CV.METRIC.VARIANTS <- c(
   "sentiment" = SENTIMENT.VARIANTS,
-  "uncertainty" = UNCERTAINTY.VARIANTS,
   "politeness" = POLITENESS.VARIANTS,
   "formality" = FORMALITY.VARIANTS,
-  "informativeness" = INFORMATIVENESS.VARIANTS,
-  "implicature" = IMPLICATURE.VARIANTS,
   "experience" = EXPERIENCE.VARIANTS
 )
 
@@ -126,77 +81,32 @@ SENTENCE.CV.METRICS <- c(
 ## Comment Level Metrics ====
 
 COMMENT.METRIC.LABELS <- c(
-  # Complexity: Yngve
+  # Complexity
   "yngve" = "Yngve",
-  "min_yngve" = "Minimum Yngve",
-  "med_yngve" = "Median Yngve",
-  "mean_yngve" = "Mean Yngve",
-  "var_yngve" = "Variance in Yngve",
-  "max_yngve" = "Maximum Yngve",
-  # Complexity: Frazier
   "frazier" = "Frazier",
-  "min_frazier" = "Minimum Frazier",
-  "med_frazier" = "Median Frazier",
-  "mean_frazier" = "Mean Frazier",
-  "var_frazier" = "Variance in Frazier",
-  "max_frazier" = "Maximum Frazier",
-  # Complexity: Propositional Density
-  "pdensity" = "Propositional Density",
-  "min_pdensity" = "Minimum p-density",
-  "med_pdensity" = "Median p-density",
-  "mean_pdensity" = "Mean p-density",
-  "var_pdensity" = "Variance in p-density",
-  "max_pdensity" = "Maximum p-density",
-  # Complexity: Content Density
-  "cdensity" = "Content Density",
-  "min_cdensity" = "Minimum c-density",
-  "med_cdensity" = "Median c-density",
-  "mean_cdensity" = "Mean c-density",
-  "var_cdensity" = "Variance in c-density",
-  "max_cdensity" = "Maximum c-density",
+  "pdensity" = "p-density",
+  "cdensity" = "c-density",
   # Sentiment
-  "sentiment" = "Sentiment",
-  "pct_neg_sentences" = "% Negative",
-  "pct_neu_sentences" = "% Neutral",
-  "pct_pos_sentences" = "% Positive",
-  "pct_nne_sentences" = "% Non-neutral",
+  "pct_neg_tokens" = "Negativity",
+  "pct_neu_tokens" = "Neutrality",
+  "pct_pos_tokens" = "Positivity",
+  "pct_nne_tokens" = "Non-neutrality",
   # Uncertainty
-  "uncertainty" = "Uncertainty",
-  "pct_dox_sentences" = "% Doxastic",
-  "pct_epi_sentences" = "% Epistemic",
-  "pct_con_sentences" = "% Conditional",
-  "pct_inv_sentences" = "% Investigative",
-  "pct_unc_sentences" = "% Uncertain",
+  "has_doxastic" = "Has Doxastic",
+  "has_epistemic" = "Has Epistemic",
+  "has_conditional" = "Has Conditional",
+  "has_investigative" = "Has Investigative",
+  "has_uncertainty" = "Has Uncertainty",
   # Politeness
-  "politeness" = "Politeness",
   "min_politeness" = "Minimum Politeness",
-  "med_politeness" = "Median Politeness",
-  "mean_politeness" = "Mean Politeness",
-  "var_politeness" = "Variance in Politeness",
   "max_politeness" = "Maximum Politeness",
   # Formality
-  "formality" = "Formality",
   "min_formality" = "Minimum Formality",
-  "med_formality" = "Median Formality",
-  "mean_formality" = "Mean Formality",
-  "var_formality" = "Variance in Formality",
   "max_formality" = "Maximum Formality",
   # Informativeness
   "informativeness" = "Informativeness",
-  "min_informativeness" = "Minimum Informativeness",
-  "med_informativeness" = "Median Informativeness",
-  "mean_informativeness" = "Mean Informativeness",
-  "var_informativeness" = "Variance in Informativeness",
-  "max_informativeness" = "Maximum Informativeness",
   # Implicature
   "implicature" = "Implicature",
-  "min_implicature" = "Minimum Implicature",
-  "med_implicature" = "Median Implicature",
-  "mean_implicature" = "Mean Implicature",
-  "var_implicature" = "Variance in Implicature",
-  "max_implicature" = "Maximum Implicature",
-  # Experience
-  "experience" = "Experience",
   # Experience: Project
   "uni_prj_experience" = "Unform Experience",
   "prp_prj_experience" = "Proportional Experience",
@@ -211,7 +121,7 @@ COMMENT.METRIC.LABELS <- c(
   # Miscellaneous
   "TRUE" = "Yes",
   "FALSE" = "No",
-  "num_sentences" = "Number of Sentences"
+  "num_sentences" = "# Sentences"
 )
 
 ## Sentence Level Metrics ====
@@ -241,7 +151,7 @@ SENTENCE.METRIC.LABELS <- c(
   "neutral" = "Neutral",
   "negative" = "Negative",
   # Miscellaneous
-  "sentence_length" = "Sentence Length"
+  "num_tokens" = "# Tokens"
 )
 
 # Miscellaneous ----
