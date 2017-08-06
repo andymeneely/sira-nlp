@@ -5,7 +5,7 @@ source("data/sentence.R")
 ## Continuous Valued Metrics ====
 
 ### Query Data ####
-dataset <- GetSentenceContinuousMetrics()
+dataset <- GetSentenceContinuousMetrics(normalize = FALSE)
 
 analysis.dataset <- dataset %>%
   select(-comment_id, -sentence_id)
@@ -39,4 +39,3 @@ for (i in 1:(length(metrics) - 1)) {
 
 ### Test: Variable Clustering ####
 test.outcome <- varclus(as.matrix(analysis.dataset))
-
