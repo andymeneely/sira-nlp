@@ -1,4 +1,6 @@
-KEYS <- c("comment_id", "sentence_id")
+SENTENCE.KEYS <- c("comment_id", "sentence_id")
+
+# Natural Language Metrics ----
 
 GetSentenceYngve <- function(normalize = TRUE) {
   query <- "
@@ -16,10 +18,9 @@ GetSentenceYngve <- function(normalize = TRUE) {
   Disconnect(connection)
   if (normalize) {
     normalization.dataset <- GetSentenceLength()
-    dataset <- inner_join(dataset, normalization.dataset, by = KEYS) %>%
-      mutate(yngve = ifelse(sentence_length > 0,
-                            yngve / sentence_length, yngve)) %>%
-      select(-sentence_length)
+    dataset <- inner_join(dataset, normalization.dataset, by = SENTENCE.KEYS) %>%
+      mutate(yngve = ifelse(num_tokens > 0, yngve / num_tokens, yngve)) %>%
+      select(-num_tokens)
   }
   return(dataset)
 }
@@ -192,12 +193,13 @@ GetSentenceImplicature <- function(normalize = TRUE) {
   return(dataset)
 }
 
+# Miscellaneous ----
+
 GetSentenceLength <- function(normalize = TRUE) {
   query <- "
     SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
-      (SELECT COUNT(*) FROM token t WHERE t.sentence_id = s.id)
-        AS sentence_length
+      (SELECT COUNT(*) FROM token t WHERE t.sentence_id = s.id) AS num_tokens
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
       JOIN sentence s ON s.id = cs.sentence_id
@@ -216,28 +218,28 @@ GetSentenceContinuousMetrics <- function(normalize = TRUE) {
   dataset <- interim.dataset
 
   interim.dataset <- GetSentenceFrazier(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+  dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
 
   interim.dataset <- GetSentencePdensity(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+  dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
 
   interim.dataset <- GetSentenceCdensity(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+  dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
 
   interim.dataset <- GetSentencePoliteness(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+  dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
 
   interim.dataset <- GetSentenceFormality(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+  dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
 
   interim.dataset <- GetSentenceInformativeness(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+  dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
 
   interim.dataset <- GetSentenceImplicature(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+  dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
 
   interim.dataset <- GetSentenceLength(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = KEYS)
+  dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
 
   return(dataset)
 }
