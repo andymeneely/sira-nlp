@@ -30,6 +30,14 @@ SplitByCommentType <- function(dataset, metric) {
   return(list("x" = x, "y" = y))
 }
 
+SaveSplits <- function(splits, metric, granularity) {
+  file <- paste("data/csv/", granularity, ".", metric, ".x.csv", sep = "")
+  write.csv(splits$x, file, row.names = F)
+
+  file <- paste("data/csv/", granularity, ".", metric, ".y.csv", sep = "")
+  write.csv(splits$y, file, row.names = F)
+}
+
 ## Database ====
 GetDbConnection <- function(db.settings){
   connection <- Connect(
@@ -97,8 +105,7 @@ GetCorrelation <- function(dataset, ignore = NA){
 }
 
 ## Association ====
-GetAssociation <- function(x, y, x.label, y.label, include.es = TRUE,
-                           p.value = 0.05) {
+GetAssociation <- function(x, y, x.label, y.label, p.value = 0.05) {
   htest <- wilcox.test(x, y)
 
   p <- htest$p.value
@@ -106,19 +113,9 @@ GetAssociation <- function(x, y, x.label, y.label, include.es = TRUE,
     warning(paste("Association outcome insignificant with p-value =", p))
   }
 
-  effect.size <- NA
-  effect.magnitude <- NA
-  if (include.es) {
-    effect <- cliff.delta(x, y)
-    effect.size <- effect$estimate
-    effect.magnitude <- effect$magnitude
-  }
-
   test.outcome <- list()
   test.outcome[["p"]] <- p
   test.outcome[["significant"]] <- p <= p.value
-  test.outcome[["effect.size"]] <- effect.size
-  test.outcome[["effect.magnitude"]] <- effect.magnitude
   test.outcome[[paste("mean.", x.label, sep = "")]] <- mean(x)
   test.outcome[[paste("mean.", y.label, sep = "")]] <- mean(y)
   test.outcome[[paste("median.", x.label, sep = "")]] <- median(x)
