@@ -17,6 +17,7 @@ for (i in 1:length(SENTENCE.CV.METRICS)) {
     select(-comment_id, -sentence_id)
 
   splits <- SplitByCommentType(analysis.dataset, metric = metric)
+  SaveSplits(splits, granularity = "sentence", metric = metric)
   test.outcome <- GetAssociation(splits$x, splits$y, "useful", "notuseful")
   test.outcome <- data.frame("metric" = label, test.outcome)
   rownames(test.outcome) <- c()

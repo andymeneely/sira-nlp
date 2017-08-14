@@ -30,9 +30,11 @@ COMMENT.CV.METRICS <- c(
   "sentiment",
   "politeness",
   "formality",
-  "informativeness",
-  "implicature",
-  "experience"
+  # "informativeness",
+  # "implicature",
+  "project_experience",
+  "module_experience",
+  "file_experience"
 )
 
 SENTIMENT.VARIANTS <- c(
@@ -49,20 +51,26 @@ FORMALITY.VARIANTS <- c(
   "min_formality",
   "max_formality"
 )
-EXPERIENCE.VARIANTS <- c(
-  "prj_uni_experience",
-  "prj_prp_experience",
-  "mod_uni_experience",
-  "mod_prp_experience",
-  "fil_uni_experience",
-  "fil_prp_experience"
+PROJECT.EXPERIENCE.VARIANTS <- c(
+  "uni_prj_experience",
+  "prp_prj_experience"
+)
+MODULE.EXPERIENCE.VARIANTS <- c(
+  "uni_mod_experience",
+  "prp_mod_experience"
+)
+FILE.EXPERIENCE.VARIANTS <- c(
+  "uni_fil_experience",
+  "prp_fil_experience"
 )
 
-COMMENT.CV.METRIC.VARIANTS <- c(
+COMMENT.CV.METRIC.VARIANTS <- list(
   "sentiment" = SENTIMENT.VARIANTS,
   "politeness" = POLITENESS.VARIANTS,
   "formality" = FORMALITY.VARIANTS,
-  "experience" = EXPERIENCE.VARIANTS
+  "project_experience" = PROJECT.EXPERIENCE.VARIANTS,
+  "module_experience" = MODULE.EXPERIENCE.VARIANTS,
+  "file_experience" = FILE.EXPERIENCE.VARIANTS
 )
 
 ## Sentence Level Metrics ====
@@ -87,33 +95,42 @@ COMMENT.METRIC.LABELS <- c(
   "pdensity" = "p-density",
   "cdensity" = "c-density",
   # Sentiment
+  "sentiment" = "Sentiment",
   "pct_neg_tokens" = "Negativity",
   "pct_neu_tokens" = "Neutrality",
   "pct_pos_tokens" = "Positivity",
   "pct_nne_tokens" = "Non-neutrality",
   # Uncertainty
+  "uncertainty" = "Uncertainty",
   "has_doxastic" = "Has Doxastic",
   "has_epistemic" = "Has Epistemic",
   "has_conditional" = "Has Conditional",
   "has_investigative" = "Has Investigative",
   "has_uncertainty" = "Has Uncertainty",
   # Politeness
+  "politeness" = "Politeness",
   "min_politeness" = "Minimum Politeness",
   "max_politeness" = "Maximum Politeness",
   # Formality
+  "formality" = "Formality",
   "min_formality" = "Minimum Formality",
   "max_formality" = "Maximum Formality",
   # Informativeness
   "informativeness" = "Informativeness",
   # Implicature
   "implicature" = "Implicature",
+  # Experience
+  "experience" = "Experience",
   # Experience: Project
+  "project_experience" = "Project Experience",
   "uni_prj_experience" = "Unform Experience",
   "prp_prj_experience" = "Proportional Experience",
   # Experience: Module
+  "module_experience" = "Module Experience",
   "uni_mod_experience" = "Unform Experience",
   "prp_mod_experience" = "Proportional Experience",
   # Experience: File
+  "file_experience" = "File Experience",
   "uni_fil_experience" = "Unform Experience",
   "prp_fil_experience" = "Proportional Experience",
   # Bug Familiarity
