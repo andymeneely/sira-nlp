@@ -246,15 +246,15 @@ GetSentenceContinuousMetrics <- function(normalize = TRUE) {
 
 GetSentenceMetric <- function(metric, normalize = TRUE) {
   dataset = switch(metric,
-                   yngve = GetSentenceYngve(),
-                   frazier = GetSentenceFrazier(),
-                   pdensity = GetSentencePdensity(),
-                   cdensity = GetSentenceCdensity(),
-                   sentiment = GetSentenceSentiment(),
-                   uncertainty = GetSentenceUncertainty(),
-                   politeness = GetSentencePoliteness(),
-                   formality = GetSentenceFormality(),
-                   informativeness = GetSentenceInformativeness(),
-                   implicature = GetSentenceImplicature())
+                   yngve = GetSentenceYngve(normalize),
+                   frazier = GetSentenceFrazier(normalize),
+                   pdensity = GetSentencePdensity(normalize),
+                   cdensity = GetSentenceCdensity(normalize),
+                   sentiment = GetSentenceSentiment(normalize),
+                   uncertainty = GetSentenceUncertainty(normalize),
+                   politeness = GetSentencePoliteness(normalize),
+                   formality = GetSentenceFormality(normalize),
+                   informativeness = GetSentenceInformativeness(normalize),
+                   implicature = GetSentenceImplicature(normalize))
   return(dataset)
 }

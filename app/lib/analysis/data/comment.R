@@ -367,16 +367,19 @@ GetCommentContinuousMetrics <- function(normalize = TRUE) {
 
 GetCommentMetric <- function(metric, normalize = TRUE) {
   dataset = switch(metric,
-                   yngve = GetCommentYngve(),
-                   frazier = GetCommentFrazier(),
-                   pdensity = GetCommentPdensity(),
-                   cdensity = GetCommentCdensity(),
-                   sentiment = GetCommentSentiment(),
-                   uncertainty = GetCommentUncertainty(),
-                   politeness = GetCommentPoliteness(),
-                   formality = GetCommentFormality(),
-                   informativeness = GetCommentInformativeness(),
-                   implicature = GetCommentImplicature())
+                   yngve = GetCommentYngve(normalize),
+                   frazier = GetCommentFrazier(normalize),
+                   pdensity = GetCommentPdensity(normalize),
+                   cdensity = GetCommentCdensity(normalize),
+                   sentiment = GetCommentSentiment(normalize),
+                   uncertainty = GetCommentUncertainty(normalize),
+                   politeness = GetCommentPoliteness(normalize),
+                   formality = GetCommentFormality(normalize),
+                   informativeness = GetCommentInformativeness(normalize),
+                   implicature = GetCommentImplicature(normalize),
+                   project_experience = GetProjectExperience(normalize),
+                   module_experience = GetModuleExperience(normalize),
+                   file_experience = GetFileExperience(normalize))
   return(dataset)
 }
 
