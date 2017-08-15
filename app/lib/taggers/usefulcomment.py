@@ -7,7 +7,6 @@ from django.db import Error, transaction
 from django.db.models import Q
 
 from app.lib import taggers, logger
-from app.lib.nlp import analyzers
 from app.lib.utils import parallel
 from app.models import *
 
@@ -40,22 +39,12 @@ def do(iqueue, cqueue):  # pragma: no cover
         with transaction.atomic():
             try:
                 if comment.parent is not None:
-                    if comment.parent.by_reviewer is True:
-                        # Parent of the change-indicating comment is a comment
-                        # posted by a reviewer. Tag it as useful.
-                        comment.parent.is_useful = True
-                        comment.parent.save()
-                    else:
-                        # Parent of the change-indicating comment is a comment
-                        # not posted by a reviewer. Traverse the comment thread
-                        # until a comment posted by a reviewer is found or no
-                        # more comments remain.
-                        parent = comment.parent
-                        while parent is not None and not parent.by_reviewer:
-                            parent = parent.parent
-                        if parent is not None:
+                    parent = comment.parent
+                    while parent is not None:
+                        if parent.by_reviewer:
                             parent.is_useful = True
                             parent.save()
+                        parent = parent.parent
                 cnt += 1
             except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
