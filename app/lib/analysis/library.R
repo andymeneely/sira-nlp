@@ -172,6 +172,21 @@ TestAssociation <- function(dataset, types, labels, p.value = 0.05){
   }
 }
 
+## Independence ====
+GetIndependence <- function(x, y, p.value = 0.05) {
+  test.outcome <- chisq.test(x, y)
+
+  p <- test.outcome$p.value
+  if(p > p.value){
+    warning(paste("Association outcome insignificant with p-value =", p))
+  }
+
+  test.outcome <- list()
+  test.outcome[["p"]] <- p
+  test.outcome[["significant"]] <- p <= p.value
+  return(test.outcome)
+}
+
 ## Plotting ====
 PlotDistributions <- function(dataset){
   plots <- list()
