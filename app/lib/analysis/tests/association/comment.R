@@ -47,10 +47,10 @@ for (i in 1:length(metrics)) {
   metric.label <- COMMENT.METRIC.LABELS[[metric]]
   cat("[", i, "/", length(metrics), "] ", metric.label, "\n", sep = "")
 
-  # dataset <- GetCommentMetric(metric)
-  # analysis.dataset <- dataset %>%
-  #   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  #   select(-comment_id)
+  dataset <- GetCommentMetric(metric)
+  analysis.dataset <- dataset %>%
+    inner_join(., COMMENT.TYPE, by = "comment_id") %>%
+    select(-comment_id)
 
   variants <- c(metric)
   if (metric %in% names(COMMENT.BV.METRIC.VARIANTS)) {
