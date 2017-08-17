@@ -17,7 +17,7 @@ UNCERTAINTY.VARIANTS <- c(
   "has_uncertainty"
 )
 
-COMMENT.BV.METRICS.VARIANTS <- c(
+COMMENT.BV.METRIC.VARIANTS <- list(
   "uncertainty" = UNCERTAINTY.VARIANTS
 )
 
