@@ -84,7 +84,7 @@ GetSpearmansRho <- function(dataset, column.one, column.two, p.value = 0.05){
   if(p > p.value){
     warning(paste("Spearman's correlation insignificant with p-value =", p))
   }
-  return(list("significant" = p <= p.value, "rho" = rho))
+  return(list("p" = p, "significant" = p <= p.value, "rho" = rho))
 }
 
 GetCorrelation <- function(dataset, ignore = NA){
