@@ -22,7 +22,7 @@ GetCommentYngve <- function(normalize = TRUE) {
       FROM (
         SELECT cs.comment_id AS comment_id,
           (
-            (s.metrics #>> '{complexity,yngve}')::numeric / 
+            (s.metrics #>> '{complexity,yngve}')::numeric /
             (SELECT COUNT(*) FROM token t WHERE t.sentence_id = s.id)
           ) AS yngve
         FROM comment c
@@ -347,19 +347,10 @@ GetCommentContinuousMetrics <- function(normalize = TRUE) {
   interim.dataset <- GetCommentSentiment(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = COMMENT.KEYS)
 
-  interim.dataset <- GetCommentUncertainty(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = COMMENT.KEYS)
-
   interim.dataset <- GetCommentPoliteness(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = COMMENT.KEYS)
 
   interim.dataset <- GetCommentFormality(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = COMMENT.KEYS)
-
-  interim.dataset <- GetCommentInformativeness(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = COMMENT.KEYS)
-
-  interim.dataset <- GetCommentImplicature(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = COMMENT.KEYS)
 
   return(dataset)
