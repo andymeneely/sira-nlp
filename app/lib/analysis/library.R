@@ -79,8 +79,13 @@ GetSpearmansRho <- function(dataset, column.one, column.two, p.value = 0.05){
     dataset[[column.one]], dataset[[column.two]],
     method = "spearman", exact = F
   )
-  p <- round(correlation$p.value, 4)
-  rho <- round(correlation$estimate, 4)
+  p <- 1.0
+  rho <- 0.0
+  if (!is.na(correlation$p.value)) {
+    p <- correlation$p.value
+    rho <- correlation$estimate
+  }
+
   if(p > p.value){
     warning(paste("Spearman's correlation insignificant with p-value =", p))
   }
@@ -120,6 +125,41 @@ GetAssociation <- function(x, y, x.label, y.label, p.value = 0.05) {
   test.outcome[[paste("mean.", y.label, sep = "")]] <- mean(y)
   test.outcome[[paste("median.", x.label, sep = "")]] <- median(x)
   test.outcome[[paste("median.", y.label, sep = "")]] <- median(y)
+  return(test.outcome)
+}
+
+GetOneSampleAssociation <- function(x, p.value = 0.05) {
+  htest <- wilcox.test(x, mu = 0)
+  p <- htest$p.value
+  if(p > p.value){
+    warning(paste("Association outcome insignificant with p-value =", p))
+  }
+
+  test.outcome <- list()
+  test.outcome[["p"]] <- p
+  test.outcome[["significant"]] <- p <= p.value
+  test.outcome[["mean"]] <- mean(x)
+  return(test.outcome)
+}
+
+GetEffectSize <- function(x, y, p.value = 0.05) {
+  htest <- wilcox.test(x, y)
+
+  p <- 1.0
+  delta <- 0.0
+  if (!is.na(htest$p.value)) {
+    p <- htest$p.value
+    delta <- cliff.delta(x, y)$estimate
+  }
+  if(p > p.value){
+    warning(paste("Association outcome insignificant with p-value =", p))
+  }
+
+  test.outcome <- list()
+  test.outcome[["p"]] <- p
+  test.outcome[["significant"]] <- p <= p.value
+  test.outcome[["delta"]] <- delta
+
   return(test.outcome)
 }
 
