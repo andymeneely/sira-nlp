@@ -333,7 +333,7 @@ title <- "Distribution of Project Experience"
 
 plot.dataset <- dataset %>%
   inner_join(., COMMENT.TYPE, by = "comment_id") %>%
-  select(-comment_id) %>%
+  select(-comment_id, -author) %>%
   melt(., id.vars = c("type"))
 
 # Render

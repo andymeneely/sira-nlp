@@ -269,6 +269,7 @@ GetCommentImplicature <- function(normalize = TRUE) {
 GetProjectExperience <- function(normalize = TRUE) {
   query <- "
     SELECT c.id AS comment_id,
+      c.author AS author,
       (c.metrics #>> '{experience,project,uniform}')::numeric
         AS uni_prj_experience,
       (c.metrics #>> '{experience,project,proportional}')::numeric
