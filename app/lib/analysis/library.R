@@ -30,6 +30,19 @@ SplitByCommentType <- function(dataset, metric) {
   return(list("x" = x, "y" = y))
 }
 
+Split <- function(dataset, by, x.value, y.value, metric) {
+  if (!(metric %in% colnames(dataset))) {
+    stop(cat(metric, "is not a column in the dataset"))
+  }
+  if (!(by %in% colnames(dataset))) {
+    stop(cat(by, "is not a column in the dataset"))
+  }
+  x <- dataset[dataset[, by] == x.value,] %>% .[[metric]] %>% na.omit(.)
+  y <- dataset[dataset[, by] == y.value,] %>% .[[metric]] %>% na.omit(.)
+
+  return(list("x" = x, "y" = y))
+}
+
 SaveSplits <- function(splits, metric, granularity) {
   file <- paste("data/csv/", granularity, ".", metric, ".x.csv", sep = "")
   write.csv(splits$x, file, row.names = F)
