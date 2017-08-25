@@ -211,6 +211,22 @@ GetSentenceLength <- function(normalize = TRUE) {
   return(dataset)
 }
 
+GetSentenceBaselines <- function(normalize = TRUE) {
+  query <- "
+    SELECT cs.comment_id AS comment_id,
+      cs.sentence_id AS sentence_id,
+      (s.metrics #>> '{baselines,flesch_kincaid}')::numeric AS flesch_kincaid
+    FROM comment c
+      JOIN comment_sentences cs ON cs.comment_id = c.id
+      JOIN sentence s ON s.id = cs.sentence_id
+    WHERE c.by_reviewer IS true;
+  "
+  connection <- GetDbConnection(db.settings)
+  dataset <- GetData(connection, query)
+  Disconnect(connection)
+  return(dataset)
+}
+
 GetSentenceContinuousMetrics <- function(normalize = TRUE) {
   dataset <- NA
 

@@ -39,3 +39,38 @@ for (i in 1:(length(metrics) - 1)) {
 
 ### Test: Variable Clustering ####
 test.outcome <- varclus(as.matrix(analysis.dataset))
+
+
+## Complexity versus Reading Ease
+dataset <- GetSentenceYngve(normalize = F) %>%
+  inner_join(., GetSentenceFrazier(normalize = F), by = SENTENCE.KEYS) %>%
+  inner_join(., GetSentenceBaselines(normalize = F), by = SENTENCE.KEYS)
+
+analysis.dataset <- dataset %>%
+  select(-comment_id, -sentence_id)
+
+metrics <- colnames(analysis.dataset)
+
+done <- 0
+total <- length(metrics) * (length(metrics) - 1) / 2
+
+test.outcomes <- data.frame()
+for (i in 1:(length(metrics) - 1)) {
+  for (j in (i + 1):length(metrics)) {
+    done <- done + 1
+
+    column.one <- metrics[i]
+    label.one <- SENTENCE.METRIC.LABELS[column.one]
+    column.two <- metrics[j]
+    label.two <- SENTENCE.METRIC.LABELS[column.two]
+
+    cat("[", done, "/", total, "] ", label.one, " and ", label.two, "\n",
+        sep = "")
+
+    test.outcome <- GetSpearmansRho(analysis.dataset, column.one, column.two)
+    test.outcome <- data.frame("X" = label.one, "Y" = label.two, test.outcome)
+    rownames(test.outcome) <- c()
+
+    test.outcomes <- rbind(test.outcomes, test.outcome)
+  }
+}
