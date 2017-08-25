@@ -9,7 +9,7 @@ COMMENT.BV.METRICS <- c(
   "uncertainty"
 )
 
-UNCERTAINTY.VARIANTS <- c(
+COMMENT.UNCERTAINTY.VARIANTS <- c(
   "has_doxastic",
   "has_epistemic",
   "has_conditional",
@@ -18,7 +18,7 @@ UNCERTAINTY.VARIANTS <- c(
 )
 
 COMMENT.BV.METRIC.VARIANTS <- list(
-  "uncertainty" = UNCERTAINTY.VARIANTS
+  "uncertainty" = COMMENT.UNCERTAINTY.VARIANTS
 )
 
 ### Continuous Valued
@@ -30,24 +30,22 @@ COMMENT.CV.METRICS <- c(
   "sentiment",
   "politeness",
   "formality",
-  # "informativeness",
-  # "implicature",
   "project_experience",
   "module_experience",
   "file_experience"
 )
 
-SENTIMENT.VARIANTS <- c(
+COMMENT.SENTIMENT.VARIANTS <- c(
   "pct_neg_tokens",
   "pct_neu_tokens",
   "pct_pos_tokens",
   "pct_nne_tokens"
 )
-POLITENESS.VARIANTS <- c(
+COMMENT.POLITENESS.VARIANTS <- c(
   "min_politeness",
   "max_politeness"
 )
-FORMALITY.VARIANTS <- c(
+COMMENT.FORMALITY.VARIANTS <- c(
   "min_formality",
   "max_formality"
 )
@@ -65,24 +63,48 @@ FILE.EXPERIENCE.VARIANTS <- c(
 )
 
 COMMENT.CV.METRIC.VARIANTS <- list(
-  "sentiment" = SENTIMENT.VARIANTS,
-  "politeness" = POLITENESS.VARIANTS,
-  "formality" = FORMALITY.VARIANTS,
+  "sentiment" = COMMENT.SENTIMENT.VARIANTS,
+  "politeness" = COMMENT.POLITENESS.VARIANTS,
+  "formality" = COMMENT.FORMALITY.VARIANTS,
   "project_experience" = PROJECT.EXPERIENCE.VARIANTS,
   "module_experience" = MODULE.EXPERIENCE.VARIANTS,
   "file_experience" = FILE.EXPERIENCE.VARIANTS
 )
 
 ## Sentence Level Metrics ====
+
+### Boolean Valued
+SENTENCE.BV.METRICS <- c(
+  "sentiment",
+  "uncertainty"
+)
+
+SENTENCE.SENTIMENT.VARIANTS <- c(
+  "is_positive",
+  "is_negative"
+)
+
+SENTENCE.UNCERTAINTY.VARIANTS <- c(
+  "is_doxastic",
+  "is_epistemic",
+  "is_conditional",
+  "is_investigative",
+  "is_uncertain"
+)
+
+### Continuous Valued
+SENTENCE.BV.METRIC.VARIANTS <- list(
+  "sentiment" = SENTENCE.SENTIMENT.VARIANTS,
+  "uncertainty" = SENTENCE.UNCERTAINTY.VARIANTS
+)
+
 SENTENCE.CV.METRICS <- c(
   "yngve",
   "frazier",
   "pdensity",
   "cdensity",
   "politeness",
-  "formality",
-  "informativeness",
-  "implicature"
+  "formality"
 )
 # Metric Labels ----
 
@@ -158,17 +180,20 @@ SENTENCE.METRIC.LABELS <- c(
   # Implicature
   "implicature" = "Implicature",
   # Uncertainty
-  "D" = "Doxastic",
-  "E" = "Epistemic",
-  "N" = "Conditional",
-  "I" = "Investigative",
-  "C" = "Certain",
+  "uncertainty" = "Uncertainty",
+  "is_doxastic" = "Is Doxastic",
+  "is_epistemic" = "Is Epistemic",
+  "is_conditional" = "Is Conditional",
+  "is_investigative" = "Is Investigative",
+  "is_uncertain" = "Is Uncertain",
   # Sentiment
-  "positive" = "Positive",
-  "neutral" = "Neutral",
-  "negative" = "Negative",
+  "sentiment" = "Sentiment",
+  "is_negative" = "Is Negative",
+  "is_neutral" = "Is Neutral",
+  "is_positive" = "Is Positive",
   # Miscellaneous
-  "num_tokens" = "# Tokens"
+  "num_tokens" = "# Tokens",
+  "flesch_kincaid" = "Reading Ease"
 )
 
 # Miscellaneous ----

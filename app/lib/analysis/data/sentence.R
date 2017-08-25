@@ -84,14 +84,17 @@ GetSentenceSentiment <- function(normalize = TRUE) {
         WHEN (
           (s.metrics #>> '{sentiment,vneg}')::int +
           (s.metrics #>> '{sentiment,neg}')::int
-        ) = 1 THEN 'negative'
+        ) = 1 THEN true ELSE false
+      END AS is_negative,
+      CASE
+        WHEN (s.metrics #>> '{sentiment,neut}')::int = 1 THEN true ELSE false
+      END AS is_neutral,
+      CASE
         WHEN (
           (s.metrics #>> '{sentiment,pos}')::int +
           (s.metrics #>> '{sentiment,vpos}')::int
-        ) = 1 THEN 'positive'
-        ELSE
-          'neutral'
-      END AS sentiment
+        ) = 1 THEN true ELSE false
+      END AS is_positive
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
       JOIN sentence s ON s.id = cs.sentence_id
@@ -110,19 +113,39 @@ GetSentenceSentiment <- function(normalize = TRUE) {
 
 GetSentenceUncertainty <- function(normalize = TRUE) {
   query <- "
-    SELECT DISTINCT
-      cs.comment_id AS comment_id,
+    SELECT cs.comment_id AS comment_id,
       cs.sentence_id AS sentence_id,
-      t.uncertainty AS uncertainty
+      EXISTS(
+        SELECT *
+        FROM token t
+        WHERE t.sentence_id = cs.sentence_id AND t.uncertainty = 'D'
+      ) AS is_doxastic,
+      EXISTS(
+        SELECT *
+        FROM token t
+        WHERE t.sentence_id = cs.sentence_id AND t.uncertainty = 'E'
+      ) AS is_epistemic,
+      EXISTS(
+        SELECT *
+        FROM token t
+        WHERE t.sentence_id = cs.sentence_id AND t.uncertainty = 'N'
+      ) AS is_conditional,
+      EXISTS(
+        SELECT *
+        FROM token t
+        WHERE t.sentence_id = cs.sentence_id AND t.uncertainty = 'I'
+      ) AS is_investigative,
+      EXISTS(
+        SELECT *
+        FROM token t
+        WHERE t.sentence_id = cs.sentence_id AND t.uncertainty <> 'C'
+      ) AS is_uncertain
     FROM comment c
       JOIN comment_sentences cs ON cs.comment_id = c.id
-      JOIN token t ON t.sentence_id = cs.sentence_id
     WHERE c.by_reviewer IS true;
   "
   connection <- GetDbConnection(db.settings)
-  dataset <- GetData(connection, query) %>%
-    filter(uncertainty != 'C') %>%
-    select(-sentence_id)
+  dataset <- GetData(connection, query)
   Disconnect(connection)
   return(dataset)
 }
@@ -246,12 +269,6 @@ GetSentenceContinuousMetrics <- function(normalize = TRUE) {
   dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
 
   interim.dataset <- GetSentenceFormality(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
-
-  interim.dataset <- GetSentenceInformativeness(normalize = normalize)
-  dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
-
-  interim.dataset <- GetSentenceImplicature(normalize = normalize)
   dataset <- inner_join(dataset, interim.dataset, by = SENTENCE.KEYS)
 
   interim.dataset <- GetSentenceLength(normalize = normalize)
