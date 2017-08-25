@@ -106,7 +106,26 @@ GetCorrelation <- function(dataset, ignore = NA){
   correlation <- melt(correlation)
   correlation <- na.omit(correlation)
 
+  correlation <- FixCorrelation(dataset, correlation)
+
   return(correlation)
+}
+
+FixCorrelation <- function(dataset, correlations, p.value = 0.05) {
+  for(index in seq(nrow(correlations))){
+    var1 <- as.character(correlations[index, ]$Var1)
+    var2 <- as.character(correlations[index, ]$Var2)
+    correlation <- cor.test(
+      dataset[[var1]], dataset[[var2]], method = "spearman", exact = F
+    )
+    if(correlation$p.value > p.value){
+      cat("-", var1, "and", var2, "\n")
+      correlations[
+        correlations$Var1 == var1 & correlations$Var2 == var2,
+        ]$value <- 0
+    }
+  }
+  return(correlations)
 }
 
 ## Association ====
