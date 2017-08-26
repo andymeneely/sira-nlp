@@ -46,13 +46,13 @@ test.outcome <- varclus(as.matrix(analysis.dataset))
 ### Query Data ####
 linguistic.dataset <- GetCommentContinuousMetrics(normalize = TRUE)
 experience.dataset <- GetProjectExperience(normalize = TRUE) %>%
-  select(comment_id, prp_prj_experience)
+  select(-uni_prj_experience)
 
-linguistic.metrics <- setdiff(colnames(linguistic.dataset), COMMENT.KEYS)
+lingusitic.metrics <- setdiff(colnames(linguistic.dataset), COMMENT.KEYS)
 experience.metrics <- setdiff(colnames(experience.dataset), COMMENT.KEYS)
 experience.metrics <- setdiff(experience.metrics, c("author"))
 
-analysis.dataset <- lingusitic.dataset %>%
+analysis.dataset <- linguistic.dataset %>%
   inner_join(., experience.dataset, by = COMMENT.KEYS) %>%
   select(-comment_id)
 
