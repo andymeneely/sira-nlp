@@ -37,9 +37,7 @@ COMMENT.CV.METRICS <- c(
 
 COMMENT.SENTIMENT.VARIANTS <- c(
   "pct_neg_tokens",
-  "pct_neu_tokens",
   "pct_pos_tokens",
-  "pct_nne_tokens"
 )
 COMMENT.POLITENESS.VARIANTS <- c(
   "min_politeness",
@@ -88,8 +86,7 @@ SENTENCE.UNCERTAINTY.VARIANTS <- c(
   "is_doxastic",
   "is_epistemic",
   "is_conditional",
-  "is_investigative",
-  "is_uncertain"
+  "is_investigative"
 )
 
 ### Continuous Valued
