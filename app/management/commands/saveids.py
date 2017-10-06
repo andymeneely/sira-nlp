@@ -43,7 +43,7 @@ class Command(BaseCommand):
         files = Files(settings)
         try:
             ids = rietveld.get_ids(year)
-            filepath = files.save_ids(year, ids)
+            filepath = files.save_ids(year, ids, switch='reviews')
             info('Code review identifiers written to {}'.format(filepath))
         except KeyboardInterrupt:
             warning('Attempting to abort.')
