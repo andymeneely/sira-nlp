@@ -245,9 +245,17 @@ def classify():
         print(confusion_matrix(y_test, y_pred))
         '''
 
-def score(sentence):
-    sent = Sentence(sentence, 0.00)
-    sent._score()
+def score(sentences):
+    with open(sentences, newline='') as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+        for sentence in csv_reader:
+            print("SENT: " + sentence[4][:50])
+            print("FORM: " + str(sentence[1]))
+            print("INFO: " + str(sentence[2]))
+            print("IMPL: " + str(sentence[3]))
+
+            sent = Sentence(sentence[4], 0.00)
+            sent._score()
 
 if __name__ == "__main__":
     args = sys.argv[1:]
