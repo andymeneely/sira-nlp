@@ -7,23 +7,11 @@ from django.db import Error, transaction
 from django.db.models import Q
 
 from app.lib import taggers, logger
-from app.lib.nlp import analyzers
 from app.lib.utils import parallel
 from app.models import *
 
-#PATTERN = re.compile(r'>\s([^\n]*)\n\n')
-PATTERN = re.compile(r'^\nDone\.')
 
-
-def _get_aggregate(comments):
-    aggregate = dict()
-    for comment in comments:
-        if comment.patch.file_path not in aggregate:
-            aggregate[comment.patch.file_path] = dict()
-        if comment.line not in aggregate[comment.patch.file_path]:
-            aggregate[comment.patch.file_path][comment.line] = list()
-        aggregate[comment.patch.file_path][comment.line].append(comment)
-    return aggregate
+PATTERN = r'^\nDone\.'
 
 
 def aggregate(oqueue, cqueue, num_doers):
@@ -46,23 +34,21 @@ def do(iqueue, cqueue):  # pragma: no cover
             cqueue.put(parallel.DD)
             break
 
-        (path, lines) = item
+        comment = item
         cnt = 0
         with transaction.atomic():
             try:
-                for (line, comments) in lines.items():
-                    for comment in comments:
-                        is_done = PATTERN.match(comment.text) and \
-                                not comment.by_reviewer
-
-                        if is_done and comment.parent is not None:
-                            comment.parent.is_useful = True
-                            comment.parent.save()
-                            print("USEFUL: " + str(comment.parent.id))
-                            cnt += 1
+                if comment.parent is not None:
+                    parent = comment.parent
+                    while parent is not None:
+                        if parent.by_reviewer:
+                            parent.is_useful = True
+                            parent.save()
+                        parent = parent.parent
+                cnt += 1
             except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
-                sys.stderr.write('  Path  {}\n'.format(path))
+                sys.stderr.write('  Comment  {}\n'.format(comment.id))
                 extype, exvalue, extrace = sys.exc_info()
                 traceback.print_exception(extype, exvalue, extrace)
 
@@ -70,13 +56,13 @@ def do(iqueue, cqueue):  # pragma: no cover
 
 
 def stream(review_ids, iqueue, num_doers):
-    for review_id in review_ids:
-        review = Review.objects.filter(id=review_id)
-        comments = Comment.objects                                        \
-                          .filter(patch__patchset__review=review)         \
-                          .order_by('patch__file_path', 'line', 'posted')
-        for (path, lines) in _get_aggregate(comments).items():
-            iqueue.put((path, lines))
+    comments = Comment.objects                                           \
+                      .filter(patch__patchset__review_id__in=review_ids) \
+                      .filter(by_reviewer=False, text__regex=PATTERN)    \
+                      .order_by('patch__file_path', 'line', 'posted')
+
+    for comment in comments:
+        iqueue.put(comment)
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)

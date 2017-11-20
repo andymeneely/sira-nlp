@@ -5,18 +5,23 @@ source("data/sentence.R")
 ## Continuous Valued Metrics ====
 
 ### Query Data ####
-dataset <- GetContinuousMetrics()
+dataset <- GetSentenceContinuousMetrics(normalize = F)
 
 ### Plot: Spearman's Correlation Coefficient ####
 title <- "Correlation among Continuous-valued Sentence Metrics"
 
-plot.dataset <- GetCorrelation(dataset, ignore = c("comment_id", "sentence_id"))
+plot.dataset <- GetCorrelation(dataset, ignore = SENTENCE.KEYS)
 
 # Resolution: 650 x 650
 ggplot(plot.dataset, aes(Var2, Var1, fill = value)) +
   geom_tile() +
-  geom_text(aes(Var2, Var1, label = sprintf("%.2f", value)),
-            color = "black", size = 4) +
+  geom_text(
+    aes(
+      Var2, Var1,
+      label = ifelse(value == 0, sprintf("-"), sprintf("%.2f", value))
+    ),
+    color = "black", size = 4
+  ) +
   scale_x_discrete(labels = SENTENCE.METRIC.LABELS) +
   scale_y_discrete(labels = SENTENCE.METRIC.LABELS) +
   scale_fill_gradient2(low = "#636363", high = "#636363", mid = "#f0f0f0",

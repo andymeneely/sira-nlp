@@ -30,6 +30,27 @@ SplitByCommentType <- function(dataset, metric) {
   return(list("x" = x, "y" = y))
 }
 
+Split <- function(dataset, by, x.value, y.value, metric) {
+  if (!(metric %in% colnames(dataset))) {
+    stop(cat(metric, "is not a column in the dataset"))
+  }
+  if (!(by %in% colnames(dataset))) {
+    stop(cat(by, "is not a column in the dataset"))
+  }
+  x <- dataset[dataset[, by] == x.value,] %>% .[[metric]] %>% na.omit(.)
+  y <- dataset[dataset[, by] == y.value,] %>% .[[metric]] %>% na.omit(.)
+
+  return(list("x" = x, "y" = y))
+}
+
+SaveSplits <- function(splits, metric, granularity) {
+  file <- paste("data/csv/", granularity, ".", metric, ".x.csv", sep = "")
+  write.csv(splits$x, file, row.names = F)
+
+  file <- paste("data/csv/", granularity, ".", metric, ".y.csv", sep = "")
+  write.csv(splits$y, file, row.names = F)
+}
+
 ## Database ====
 GetDbConnection <- function(db.settings){
   connection <- Connect(
@@ -71,12 +92,17 @@ GetSpearmansRho <- function(dataset, column.one, column.two, p.value = 0.05){
     dataset[[column.one]], dataset[[column.two]],
     method = "spearman", exact = F
   )
-  p <- round(correlation$p.value, 4)
-  rho <- round(correlation$estimate, 4)
+  p <- 1.0
+  rho <- 0.0
+  if (!is.na(correlation$p.value)) {
+    p <- correlation$p.value
+    rho <- correlation$estimate
+  }
+
   if(p > p.value){
     warning(paste("Spearman's correlation insignificant with p-value =", p))
   }
-  return(list("significant" = p <= p.value, "rho" = rho))
+  return(list("p" = p, "significant" = p <= p.value, "rho" = rho))
 }
 
 GetCorrelation <- function(dataset, ignore = NA){
@@ -93,12 +119,30 @@ GetCorrelation <- function(dataset, ignore = NA){
   correlation <- melt(correlation)
   correlation <- na.omit(correlation)
 
+  correlation <- FixCorrelation(dataset, correlation)
+
   return(correlation)
 }
 
+FixCorrelation <- function(dataset, correlations, p.value = 0.05) {
+  for(index in seq(nrow(correlations))){
+    var1 <- as.character(correlations[index, ]$Var1)
+    var2 <- as.character(correlations[index, ]$Var2)
+    correlation <- cor.test(
+      dataset[[var1]], dataset[[var2]], method = "spearman", exact = F
+    )
+    if(correlation$p.value > p.value){
+      cat("-", var1, "and", var2, "\n")
+      correlations[
+        correlations$Var1 == var1 & correlations$Var2 == var2,
+        ]$value <- 0
+    }
+  }
+  return(correlations)
+}
+
 ## Association ====
-GetAssociation <- function(x, y, x.label, y.label, include.es = TRUE,
-                           p.value = 0.05) {
+GetAssociation <- function(x, y, x.label, y.label, p.value = 0.05) {
   htest <- wilcox.test(x, y)
 
   p <- htest$p.value
@@ -106,23 +150,48 @@ GetAssociation <- function(x, y, x.label, y.label, include.es = TRUE,
     warning(paste("Association outcome insignificant with p-value =", p))
   }
 
-  effect.size <- NA
-  effect.magnitude <- NA
-  if (include.es) {
-    effect <- cliff.delta(x, y)
-    effect.size <- effect$estimate
-    effect.magnitude <- effect$magnitude
+  test.outcome <- list()
+  test.outcome[["p"]] <- p
+  test.outcome[["significant"]] <- p <= p.value
+  test.outcome[[paste("mean.", x.label, sep = "")]] <- mean(x)
+  test.outcome[[paste("mean.", y.label, sep = "")]] <- mean(y)
+  test.outcome[[paste("median.", x.label, sep = "")]] <- median(x)
+  test.outcome[[paste("median.", y.label, sep = "")]] <- median(y)
+  return(test.outcome)
+}
+
+GetOneSampleAssociation <- function(x, p.value = 0.05) {
+  htest <- wilcox.test(x, mu = 0)
+  p <- htest$p.value
+  if(p > p.value){
+    warning(paste("Association outcome insignificant with p-value =", p))
   }
 
   test.outcome <- list()
   test.outcome[["p"]] <- p
   test.outcome[["significant"]] <- p <= p.value
-  test.outcome[["effect.size"]] <- effect.size
-  test.outcome[["effect.magnitude"]] <- effect.magnitude
-  test.outcome[[paste("mean.", x.label, sep = "")]] <- mean(x)
-  test.outcome[[paste("mean.", y.label, sep = "")]] <- mean(y)
-  test.outcome[[paste("median.", x.label, sep = "")]] <- median(x)
-  test.outcome[[paste("median.", y.label, sep = "")]] <- median(y)
+  test.outcome[["mean"]] <- mean(x)
+  return(test.outcome)
+}
+
+GetEffectSize <- function(x, y, p.value = 0.05) {
+  htest <- wilcox.test(x, y)
+
+  p <- 1.0
+  delta <- 0.0
+  if (!is.na(htest$p.value)) {
+    p <- htest$p.value
+    delta <- cliff.delta(x, y)$estimate
+  }
+  if(p > p.value){
+    warning(paste("Association outcome insignificant with p-value =", p))
+  }
+
+  test.outcome <- list()
+  test.outcome[["p"]] <- p
+  test.outcome[["significant"]] <- p <= p.value
+  test.outcome[["delta"]] <- delta
+
   return(test.outcome)
 }
 
@@ -175,6 +244,21 @@ TestAssociation <- function(dataset, types, labels, p.value = 0.05){
   }
 }
 
+## Independence ====
+GetIndependence <- function(x, y, p.value = 0.05) {
+  test.outcome <- chisq.test(x, y)
+
+  p <- test.outcome$p.value
+  if(p > p.value){
+    warning(paste("Association outcome insignificant with p-value =", p))
+  }
+
+  test.outcome <- list()
+  test.outcome[["p"]] <- p
+  test.outcome[["significant"]] <- p <= p.value
+  return(test.outcome)
+}
+
 ## Plotting ====
 PlotDistributions <- function(dataset){
   plots <- list()
@@ -206,6 +290,12 @@ PlotDistributions <- function(dataset){
 }
 
 ## Normality ===
+GetNormality <- function(data, p.value = 0.05) {
+  test.outcome <- ad.test(data)
+  return(list("p" = test.outcome$p.value,
+              "is.normal" = test.outcome$p.value > p.value))
+}
+
 TestNormality <- function(data, label) {
   test.outcome <- ad.test(data)
   if (test.outcome$p.value < 0.05) {
