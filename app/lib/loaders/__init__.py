@@ -8,3 +8,4 @@ from app.lib.loaders.vulnerability import VulnerabilityLoader
 from app.lib.loaders.sentencemessage import SentenceMessageLoader
 from app.lib.loaders.sentencecomment import SentenceCommentLoader
 from app.lib.loaders.comment import CommentLoader
+from app.lib.loaders.sourcecode import SourceCodeSentenceLoader
