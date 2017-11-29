@@ -6,10 +6,13 @@ import traceback
 from django.db import Error, transaction
 
 from app.lib import helpers, loaders
-from app.lib.nlp import summarizer, sentenizer
+from app.lib.nlp import summarizer, sentenizer, tokenizer
 from app.lib.utils import parallel
 from app.models import *
 from app.queryStrings import *
+
+CAMELCASE_RE = re.compile('([A-Z][a-z0-9]+){2,}')
+CODECHARS_RE = re.compile('[<>\{\}\[\]\\~`_\=\+\^]')
 
 def _fix_join(text):
     text = re.sub(r' : ([\(\)])', r' :\1', text) # Smiley/Frowny Face
@@ -19,6 +22,19 @@ def _fix_join(text):
     text = re.sub(r' \)', ')', text) # Clean Up Extra Spaces
 
     return text
+
+def _clean_tokens(tokens):
+    clean_tokens = list()
+    found_code = False
+    for token in tokens:
+        if (CODECHARS_RE.search(tok.token) is not None or
+            CAMELCASE_RE.search(tok.token) is not None):
+            clean_tokens.append('xxCODExx')
+            found_code = True
+        else:
+            clean_tokens.append(token)
+
+    return clean_tokens, found_code
 
 def _truncate(tokens):
     truncated_sent = list()
@@ -56,18 +72,22 @@ def do(iqueue, cqueue):  # pragma: no cover
             cqueue.put(parallel.DD)
             break
 
-        (sent_id, tokens) = item
+        (sent_id) = item
 
         count = 0
         with transaction.atomic():
             try:
-                sorted_tokens = sorted(tokens, key=lambda x: x[1])
-                truncated_sentence, truncated_tokens = _truncate(sorted_tokens)
-                print(truncated_sentence)
                 sent = Sentence.objects.get(id=sent_id)
-                sent.clean_text = truncated_sentence
-                sent.save()
-                count += 1
+                tokens = tokenizer.NLTKTokenizer(sent.text).execute()
+                clean_tokens, found_code = _clean_tokens(tokens)
+                if found_code:
+                    truncated_sentence, truncated_tokens = _truncate(clean_tokens)
+                    print(truncated_sentence)
+                    sent.clean_text = truncated_sentence
+                    sent.save()
+                    count += 1
+                else:
+                    pass
             except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Sentence  {}\n'.format(sent_id))
@@ -79,10 +99,7 @@ def do(iqueue, cqueue):  # pragma: no cover
 
 def stream(sentence_ids, settings, iqueue, num_doers):
     for sent_id in sentence_ids:
-        tokens = Token.objects.filter(sentence_id=sent_id).values_list(
-                     'token', 'position', 'is_code')
-
-        iqueue.put((sent_id, list(tokens)))
+        iqueue.put((sent_id))
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)
