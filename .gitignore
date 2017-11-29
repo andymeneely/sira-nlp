@@ -111,6 +111,10 @@ linsights/dbsettings.py
 **/scratch.*
 **/workspace.*
 **/temp.*
+**/xx_*_xx.*
+
+# Directories that are used to contain temporary content
+scratch/
 
 # Unversioned files
 app/management/commands/frequency.py
