@@ -17,7 +17,6 @@ def _fix_join(text):
     text = re.sub(r' \( \)', '', text) # Remove Function Calls
     text = re.sub(r'\( ', '(', text) # Clean Up Extra Spaces
     text = re.sub(r' \)', ')', text) # Clean Up Extra Spaces
-#    text = re.sub(r" ('[a-zA-Z])", r"\1", text)
 
     return text
 
@@ -30,17 +29,12 @@ def _truncate(tokens):
             last_is_code = False
         else:
             if not last_is_code:
-                truncated_sent.append("**CODE**")
+                truncated_sent.append("xxCODExx")
                 last_is_code = True
             else:
                 pass
 
     return _fix_join(" ".join(truncated_sent)), truncated_sent
-
-def _check_sent(tokens):
-    no_code = list(filter(lambda a: a != "**CODE**", tokens))
-    status = re.search(r'[a-zA-Z]', " ".join(no_code))
-    return status
 
 def aggregate(oqueue, cqueue, num_doers):
     count, done = 0, 0
@@ -72,11 +66,6 @@ def do(iqueue, cqueue):  # pragma: no cover
                 print(truncated_sentence)
                 sent = Sentence.objects.get(id=sent_id)
                 sent.clean_text = truncated_sentence
-                #if _check_sent(truncated_tokens):
-                #    sent.is_code = True
-                    #print(True)
-                #else:
-                #    pass
                 sent.save()
                 count += 1
             except Error as err:  # pragma: no cover
