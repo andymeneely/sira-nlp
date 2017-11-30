@@ -186,7 +186,6 @@ class Sentence(models.Model):
     clean_text = models.TextField(default=None, null=True)
 
     parses = jsonb.JSONField(default=dict)
-    clean_parses = jsonb.JSONField(default=dict)
     metrics = jsonb.JSONField(
             default={'sentiment': {}, 'complexity': {}, 'politeness': {},
                      'formality': {}, 'implicature': {}, 'informativeness': {}}
