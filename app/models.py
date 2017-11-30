@@ -183,7 +183,7 @@ class Sentence(models.Model):
     """ Defines the schema for the sentence table. """
     id = models.AutoField(primary_key=True)
     text = models.TextField(default='')
-    clean_text = models.TextField(default='')
+    clean_text = models.TextField(default=None, null=True)
 
     parses = jsonb.JSONField(default=dict)
     clean_parses = jsonb.JSONField(default=dict)

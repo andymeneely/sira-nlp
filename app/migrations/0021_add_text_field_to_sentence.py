@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sentence',
             name='clean_text',
-            field=models.TextField(default=''),
+            field=models.TextField(default=None, null=True),
         ),
     ]
