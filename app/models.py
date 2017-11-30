@@ -207,7 +207,6 @@ class Token(models.Model):
     pos = models.CharField(max_length=10, default='')
     chunk = models.CharField(max_length=10, default='')
     uncertainty = models.CharField(max_length=1, default='C')
-    is_code = models.BooleanField(default=False)
 
     # Navigation Fields
     sentence = models.ForeignKey('Sentence')
