@@ -24,22 +24,19 @@ def _fix_join(text):
     return text
 
 def _clean_tokens(tokens):
-    clean_tokens = list()
-    found_code = False
+    _tokens = list()
     for token in tokens:
-        if (CODECHARS_RE.search(tok.token) is not None or
-            CAMELCASE_RE.search(tok.token) is not None):
-            clean_tokens.append('xxCODExx')
-            found_code = True
-        else:
-            clean_tokens.append(token)
-
-    return clean_tokens, found_code
+        is_code = (
+                CODECHARS_RE.search(token) is not None or
+                CAMELCASE_RE.search(token) is not None
+            )
+        _tokens.append((token, is_code))
+    return _tokens, any([is_code for (_, is_code) in _tokens])
 
 def _truncate(tokens):
     truncated_sent = list()
     last_is_code = False
-    for (token, position, is_code) in tokens:
+    for (token, is_code) in tokens:
         if not is_code:
             truncated_sent.append(token)
             last_is_code = False
@@ -86,8 +83,6 @@ def do(iqueue, cqueue):  # pragma: no cover
                     sent.clean_text = truncated_sentence
                     sent.save()
                     count += 1
-                else:
-                    pass
             except Error as err:  # pragma: no cover
                 sys.stderr.write('Exception\n')
                 sys.stderr.write('  Sentence  {}\n'.format(sent_id))
