@@ -36,8 +36,6 @@ def do(iqueue, cqueue):  # pragma: no cover
         with transaction.atomic():
             try:
                 for (sentence_id, sentence_text) in sentences:
-                    #print(sentence_id)
-                    #print(sentence_text)
                     summary = summarizer.Summarizer(sentence_text).execute()
                     for (position, token, stem, lemma, pos, chunk) in summary:
                         objects.append(Token(
@@ -60,10 +58,22 @@ def do(iqueue, cqueue):  # pragma: no cover
 def stream(review_ids, settings, iqueue, num_doers):
     for review_id in review_ids:
         sentences = list()
-        for sentence in Sentence.objects.filter(message__review_id=review_id):
+
+        _sentences = Sentence.objects.filter(message__review_id=review_id)
+        for sentence in _sentences:
             sentences.append((sentence.id, sentence.text))
-        for sentence in Sentence.objects.filter(comment__patch__patchset__review_id=review_id):
-            sentences.append((sentence.id, sentence.text))
+            text = sentence.text
+            if sentence.clean_text is not None:
+                text = sentence.clean_text
+            sentences.append((sentence.id, text))
+
+        _sentences = Sentence.objects                              \
+            .filter(comment__patch__patchset__review_id=review_id)
+        for sentence in _sentences:
+            text = sentence.text
+            if sentence.clean_text is not None:
+                text = sentence.clean_text
+            sentences.append((sentence.id, text))
         iqueue.put((review_id, sentences))
 
     for i in range(num_doers):

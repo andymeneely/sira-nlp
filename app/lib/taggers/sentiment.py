@@ -34,7 +34,10 @@ def do(iqueue, cqueue): # pragma: no cover
         (sent, url) = item
         with transaction.atomic():
             try:
-                results = analyzers.SentimentAnalyzer(sent.text, url).analyze()
+                text = sent.text
+                if sent.clean_text is not None:
+                    text = sent.clean_text
+                results = analyzers.SentimentAnalyzer(text, url).analyze()
 
                 sent.metrics['sentiment'] = results
                 sent.save()

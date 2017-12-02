@@ -102,11 +102,11 @@ def stream(sentences, iqueue, num_doers):
             #"http://cluster-node-03.main.ad.rit.edu:41194/",
             "http://localhost:41194/"]
     for sentence in sentences:
-        iqueue.put((sentence.id, sentence.text, urls[c]))
-        if c < len(urls)-1: # pragma: no cover
-            c += 1
-        else:
-           c = 0
+        text = sentence.text
+        if sentence.clean_text is not None:
+            text = sentence.clean_text
+        iqueue.put((sentence.id, text, urls[c]))
+        c = (c + 1) % len(urls)
 
     for i in range(num_doers):
         iqueue.put(parallel.EOI)
