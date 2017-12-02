@@ -10,7 +10,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import connection, connections
 
-from app.lib import loaders, taggers
+from app.lib import loaders
 from app.lib.helpers import *
 from app.lib.logger import *
 from app.models import *
@@ -63,10 +63,6 @@ class Command(BaseCommand):
             loader = loaders.SourceCodeSentenceLoader(settings, processes, ids)
             count = loader.load()
             info('  {:,} source code sentences loaded'.format(count))
-
-            with connection.cursor() as cursor:
-                cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_token'))
-                cursor.execute('REFRESH MATERIALIZED VIEW {};'.format('vw_review_lemma'))
         except KeyboardInterrupt: # pragma: no cover
             warning('Attempting to abort.')
         finally:
