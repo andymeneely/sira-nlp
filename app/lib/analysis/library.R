@@ -7,7 +7,7 @@ source("data/data.R")
 
 ## Generic ====
 InitLibraries <- function(){
-  libraries <- c("DBI", "effsize", "Hmisc", "nortest", "plyr", "dplyr", "ggplot2",
+  libraries <- c("DBI", "effsize", "Hmisc", "nortest", "dplyr", "ggplot2",
                  "reshape2", "tidyr")
   for(lib in libraries){
     suppressPackageStartupMessages(library(lib, character.only = T))
