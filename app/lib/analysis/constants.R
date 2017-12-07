@@ -37,7 +37,7 @@ COMMENT.CV.METRICS <- c(
 
 COMMENT.SENTIMENT.VARIANTS <- c(
   "pct_neg_tokens",
-  "pct_pos_tokens",
+  "pct_pos_tokens"
 )
 COMMENT.POLITENESS.VARIANTS <- c(
   "min_politeness",
