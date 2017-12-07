@@ -376,6 +376,7 @@ GetCommentMetric <- function(metric, normalize = TRUE) {
 }
 
 GetCommentLength <- function(normalize = TRUE) {
+  connection <- GetDbConnection(db.settings)
   query <- "
     SELECT cs.comment_id AS comment_id, COUNT(*) AS num_sentences
     FROM comment_sentences cs
@@ -383,8 +384,17 @@ GetCommentLength <- function(normalize = TRUE) {
     WHERE c.by_reviewer IS true
     GROUP BY cs.comment_id;
   "
-  connection <- GetDbConnection(db.settings)
   dataset <- GetData(connection, query)
+  query <- "
+    SELECT cs.comment_id AS comment_id, COUNT(*) AS num_tokens
+    FROM comment_sentences cs
+      JOIN comment c ON c.id = cs.comment_id
+      JOIN token t ON t.sentence_id = cs.sentence_id
+    WHERE c.by_reviewer IS true
+    GROUP BY cs.comment_id;
+  "
+  dataset <- GetData(connection, query) %>%
+    inner_join(., dataset, by = COMMENT.KEYS)
   Disconnect(connection)
   return(na.omit(dataset))
 }
