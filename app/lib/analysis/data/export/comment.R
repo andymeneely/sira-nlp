@@ -9,16 +9,16 @@ InitGlobals()
 ## Fields: yngve, frazier, cdensity, pdensity, pct_neg_tokens, pct_neu_tokens,
 ##         pct_pos_tokens, pct_nne_tokens, min_formality, max_formality,
 ##         min_politeness, max_politeness
-dataset <- GetCommentContinuousMetrics()
+dataset <- GetCommentContinuousMetrics(normalize = F)
 
 ## Fields: has_doxastic, has_epistemic, has_conditional, has_investigative
 ##         has_uncertainty
 dataset <- dataset %>%
-  inner_join(., GetCommentUncertainty(), by = COMMENT.KEYS)
+  inner_join(., GetCommentUncertainty(normalize = F), by = COMMENT.KEYS)
 
 ## Fields: num_sentences, num_tokens
 dataset <- dataset %>%
-  inner_join(., GetCommentLength(), by = COMMENT.KEYS)
+  inner_join(., GetCommentLength(normalize = F), by = COMMENT.KEYS)
 
 # Associate with Comment Type ----
 export.dataset <- dataset %>%
